@@ -59,6 +59,7 @@ class JSONCRUDHandler(webapp2.RequestHandler):
 
         try:
             schema(obj)
+            #TODO: this may need to be obj = schema(obj) or something similar
         except:
             logging.exception('validation failed')
             logging.info(obj)

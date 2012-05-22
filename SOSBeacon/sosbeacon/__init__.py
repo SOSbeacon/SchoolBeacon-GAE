@@ -15,3 +15,18 @@
 # limitations under the License.
 #
 
+from google.appengine.ext import ndb
+
+
+class EntityBase(ndb.Model):
+
+    # The entity's change revision counter.
+    revision = ndb.IntegerProperty('r_', default=0)
+
+    # Useful timestamps.
+    added = ndb.DateTimeProperty('a_', auto_now_add=True)
+    modified = ndb.DateTimeProperty('m_', auto_now=True)
+
+    def _pre_put_hook(self):
+        """Ran before the entity is written to the datastore."""
+        self.revision += 1

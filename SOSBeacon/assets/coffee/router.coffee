@@ -24,7 +24,7 @@ class App.SOSBeacon.Router extends Backbone.Router
         "person": "showPerson"
 
     initialize: (data) ->
-        @menu = new App.SOSBeacon.Views.Menu()
+        @menu = new App.SOSBeacon.View.Menu()
         @menu.render()
 
     swap: (newView, args) =>
@@ -35,5 +35,5 @@ class App.SOSBeacon.Router extends Backbone.Router
         $(@el).append(@currentView.render().el)
 
     showPerson: () =>
-        @swap(App.SOSBeacon.Views.PersonApp)
+        @swap(App.SOSBeacon.View.PersonApp)
 

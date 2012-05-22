@@ -29,5 +29,6 @@ class EntityBase(ndb.Model):
 
     def _pre_put_hook(self):
         """Ran before the entity is written to the datastore.
-        It is possible to "skip" revisions due to contention."""
+        It is possible to "skip" revisions due to contention.
+        """
         self.revision += 1

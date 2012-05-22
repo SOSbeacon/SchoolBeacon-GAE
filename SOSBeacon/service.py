@@ -32,6 +32,7 @@ import webapp2
 url_map = [
     #TODO: add service endpoints
     ('.*/person.*', 'sosbeacon.service.PersonHandler'),
+    ('.*/group.*', 'sosbeacon.service.GroupHandler'),
     ('.*/contact.*', 'sosbeacon.service.ContactHandler'),
 ]
 

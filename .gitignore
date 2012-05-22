@@ -1,2 +1,4 @@
 .*.ds
 static
+*.pyc
+node_modules

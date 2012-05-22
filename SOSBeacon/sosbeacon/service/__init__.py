@@ -32,7 +32,7 @@ class JSONCRUDHandler(webapp2.RequestHandler):
         self.schema = schema
 
     def get(self):
-        objs =request_query(self.entity, **self.request)
+        objs = request_query(self.entity, **self.request)
         self.response.out.write(json.dumps(objs))
 
     def delete(self):
@@ -77,3 +77,12 @@ class PersonHandler(JSONCRUDHandler):
         from sosbeacon.person import person_schema
 
         super(PersonHandler, self).__init__(Person, person_schema, **kwargs)
+
+
+class ContactHandler(JSONCRUDHandler):
+
+    def __init__(self, **kwargs):
+        from sosbeacon.contact import Contact
+        from sosbeacon.contact import contact_schema
+
+        super(ContactHandler, self).__init__(Contact, contact_schema, **kwargs)

@@ -15,7 +15,7 @@
 #
 
 
-class App.SOSBeacon.Models.MenuItem extends Backbone.Model
+class App.SOSBeacon.Model.MenuItem extends Backbone.Model
     defaults: ->
         return {
             text: "",
@@ -24,11 +24,11 @@ class App.SOSBeacon.Models.MenuItem extends Backbone.Model
         }
 
 
-class App.SOSBeacon.Collections.MenuItems extends Backbone.Collection
-    model: App.SOSBeacon.Models.MenuItem
+class App.SOSBeacon.Collection.MenuItems extends Backbone.Collection
+    model: App.SOSBeacon.Model.MenuItem
 
 
-class App.SOSBeacon.Views.MenuItems extends Backbone.View
+class App.SOSBeacon.View.MenuItems extends Backbone.View
     template: JST.menuitem
     tagName: "li"
     className: "menu"
@@ -39,7 +39,7 @@ class App.SOSBeacon.Views.MenuItems extends Backbone.View
         return this
 
 
-class App.SOSBeacon.Views.Menu extends Backbone.View
+class App.SOSBeacon.View.Menu extends Backbone.View
     el: $("#sosbeaconheader")
 
     initialize: () ->
@@ -50,13 +50,13 @@ class App.SOSBeacon.Views.Menu extends Backbone.View
                 href: '#\/person'
             },
         ]
-        @collection = new App.SOSBeacon.Collections.MenuItems(items)
+        @collection = new App.SOSBeacon.Collection.MenuItems(items)
         @collection.bind('change', @render, this)
 
     render: =>
         menu = @$("#sosbeacon-menu")
         @collection.each((menuItem) =>
-            view = new App.SOSBeacon.Views.MenuItems({model: menuItem})
+            view = new App.SOSBeacon.View.MenuItems({model: menuItem})
             menu.append(view.render().el)
         )
         return this

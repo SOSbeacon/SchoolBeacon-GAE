@@ -6,21 +6,21 @@ import webapp2
 
 def request_query(entity, **kwargs):
     #TODO: had in other collection handling
-    query = kwargs.get('query')
+    user_query = kwargs.get('query')
     query_filter = kwargs.get('filter')
     limit = int(kwargs.get('limit', 10))
 
-    q = entity.query()
+    query = entity.query()
 
-    if query:
-        search = query.strip().lower()
-        q = q.filter(query_filter >= search)
-        q = q.filter(query_filter < search + u"\uFFFD")
+    if user_query:
+        search = user_query.strip().lower()
+        query = query.filter(query_filter >= search)
+        query = query.filter(query_filter < search + u"\uFFFD")
 
     if limit > 0:
-        q = q.fetch(limit)
+        query = query.fetch(limit)
 
-    return q
+    return [entity.to_dict() for entity in query]
 
 
 class JSONCRUDHandler(webapp2.RequestHandler):
@@ -32,7 +32,7 @@ class JSONCRUDHandler(webapp2.RequestHandler):
         self.schema = schema
 
     def get(self):
-        objs = request_query(self.entity, **self.request)
+        objs = request_query(self.entity, **self.request.params)
         self.response.out.write(json.dumps(objs))
 
     def delete(self):

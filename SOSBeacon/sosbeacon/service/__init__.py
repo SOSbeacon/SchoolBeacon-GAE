@@ -25,8 +25,8 @@ def request_query(entity, **kwargs):
 
 class JSONCRUDHandler(webapp2.RequestHandler):
 
-    def __init__(self, entity, schema, **kwargs):
-        super(JSONCRUDHandler, self).__init__(**kwargs)
+    def __init__(self, entity, schema, *args, **kwargs):
+        super(JSONCRUDHandler, self).__init__(*args, **kwargs)
 
         self.entity = entity
         self.schema = schema
@@ -73,17 +73,18 @@ class JSONCRUDHandler(webapp2.RequestHandler):
 
 class PersonHandler(JSONCRUDHandler):
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         from sosbeacon.person import Person
         from sosbeacon.person import person_schema
 
-        super(PersonHandler, self).__init__(Person, person_schema, **kwargs)
+        super(PersonHandler, self).__init__(Person, person_schema, *args, **kwargs)
 
 
 class ContactHandler(JSONCRUDHandler):
 
-    def __init__(self, **kwargs):
+    def __init__(self, *args, **kwargs):
         from sosbeacon.contact import Contact
         from sosbeacon.contact import contact_schema
 
-        super(ContactHandler, self).__init__(Contact, contact_schema, **kwargs)
+        super(ContactHandler, self).__init__(Contact, contact_schema, *args, **kwargs)
+

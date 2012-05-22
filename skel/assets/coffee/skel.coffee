@@ -52,11 +52,12 @@ class App.Skel.Views.ModelApp extends App.Skel.Views.App
     editItem: (model) =>
         App.Skel.Events.bind("#{@modelType.name}:save", this.editSave, this)
 
-        @addClose()
         @editView = new @form({model: model})
+
         el = @editView.render(true).$el
         el.modal('show')
         el.find('input.code').focus()
+
         if @editView.focusButton
             el.find(@editView.focusButton).focus()
 
@@ -131,11 +132,28 @@ class App.Skel.Views.EditView extends Backbone.View
     isModal: false
     focusButton: null
 
+    initialize: =>
+        @model.bind('error', App.Utils.Forms.displayValidationErrors)
+
     clear: =>
         @model.clear()
         @render(@isModal)
 
         return false
+
+    change: (event) =>
+        App.Utils.Forms.hideAlert()
+
+        target = event.target
+        change = {}
+        change[target.name] = target.value
+        @model.set(change)
+
+        check = @model.validate(@model.toJSON())
+        if @model.isValid
+            App.Utils.Forms.removeValidationError(target.id)
+        else
+            App.Utils.Forms.addValidationError(target.id, check.message)
 
     render: (asModal) =>
         @isModal = asModal
@@ -153,8 +171,10 @@ class App.Skel.Views.EditView extends Backbone.View
 
         return this
 
-    save: =>
+    save: (params) =>
         App.Skel.Events.trigger("#{@modelType.name}:save", @model, this)
+
+        $('.alert-success').css('display', 'block')
         return false
 
     updateOnEnter: (e) =>

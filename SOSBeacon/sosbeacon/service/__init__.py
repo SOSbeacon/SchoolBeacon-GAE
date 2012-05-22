@@ -7,7 +7,7 @@ import webapp2
 def request_query(entity, **kwargs):
     #TODO: had in other collection handling
     user_query = kwargs.get('query')
-    query_filter = kwargs.get('filter')
+    query_filter = kwargs.get('filter', entity.name_)
     limit = int(kwargs.get('limit', 10))
 
     query = entity.query()

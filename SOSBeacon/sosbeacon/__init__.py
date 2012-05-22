@@ -28,5 +28,6 @@ class EntityBase(ndb.Model):
     modified = ndb.DateTimeProperty('m_', auto_now=True)
 
     def _pre_put_hook(self):
-        """Ran before the entity is written to the datastore."""
+        """Ran before the entity is written to the datastore.
+        It is possible to "skip" revisions due to contention."""
         self.revision += 1

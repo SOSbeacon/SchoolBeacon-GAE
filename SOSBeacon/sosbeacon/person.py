@@ -16,7 +16,7 @@ class Person(EntityBase):
     version_ = ndb.IntegerProperty('v_', default=1)
 
     name = ndb.StringProperty('n')
-    name_ = ndb.ComputedProperty(lambda self: self.name.lower())
+    name_ = ndb.ComputedProperty(lambda self: self.name.lower(), name='n_')
 
     groups = ndb.KeyProperty('g', repeated=True)
     contacts = ndb.KeyProperty('c', repeated=True)

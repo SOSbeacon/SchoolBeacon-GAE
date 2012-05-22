@@ -14,26 +14,4 @@
 # limitations under the License.
 #
 
-
-class App.sosbeacon.Router extends Backbone.Router
-    el: $("#sosbeaconcontainer")
-    menu: null
-
-    routes:
-        "": "showPerson"
-        "person": "showPerson"
-
-    initialize: (data) ->
-        @menu = new App.sosbeacon.Views.Menu()
-        @menu.render()
-
-    swap: (newView, args) =>
-        if @currentView
-            @currentView.close()
-
-        @currentView = new newView(args)
-        $(@el).append(@currentView.render().el)
-
-    showPerson: () =>
-        @swap(App.sosbeacon.Views.PersonApp)
-
+window.App.SOSBeacon = App.module('SOSBeacon')

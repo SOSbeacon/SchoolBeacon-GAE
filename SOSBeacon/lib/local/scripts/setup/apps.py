@@ -98,7 +98,7 @@ def _copy_files(app_name, root_src_dir, root_dst_dir, dirs_to_ignore=None,
 
             out_file = open(os.path.join(dst_dir, '.rename.tmp'), "w")
             subprocess.call(
-                ['sed', '-e', 's/sosbeacon/%s/g' % (app_name,), '-e',
+                ['sed', '-e', 's/SOSBeacon/%s/g' % (app_name,), '-e',
                  's/sosbeacon/%s/g' % (app_name.lower(),), dst_file],
                 stdout=out_file)
             subprocess.call(
@@ -115,8 +115,8 @@ def _rename(app_name, destination_directory):
         for item in items:
             if 'sosbeacon' in item:
                 __rename(item, item.replace('sosbeacon', app_name.lower()))
-            if 'sosbeacon' in item:
-                __rename(item, item.replace('sosbeacon', app_name))
+            if 'SOSBeacon' in item:
+                __rename(item, item.replace('SOSBeacon', app_name))
 
     for _, dirs, files in os.walk(destination_directory):
         for directory in dirs:

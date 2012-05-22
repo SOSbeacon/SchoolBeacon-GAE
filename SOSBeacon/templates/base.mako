@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>sosbeacon</title>
+        <title>SOSBeacon</title>
         <link rel="stylesheet" type="text/css" href="/static/css/lib.css">
         <link rel="stylesheet" type="text/css" href="/static/css/sosbeacon.css">
     </head>
@@ -10,7 +10,7 @@
             <div class="navbar navbar-fixed-top">
                 <div class="navbar-inner">
                     <div class="container">
-                        <a class="brand" href="#">sosbeacon</a>
+                        <a class="brand" href="#">SOSBeacon</a>
                         <div id="sosbeaconheader" class="nav-collapse">
                             <ul id="sosbeacon-menu" class="nav">
                             </ul>
@@ -31,9 +31,9 @@
         <script type="application/javascript" src="/static/script/sosbeacon.js"></script>
         <script type="text/javascript">
         $(function(){
-            var sosbeacon = new App.sosbeacon.Router
+            var sosbeacon = new App.SOSBeacon.Router
             Backbone.history.start();
-            App.sosbeacon.router = sosbeacon;
+            App.SOSBeacon.router = sosbeacon;
         });
         </script>
     </body>

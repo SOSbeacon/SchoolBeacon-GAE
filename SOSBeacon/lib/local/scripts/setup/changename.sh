@@ -21,7 +21,7 @@ for _FILE in `grep -Rl *`
             continue
         fi
 
-        #sed -e "s/sosbeacon/$_APP/g" -e "s/sosbeacon/$_LAPP/g" "$_FILE" > .rename.tmp
+        #sed -e "s/SOSBeacon/$_APP/g" -e "s/sosbeacon/$_LAPP/g" "$_FILE" > .rename.tmp
         #mv .rename.tmp "$_FILE"
 done
 

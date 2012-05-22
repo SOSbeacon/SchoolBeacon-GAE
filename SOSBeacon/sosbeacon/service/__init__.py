@@ -58,8 +58,7 @@ class JSONCRUDHandler(webapp2.RequestHandler):
         schema = Schema(self.schema, extra=True)
 
         try:
-            schema(obj)
-            #TODO: this may need to be obj = schema(obj) or something similar
+            obj = schema(obj)
         except:
             logging.exception('validation failed')
             logging.info(obj)
@@ -87,4 +86,12 @@ class ContactHandler(JSONCRUDHandler):
         from sosbeacon.contact import contact_schema
 
         super(ContactHandler, self).__init__(Contact, contact_schema, *args, **kwargs)
+
+class GroupHandler(JSONCRUDHandler):
+
+    def __init__(self, *args, **kwargs):
+        from sosbeacon.group import Group
+        from sosbeacon.group import group_schema
+
+        super(GroupHandler, self).__init__(Group, group_schema, *args, **kwargs)
 

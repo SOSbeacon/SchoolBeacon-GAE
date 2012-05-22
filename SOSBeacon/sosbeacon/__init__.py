@@ -32,3 +32,11 @@ class EntityBase(ndb.Model):
         It is possible to "skip" revisions due to contention.
         """
         self.revision += 1
+
+    def _default_dict(self):
+        return {
+            'key': self.key.urlsafe(),
+            'revision': self.revision,
+            'added': self.added.strftime('%Y-%m-%d %h:%M'), # TODO: Standardize
+            'modified': self.modified.strftime('%Y-%m-%d %h:%M'), # TODO: Standardize
+        }

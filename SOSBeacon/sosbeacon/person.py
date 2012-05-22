@@ -45,17 +45,11 @@ class Person(EntityBase):
         """Return a Person entity represented as a dict of values
         suitable for Person.from_dict.
         """
-        person = {
-            "version": self.version_,
-            'key': self.key.urlsafe(),
-            'revision': self.revision,
-            'added': self.added.strftime('%Y-%m-%d %h:%M'), # TODO: Standardize
-            'modified': self.modified.strftime('%Y-%m-%d %h:%M'), # TODO: Standardize
+        person = self._default_dict()
+        person["version"] = self.version_
+        person['name'] = self.name
 
-            'name': self.name,
-
-            'groups':[key.urlsafe() for key in self.groups],
-            'contacts':[key.urlsafe() for key in self.contacts]
-        }
+        person['groups'] = [key.urlsafe() for key in self.groups]
+        person['contacts'] = [key.urlsafe() for key in self.contacts]
 
         return person

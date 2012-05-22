@@ -22,6 +22,7 @@ class App.SOSBeacon.Router extends Backbone.Router
     routes:
         "": "showContact"
         "contact": "showContact"
+        "student": "showStudent"
         "group": "showGroup"
 
     initialize: (data) ->
@@ -37,6 +38,9 @@ class App.SOSBeacon.Router extends Backbone.Router
 
     showContact: () =>
         @swap(App.SOSBeacon.View.ContactApp)
+
+    showStudent: () =>
+        @swap(App.SOSBeacon.View.StudentApp)
 
     showGroup: () =>
         @swap(App.SOSBeacon.View.GroupApp)

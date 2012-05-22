@@ -87,6 +87,14 @@ class ContactHandler(JSONCRUDHandler):
 
         super(ContactHandler, self).__init__(Contact, contact_schema, *args, **kwargs)
 
+class StudentHandler(JSONCRUDHandler):
+
+    def __init__(self, *args, **kwargs):
+        from sosbeacon.student import Student
+        from sosbeacon.student import student_schema
+
+        super(StudentHandler, self).__init__(Student, student_schema, *args, **kwargs)
+
 class GroupHandler(JSONCRUDHandler):
 
     def __init__(self, *args, **kwargs):

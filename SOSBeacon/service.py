@@ -31,8 +31,8 @@ import webapp2
 
 url_map = [
     #TODO: add service endpoints
-    ('.*/person.*', 'dispatch.service.PersonHandler'),
-    ('.*/contact.*', 'dispatch.service.ContactHandler'),
+    ('.*/person.*', 'sosbeacon.service.PersonHandler'),
+    ('.*/contact.*', 'sosbeacon.service.ContactHandler'),
 ]
 
 app = webapp2.WSGIApplication(url_map)

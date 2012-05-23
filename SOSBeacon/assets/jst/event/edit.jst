@@ -12,7 +12,14 @@
         <div class="modal-body">
             <fieldset>
                 <div class="control-group">
-                    <label for="title" class="control-label">Name:</label>
+                    <label for="active" class="control-label">Active:</label>
+                    <div class="controls">
+                        <input id="active" name="active" type="checkbox"
+                               <%= active ? "checked": "" %> class="active" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="title" class="control-label">Title:</label>
                     <div class="controls">
                         <input id="title" name="title" type="text" value="<%= title %>" 
                             class="title" placeholder="Title..." />

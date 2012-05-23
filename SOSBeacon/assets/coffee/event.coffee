@@ -5,6 +5,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
     defaults: ->
         return {
             key: "",
+            active: true,
             title: "",
             summary: "",
             detail: "",
@@ -57,6 +58,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
             e.preventDefault()
 
         @model.save(
+            active: @$('input.active').val()
             title: @$('input.title').val()
             summary: @$('input.summary').val()
             detail: @$('input.detail').val()

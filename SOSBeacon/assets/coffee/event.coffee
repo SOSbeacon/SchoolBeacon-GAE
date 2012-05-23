@@ -60,9 +60,9 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         @model.save(
             active: @$('input.active').val()
             title: @$('input.title').val()
-            summary: @$('input.summary').val()
-            detail: @$('input.detail').val()
             groups: @$('input.groups').val()
+            summary: @$('textarea.summary').val()
+            detail: @$('textarea.detail').val()
         )
 
         return super()

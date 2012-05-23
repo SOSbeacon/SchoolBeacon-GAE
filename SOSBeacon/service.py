@@ -33,6 +33,7 @@ url_map = [
     ('.*/group.*', 'sosbeacon.service.GroupHandler'),
     ('.*/contact.*', 'sosbeacon.service.ContactHandler'),
     ('.*/student.*', 'sosbeacon.service.StudentHandler'),
+    ('.*/event.*', 'sosbeacon.service.EventHandler'),
 ]
 
 app = webapp2.WSGIApplication(url_map)

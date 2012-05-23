@@ -104,3 +104,17 @@ class GroupHandler(JSONCRUDHandler):
 
         super(GroupHandler, self).__init__(Group, group_schema, *args, **kwargs)
 
+class EventHandler(JSONCRUDHandler):
+
+    def __init__(self, *args, **kwargs):
+        from sosbeacon.event import Event
+        from sosbeacon.event import event_schema
+
+        super(EventHandler, self).__init__(Event, event_schema, *args, **kwargs)
+
+    def get(self):
+        params = self.request.params.copy()
+        params['filter'] = "title_"
+        objs = request_query(self.entity, **params)
+        self.response.out.write(json.dumps(objs))
+

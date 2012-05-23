@@ -13,9 +13,9 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
         }
 
     initialize: () ->
-        @contacts = @nestCollection(
-            'contacts',
-            new App.SOSBeacon.Collection.ContactList(@get('contacts')))
+        #@contacts = @nestCollection(
+            #'contacts',
+            #new App.SOSBeacon.Collection.ContactList(@get('contacts')))
 
         @groups = @nestCollection(
             'groups',
@@ -87,10 +87,21 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
             el.find('fieldset.groups').append(editView.render().el)
         )
 
-        @model.contacts.each((contact, i) ->
+        console.log(@model.get('contacts'))
+        for contact_key in @model.get('contacts')
+            console.log(contact_key)
+            contact = new App.SOSBeacon.Model.Contact()
+            contact.id = contact_key
+            contact.fetch({
+                silent: true
+                success: (data) ->
+                    console.log(data)
+                error: (data, e) ->
+                    console.log(e)
+                    console.log(data)
+            })
             editView = new App.SOSBeacon.View.ContactSelect({model: contact})
             el.find('fieldset.contacts').append(editView.render().el)
-        )
 
         return super(asModal)
 

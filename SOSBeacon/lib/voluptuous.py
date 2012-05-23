@@ -775,6 +775,16 @@ def title(v):
     return str(v).title()
 
 
+def ndbkey(msg=None):
+    """Ensure the value is an ndb key string."""
+    from google.appengine.ext import ndb
+    def validator(value):
+        try:
+            return ndb.Key(urlsafe=value)
+        except:
+            raise Invalid(msg or "Invalid key.")
+    return validator
+
 if __name__ == '__main__':
     import doctest
     doctest.testmod()

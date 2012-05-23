@@ -9,8 +9,12 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
             title: "",
             summary: "",
             detail: "",
-            groups: ""
+            groups: []
         }
+
+    initialize: () ->
+        @groups = new App.SOSBeacon.Collection.GroupList()
+        return this
 
     validate: (attrs) =>
         hasError = false
@@ -48,6 +52,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
 
     events:
         "change": "change"
+        "click button.add_group": "addGroup"
         "submit form" : "save"
         "keypress .edit": "updateOnEnter"
         "click .remove-button": "clear"
@@ -57,12 +62,17 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         if e
             e.preventDefault()
 
+        groupList = []
+        @model.groups.each((group) ->
+            groupList.push(group.id)
+        )
+
         @model.save(
             active: @$('input.active').val()
             title: @$('input.title').val()
-            groups: @$('input.groups').val()
             summary: @$('textarea.summary').val()
             detail: @$('textarea.detail').val()
+            groups: groupList
         )
 
         return super()
@@ -71,10 +81,32 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         el = @$el
         el.html(@template(@model.toJSON()))
 
+        @model.groups.each((group, i) ->
+            editView = new App.SOSBeacon.View.GroupSelect({model: group})
+            el.find('fieldset.groups').append(editView.render().el)
+        )
+
         return super(asModal)
+
+    addGroup: () =>
+        editView = new App.SOSBeacon.View.GroupSelect(
+            model: new @model.groups.model()
+            groupCollection: @model.groups
+        )
+        rendered = editView.render()
+        @$el.find('fieldset.groups').append(rendered.el)
+
+        rendered.$el.find('input.group').focus()
+
+        return false
 
     updateOnEnter: (e) =>
         focusItem = $("*:focus")
+
+        if e.keyCode == 13
+            if focusItem.hasClass('group')
+                @addGroup()
+                return false
 
         return super(e)
 

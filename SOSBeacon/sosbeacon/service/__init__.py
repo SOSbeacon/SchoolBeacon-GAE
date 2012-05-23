@@ -7,15 +7,16 @@ import webapp2
 def request_query(entity, **kwargs):
     #TODO: had in other collection handling
     user_query = kwargs.get('query')
-    query_filter = kwargs.get('filter', entity.name_)
+    query_filter = kwargs.get('filter', "name_")
     limit = int(kwargs.get('limit', 10))
 
     query = entity.query()
 
     if user_query:
+        filter_property = getattr(entity, query_filter)
         search = user_query.strip().lower()
-        query = query.filter(query_filter >= search)
-        query = query.filter(query_filter < search + u"\uFFFD")
+        query = query.filter(filter_property >= search)
+        query = query.filter(filter_property < search + u"\uFFFD")
 
     if limit > 0:
         query = query.fetch(limit)

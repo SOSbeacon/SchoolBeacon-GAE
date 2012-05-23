@@ -40,7 +40,6 @@ class Person(EntityBase):
 
         return person
 
-    @classmethod
     def to_dict(self):
         """Return a Person entity represented as a dict of values
         suitable for Person.from_dict.

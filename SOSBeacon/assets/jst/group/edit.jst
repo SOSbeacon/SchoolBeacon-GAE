@@ -1,0 +1,43 @@
+<div class="row-fluid status-bar" >
+    <div class="alert alert-success" style="display: none">
+        <button class="close" data-dismiss="alert">&times;</button>
+        <strong> Success! </strong> Group saved successfully
+    </div>
+</div>
+<form class="edit containter-fluid well form-horizontal">
+    <div class="row-fluid">
+        <div id="editheadercontainer" class="modal-header">
+            <h3 id="editheader">Group<h3>
+        </div>
+        <div class="modal-body">
+            <fieldset>
+                <div class="control-group">
+                    <label for="name" class="control-label">Name:</label>
+                    <div class="controls">
+                        <input id="name" name="name" type="text" value="<%= name %>" 
+                            class="name" placeholder="Name..." />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="active" class="control-label">Active:</label>
+                    <div class="controls">
+                        <input id="active" name="active" type="checkbox"
+                               <%= active ? "checked": "" %> class="active" />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="notes" class="control-label">Notes:</label>
+                    <div class="controls">
+                        <textarea id="notes" name="notes" class="notes input-xlarge"
+                            placeholder="Notes..."><%= notes %></textarea>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div class="modal-footer form-actions">
+            <button class="save btn btn-primary">Save</button>
+            <button class="remove-button btn btn-danger">Clear</button>
+        </div>
+    </div>
+</form>
+

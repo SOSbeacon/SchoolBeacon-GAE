@@ -49,6 +49,16 @@ class App.SOSBeacon.View.Menu extends Backbone.View
                 title: 'contact',
                 href: '#\/contact'
             },
+            {
+                text: 'Student',
+                title: 'student',
+                href: '#\/student'
+            },
+            {
+                text: 'Group',
+                title: 'group',
+                href: '#\/group'
+            },
         ]
         @collection = new App.SOSBeacon.Collection.MenuItems(items)
         @collection.bind('change', @render, this)

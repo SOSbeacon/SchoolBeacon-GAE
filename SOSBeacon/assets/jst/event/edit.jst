@@ -1,0 +1,43 @@
+<div class="row-fluid status-bar" >
+    <div class="alert alert-success" style="display: none">
+        <button class="close" data-dismiss="alert">&times;</button>
+        <strong> Success! </strong> Event saved successfully.
+    </div>
+</div>
+<form class="edit containter-fluid well form-horizontal">
+    <div class="row-fluid">
+        <div id="editheadercontainer" class="modal-header">
+            <h3 id="editheader">Event<h3>
+        </div>
+        <div class="modal-body">
+            <fieldset>
+                <div class="control-group">
+                    <label for="title" class="control-label">Name:</label>
+                    <div class="controls">
+                        <input id="title" name="title" type="text" value="<%= title %>" 
+                            class="title" placeholder="Title..." />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="summary" class="control-label">Summary:</label>
+                    <div class="controls">
+                        <textarea id="summary" name="summary" class="summary input-xlarge"
+                            placeholder="Brief event summary...."><%= summary %></textarea>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="detail" class="control-label">Notes:</label>
+                    <div class="controls">
+                        <textarea id="detail" name="detail" class="detail input-xlarge"
+                            placeholder="Full event detail...."><%= detail %></textarea>
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+        <div class="modal-footer form-actions">
+            <button class="save btn btn-primary">Save</button>
+            <button class="remove-button btn btn-danger">Clear</button>
+        </div>
+    </div>
+</form>
+

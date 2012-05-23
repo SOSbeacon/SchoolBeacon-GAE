@@ -144,16 +144,16 @@ class App.Skel.View.EditView extends Backbone.View
     change: (event) =>
         App.Util.Form.hideAlert()
 
-        target = event.target
-        change = {}
-        change[target.name] = target.value
-        @model.set(change)
+        #target = event.target
+        #change = {}
+        #change[target.name] = target.value
+        #@model.set(change)
 
-        check = @model.validate(@model.toJSON())
-        if @model.isValid
-            App.Util.Form.removeValidationError(target.id)
-        else
-            App.Util.Form.addValidationError(target.id, check.message)
+        #check = @model.validate(@model.toJSON())
+        #if @model.isValid
+            #App.Util.Form.removeValidationError(target.id)
+        #else
+            #App.Util.Form.addValidationError(target.id, check.message)
 
     render: (asModal) =>
         @isModal = asModal

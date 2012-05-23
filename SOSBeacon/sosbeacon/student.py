@@ -44,8 +44,16 @@ class Student(EntityBase):
 
         student.groups = data.get('groups')
 
-        student.contacts = [
-            ndb.Key(urlsafe=key) for key in data.get('contacts', [])]
+        for contact in data.get('contacts', []):
+            key = None
+            if isinstance(contact, basestring):
+                key = contact
+            else:
+                key = contact['key']
+
+            student.contacts.append(ndb.Key(urlsafe=key))
+        #student.contacts = [
+            #ndb.Key(urlsafe=key) for key in data.get('contacts', [])]
 
         return student
 
@@ -58,8 +66,8 @@ class Student(EntityBase):
         student['name'] = self.name
         student['identifier'] = self.identifier
 
-        student['contacts'] = [key.urlsafe() for key in self.students]
-        student['groups'] = self.methods
+        student['contacts'] = [key.urlsafe() for key in self.contacts]
+        student['groups'] = self.groups
 
         return student
 

@@ -14,6 +14,10 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
 
     initialize: () ->
         @groups = new App.SOSBeacon.Collection.GroupList()
+        groups = @get('groups')
+        if groups
+            url = @groups.url + '/' + groups.join()
+            @groups.fetch({url: url})
         return this
 
     validate: (attrs) =>

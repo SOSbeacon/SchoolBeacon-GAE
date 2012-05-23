@@ -37,6 +37,7 @@ class EntityBase(ndb.Model):
         return {
             'key': self.key.urlsafe(),
             'revision': self.revision,
-            'added': self.added.strftime('%Y-%m-%d %h:%M'), # TODO: Standardize
-            'modified': self.modified.strftime('%Y-%m-%d %h:%M'), # TODO: Standardize
+            'added': self.added.strftime('%Y-%m-%d %H:%M'), # TODO: Standardize
+            'modified': self.modified.strftime('%Y-%m-%d %H:%M'), # TODO: Standardize
         }
+

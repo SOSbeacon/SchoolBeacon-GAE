@@ -106,7 +106,35 @@ class App.SOSBeacon.View.ContactApp extends App.Skel.View.ModelApp
     form: App.SOSBeacon.View.ContactEdit
     module: 'SOSBeacon'
 
+
 class App.SOSBeacon.View.ContactList extends App.Skel.View.ListView
     template: JST['contact/list']
     modelType: App.SOSBeacon.Model.Contact
+
+
+class App.SOSBeacon.View.ContactSelect extends Backbone.View
+    template: JST['contact/select']
+    className: "control"
+
+    render: () =>
+        @$el.html(@template(@model.toJSON()))
+        @$el.find('input.name').typeahead({
+            value_property: 'name'
+            updater: (item) =>
+                @model.set({'key': item.key, 'name': item.name},
+                           {silent: true})
+                return item.name
+            matcher: (item) ->
+                return true
+            source: (typeahead, query) ->
+                $.ajax({
+                    type: 'GET'
+                    dataType: 'json'
+                    url: '/service/contact'
+                    data: {query: query}
+                    success: (data) ->
+                        typeahead.process(data)
+                })
+        })
+        return this
 

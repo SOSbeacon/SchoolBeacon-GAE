@@ -47,6 +47,8 @@ def _bundle_app_coffee(app, env, debug=False):
     COFFEE_PATH = 'coffee'
     scripts = (
         path.join(COFFEE_PATH, 'app.coffee'),
+        path.join(COFFEE_PATH, 'contact-method.coffee'),
+        path.join(COFFEE_PATH, 'contact.coffee'),
         path.join(COFFEE_PATH, 'menu.coffee'),
         path.join(COFFEE_PATH, 'router.coffee'),
     )

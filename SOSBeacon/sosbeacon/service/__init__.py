@@ -32,11 +32,18 @@ class JSONCRUDHandler(webapp2.RequestHandler):
         self.entity = entity
         self.schema = schema
 
-    def get(self):
-        objs = request_query(self.entity, **self.request.params)
-        self.response.out.write(json.dumps(objs))
+    def get(self, args):
+        if not args:
+            entities = list(request_query(self.entity, **self.request.params))
+        else:
+            from google.appengine.ext import ndb
+            keys = [ndb.Key(urlsafe=key) for key in args.split(',')]
+            entities = [entity.to_dict() if entity else None
+                        for entity in ndb.get_multi(keys)]
 
-    def delete(self):
+        self.response.out.write(json.dumps(entities))
+
+    def delete(self, args):
         from google.appengine.ext import ndb
 
         urlsafe = self.request.path.rsplit('/', 1)[-1]
@@ -46,13 +53,13 @@ class JSONCRUDHandler(webapp2.RequestHandler):
         ndb.Key(urlsafe=urlsafe).delete()
         logging.info("Deleted %s with key: %s", self.entity, urlsafe)
 
-    def post(self):
-        self.process()
+    def post(self, args):
+        self.process(args)
 
-    def put(self):
-        self.process()
+    def put(self, args):
+        self.process(args)
 
-    def process(self):
+    def process(self, args):
         from voluptuous import Schema
 
         obj = json.loads(self.request.body)
@@ -112,9 +119,17 @@ class EventHandler(JSONCRUDHandler):
 
         super(EventHandler, self).__init__(Event, event_schema, *args, **kwargs)
 
-    def get(self):
+    def get(self, args):
         params = self.request.params.copy()
         params['filter'] = "title_"
-        objs = request_query(self.entity, **params)
-        self.response.out.write(json.dumps(objs))
+
+        if not args:
+            entities = list(request_query(self.entity, **params))
+        else:
+            from google.appengine.ext import ndb
+            keys = [ndb.Key(urlsafe=key) for key in args.split(',')]
+            entities = [entity.to_dict() if entity else None
+                        for entity in ndb.get_multi(keys)]
+
+        self.response.out.write(json.dumps(entities))
 

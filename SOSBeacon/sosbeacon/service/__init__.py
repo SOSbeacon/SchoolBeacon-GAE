@@ -44,7 +44,7 @@ class JSONCRUDHandler(webapp2.RequestHandler):
             return
 
         ndb.Key(urlsafe=urlsafe).delete()
-        logging.info("Deleted %s with key: %s", (self.entity, urlsafe))
+        logging.info("Deleted %s with key: %s", self.entity, urlsafe)
 
     def post(self):
         self.process()

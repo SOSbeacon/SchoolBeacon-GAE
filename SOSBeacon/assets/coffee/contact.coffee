@@ -126,8 +126,9 @@ class App.SOSBeacon.View.ContactSelect extends Backbone.View
         @$el.find('input.name').typeahead({
             value_property: 'name'
             updater: (item) =>
-                @model.set({'key': item.key, 'name': item.name},
-                           {silent: true})
+                @model.set(item, {silent: true})
+                if @options.contactCollection
+                    @options.contactCollection.add(@model)
                 return item.name
             matcher: (item) ->
                 return true

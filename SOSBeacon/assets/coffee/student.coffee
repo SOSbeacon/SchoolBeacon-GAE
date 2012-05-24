@@ -13,13 +13,17 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
         }
 
     initialize: () ->
-        #@contacts = @nestCollection(
-            #'contacts',
-            #new App.SOSBeacon.Collection.ContactList(@get('contacts')))
+        @groups = new App.SOSBeacon.Collection.GroupList()
+        groups = @get('groups')
+        if not _.isEmpty(groups)
+            url = @groups.url + '/' + groups.join()
+            @groups.fetch({url: url})
 
-        @groups = @nestCollection(
-            'groups',
-            new App.SOSBeacon.Collection.GroupList(@get('groups')))
+        @contacts = new App.SOSBeacon.Collection.ContactList()
+        contacts = @get('contacts')
+        if not _.isEmpty(contacts)
+            url = @contacts.url + '/' + contacts.join()
+            @contacts.fetch({url: url})
 
     validate: (attrs) =>
         hasError = false
@@ -60,19 +64,21 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         if e
             e.preventDefault()
 
-        @model.contacts.each((contact) ->
-            contact.editView.close()
-        )
-
         groupList = []
         @model.groups.each((group) ->
-            groupList.push(group)
+            groupList.push(group.id)
+        )
+
+        contactList = []
+        @model.contacts.each((contact) ->
+            contactList.push(contact.id)
         )
 
         @model.save(
             name: @$('input.name').val()
             identifier: @$('input.identifier').val()
             groups: groupList
+            contacts: contactList
             notes: $.trim(@$('textarea.notes').val())
         )
 
@@ -87,29 +93,18 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
             el.find('fieldset.groups').append(editView.render().el)
         )
 
-        console.log(@model.get('contacts'))
-        for contact_key in @model.get('contacts')
-            console.log(contact_key)
-            contact = new App.SOSBeacon.Model.Contact()
-            contact.id = contact_key
-            contact.fetch({
-                silent: true
-                success: (data) ->
-                    console.log(data)
-                error: (data, e) ->
-                    console.log(e)
-                    console.log(data)
-            })
+        @model.contacts.each((contact, i) ->
             editView = new App.SOSBeacon.View.ContactSelect({model: contact})
             el.find('fieldset.contacts').append(editView.render().el)
+        )
 
         return super(asModal)
 
     addGroup: () =>
-        group = new @model.groups.model()
-        @model.groups.add(group)
-
-        editView = new App.SOSBeacon.View.GroupSelect({model: group})
+        editView = new App.SOSBeacon.View.GroupSelect(
+            model: new @model.groups.model()
+            groupCollection: @model.groups
+        )
         rendered = editView.render()
         @$el.find('fieldset.groups').append(rendered.el)
 
@@ -118,10 +113,10 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         return false
 
     addContact: () =>
-        contact = new @model.contacts.model()
-        @model.contacts.add(contact)
-
-        editView = new App.SOSBeacon.View.ContactSelect({model: contact})
+        editView = new App.SOSBeacon.View.ContactSelect(
+            model: new @model.contacts.model()
+            contactCollection: @model.contacts
+        )
         rendered = editView.render()
         @$el.find('fieldset.contacts').append(rendered.el)
 

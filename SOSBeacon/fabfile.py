@@ -46,7 +46,10 @@ def test(args='', python='python', run_javascript=True):
     if run_javascript:
         local('cd assets; mocha --compilers coffee:coffee-script')
 
-def run(args='', python='python'):
+def run(args='', python='python', clear_pycs=True):
+    if clear_pycs:
+        local('find . -name "*.pyc" -delete')
+
     path = os.path.join('lib', 'local', 'scripts', 'runserver.py')
     local('%s %s %s' % (python, path, args))
 

@@ -1,5 +1,7 @@
 from google.appengine.ext import ndb
 
+import voluptuous
+
 from . import EntityBase
 
 
@@ -7,8 +9,8 @@ student_schema = {
     'key': basestring,
     'name': basestring,
     'identifier': basestring,
-    'groups': list,
-    'contacts': list
+    'groups': [voluptuous.ndbkey()],
+    'contacts': [voluptuous.ndbkey()]
 }
 
 class Student(EntityBase):
@@ -24,7 +26,7 @@ class Student(EntityBase):
         lambda self: self.identifier.lower(),
         name='i_')
 
-    groups = ndb.StringProperty('g', repeated=True)
+    groups = ndb.KeyProperty('g', repeated=True)
     contacts = ndb.KeyProperty('c', repeated=True)
 
     @classmethod
@@ -43,17 +45,7 @@ class Student(EntityBase):
         student.identifier = data.get('identifier')
 
         student.groups = data.get('groups')
-
-        for contact in data.get('contacts', []):
-            key = None
-            if isinstance(contact, basestring):
-                key = contact
-            else:
-                key = contact['key']
-
-            student.contacts.append(ndb.Key(urlsafe=key))
-        #student.contacts = [
-            #ndb.Key(urlsafe=key) for key in data.get('contacts', [])]
+        student.contacts = data.get('contacts')
 
         return student
 
@@ -67,7 +59,7 @@ class Student(EntityBase):
         student['identifier'] = self.identifier
 
         student['contacts'] = [key.urlsafe() for key in self.contacts]
-        student['groups'] = self.groups
+        student['groups'] = [key.urlsafe() for key in self.groups]
 
         return student
 

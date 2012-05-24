@@ -1,0 +1,13 @@
+queue:
+- name: event-up
+  mode: pull
+
+- name: event-updator
+  rate: 100/s
+
+- name: group-tx
+  rate: 100/s
+
+- name: contact-tx
+  rate: 100/s
+

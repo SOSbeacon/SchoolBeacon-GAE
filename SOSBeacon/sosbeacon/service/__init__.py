@@ -120,11 +120,12 @@ class EventHandler(JSONCRUDHandler):
         super(EventHandler, self).__init__(Event, event_schema, *args, **kwargs)
 
     def get(self, args):
-        params = self.request.params.copy()
-        params['filter'] = "title_"
-
         if not args:
-            entities = list(request_query(self.entity, **params))
+            context = {}
+            context.update(self.request.params)
+            context['filter'] = "title_"
+
+            entities = list(request_query(self.entity, **context))
         else:
             from google.appengine.ext import ndb
             keys = [ndb.Key(urlsafe=key) for key in args.split(',')]

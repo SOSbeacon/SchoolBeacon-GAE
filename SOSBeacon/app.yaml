@@ -47,6 +47,10 @@ handlers:
 - url: /service/.*
   script: service.app
 
+- url: /task/.*
+  script: task.app
+  login: admin
+
 - url: .*
   script: main.app
 

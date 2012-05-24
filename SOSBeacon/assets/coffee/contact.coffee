@@ -1,7 +1,7 @@
 
 class App.SOSBeacon.Model.Contact extends Backbone.Model
     idAttribute: 'key'
-    urlRoot: '/service/contact'
+    #urlRoot: '/service/contact'
     defaults: ->
         return {
             key: "",
@@ -10,6 +10,9 @@ class App.SOSBeacon.Model.Contact extends Backbone.Model
             methods: [],
             notes: "",
         }
+
+    url: () ->
+        return '/service/contact/' + this.id
 
     initialize: () ->
         @methods = @nestCollection(
@@ -116,6 +119,11 @@ class App.SOSBeacon.View.ContactSelect extends Backbone.View
     template: JST['contact/select']
     className: "control"
 
+    initialize: ->
+        @model.bind('change', @render, this)
+        @model.bind('destroy', @remove, this)
+        @model.editView = this
+
     render: () =>
         @$el.html(@template(@model.toJSON()))
         @$el.find('input.name').typeahead({
@@ -138,3 +146,8 @@ class App.SOSBeacon.View.ContactSelect extends Backbone.View
         })
         return this
 
+    close: () =>
+        @model.set(
+            name: @$('input.name').val()
+        )
+        return this

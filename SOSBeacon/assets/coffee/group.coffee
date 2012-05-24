@@ -6,7 +6,7 @@ class App.SOSBeacon.Model.Group extends Backbone.Model
         return {
             key: "",
             name: "",
-            active: "",
+            active: true,
             notes: "",
         }
 
@@ -84,8 +84,9 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
         @$el.find('input.name').typeahead({
             value_property: 'name'
             updater: (item) =>
-                @model.set({'name': item.name, 'active': item.active},
-                           {silent: true})
+                @model.set(item, {silent: true})
+                if @options.groupCollection
+                    @options.groupCollection.add(@model)
                 return item.name
             matcher: (item) ->
                 return true

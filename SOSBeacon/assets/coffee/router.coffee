@@ -24,6 +24,7 @@ class App.SOSBeacon.Router extends Backbone.Router
         "contact": "showContact"
         "student": "showStudent"
         "group": "showGroup"
+        "event": "showEvent"
 
     initialize: (data) ->
         @menu = new App.SOSBeacon.View.Menu()
@@ -44,4 +45,7 @@ class App.SOSBeacon.Router extends Backbone.Router
 
     showGroup: () =>
         @swap(App.SOSBeacon.View.GroupApp)
+
+    showEvent: () =>
+        @swap(App.SOSBeacon.View.EventApp)
 

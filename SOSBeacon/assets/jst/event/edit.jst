@@ -6,6 +6,24 @@
         <div class="modal-body">
             <fieldset>
                 <div class="control-group">
+                    <label for="notify_primary_only" class="control-label">
+                        Primary Contact Only:</label>
+                    <div class="controls">
+                        <input id="notify_primary_only" name="notify_primary_only"
+                               type="checkbox" class="notify_primary_only" 
+                               <%= notify_primary_only ? "checked": "" %> />
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label for="response_wait_seconds" class="control-label">Resend Delay:</label>
+                    <div class="controls">
+                        <input id="response_wait_seconds" name="response_wait_seconds"
+                               type="text" value="<%= response_wait_seconds %>" 
+                               class="response_wait_seconds"
+                               placeholder="Retry delay..." />
+                    </div>
+                </div>
+                <div class="control-group">
                     <label for="active" class="control-label">Active:</label>
                     <div class="controls">
                         <input id="active" name="active" type="checkbox"

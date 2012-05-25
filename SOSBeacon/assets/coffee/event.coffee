@@ -6,6 +6,8 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
         return {
             key: "",
             active: true,
+            notify_primary_only: false,
+            response_wait_seconds: 3600,
             title: "",
             summary: "",
             detail: "",
@@ -23,6 +25,11 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
     validate: (attrs) =>
         hasError = false
         errors = {}
+
+        # TODO: This could be more robust.
+        if not _.isFinite(attrs.response_wait_seconds)
+            hasError = true
+            errors.response_wait_seconds = "Invalid value for response wait seconds."
 
         if _.isEmpty(attrs.title)
             hasError = true
@@ -72,11 +79,13 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         )
 
         @model.save(
-            active: @$('input.active').val()
+            active: @$('input.active').prop('checked')
             title: @$('input.title').val()
             summary: @$('textarea.summary').val()
             detail: @$('textarea.detail').val()
             groups: groupList
+            notify_primary_only: @$('input.notify_primary_only').prop('checked')
+            response_wait_seconds: parseInt(@$('input.response_wait_seconds').val())
         )
 
         return super()

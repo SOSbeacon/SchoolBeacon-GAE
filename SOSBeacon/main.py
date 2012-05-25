@@ -17,9 +17,10 @@
 
 """Map user-facing handlers here.  This is meant to map actual HTML pages."""
 
+import logging
 import os
 import sys
-import logging
+from time import time
 
 # Add lib to path.
 libs_dir = os.path.join(os.path.dirname(__file__), 'lib')
@@ -29,20 +30,92 @@ if libs_dir not in sys.path:
 
 import webapp2
 
-from mako import exceptions
-from mako.template import Template
+from google.appengine.api import memcache
+from google.appengine.api import taskqueue
 
-class Main(webapp2.RequestHandler):
-    def get(self):
+from mako import exceptions
+from mako.lookup import TemplateLookup
+
+from sosbeacon.event import Event
+from sosbeacon.contact import Contact
+
+
+EVENT_DOES_NOT_EXIST = "-!It's a Trap!-"
+
+
+class TemplateHandler(webapp2.RequestHandler):
+    def render(self, template_name, **context):
         try:
-            template = Template(filename='templates/base.mako')
-            out = template.render()
+            lookup = TemplateLookup(directories=["templates"])
+            template = lookup.get_template(template_name)
+            out = template.render(**context)
         except:
             out = exceptions.html_error_template().render()
             logging.exception('Oh NO! Rendering error.')
 
+        return out
+
+class MainHandler(TemplateHandler):
+    def get(self):
+        out = self.render('default.mako')
         self.response.out.write(out)
 
-url_map = [('/', Main)]
+
+class EventHandler(TemplateHandler):
+    def get(self, event_id, contact_id):
+        event_mc_key = 'Event:%s' % (int(event_id),)
+        event_html = memcache.get(event_mc_key)
+        if not event_html:
+            event = Event.get_by_id(int(event_id))
+            if not event:
+                memcache.set(event_mc_key, EVENT_DOES_NOT_EXIST)
+                self.error(404)
+                return
+
+            event_html = self.render('event.mako', event=event)
+            memcache.set(event_mc_key, event_html)
+
+        if event_html == EVENT_DOES_NOT_EXIST:
+            # Some one might be exploring.  Lets not give them anything.
+            self.error(404)
+            return
+
+        event = Event.get_by_id(int(event_id))
+        #contact = Contact.get_by_id(int(contact_id))
+        #contact_groups = set(contact.groups)
+        #event_groups = set(event.groups)
+        #if event_groups.isdisjoint(contact_groups):
+        #    # This contact isn't in the groups allowed to see this event.
+        #    self.error(404)
+        #    return
+
+        self.response.out.write(event_html)
+
+        # Try to mark this event as acknowledged.
+        try:
+            ack_marker_key = "rx:%s:%s" % (event_id, contact_id)
+            seen = memcache.get(ack_marker_key)
+            if not seen:
+                taskqueue.add(
+                    queue_name="event-up",
+                    method="PULL",
+                    tag=event_id,
+                    params={
+                        'type': 'rx',
+                        'event': event_id,
+                        'contact': contact_id,
+                        'when': time()
+                    }
+                )
+
+            memcache.set(ack_marker_key, True)
+        except:
+            # This is non-critical, so ignore all exceptions.
+            pass
+
+url_map = [
+    ('/', MainHandler),
+    ('/e/(.*)/(.*)', EventHandler),
+]
 app = webapp2.WSGIApplication(url_map)
 

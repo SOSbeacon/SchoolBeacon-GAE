@@ -240,6 +240,7 @@ class EventUpdateHandler(webapp2.RequestHandler):
             marker_map[marker_key] = marker
 
         event_update(event_key, count_updates, marker_map)
+        update_queue.delete_tasks(updates)
 
 
 @ndb.transactional

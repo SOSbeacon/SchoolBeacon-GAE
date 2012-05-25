@@ -1,9 +1,15 @@
+
+from google.appengine.api import memcache
+from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
 import voluptuous
 
 from . import EntityBase
 
+BATCH_SECONDS = 5
+EVENT_UPDATE_QUEUE = "event-up"
+EVENT_UPDATE_WORKER_QUEUE = "event-updator"
 
 event_schema = {
     'key': basestring,
@@ -107,4 +113,56 @@ class EventMarker(EntityBase):
         self.last_contact_method = max(self.last_contact_method,
                                        other.last_contact_method)
         return self
+
+
+def update_contact_counts(event_key, contact_count, group_key, group_task_no):
+    """Insert a task to apply count updates to the given event."""
+    taskqueue.add(
+        queue_name=EVENT_UPDATE_QUEUE,
+        method="PULL",
+        tag=event_key,
+        params={
+            'type': "cnt",
+            'event': event_key,
+            'contact_count': contact_count,
+            'group': group_key,
+            'task_no': group_task_no
+        }
+    )
+    insert_event_updator(ndb.Key(urlsafe=event_key))
+
+def update_event_contact(event_key, contact_key, contact_method, when):
+    """Insert a task containing contact method details."""
+    taskqueue.add(
+        queue_name=EVENT_UPDATE_QUEUE,
+        method="PULL",
+        tag=event_key,
+        params={
+            'type': "tx",
+            'event': event_key,
+            'contact': contact_key,
+            'method': contact_method,
+            'when': when
+        }
+    )
+    insert_event_updator(ndb.Key(urlsafe=event_key))
+
+
+def insert_event_updator(event_key):
+    """Insert a task to aggregate and apply updates to the given event."""
+    from time import time
+    time_block = int(time() / BATCH_SECONDS)
+    name = "up-%s-%s" % (event_key.id(), time_block)
+    exists = memcache.get(name)
+    if exists:
+        return
+
+    taskqueue.add(
+        queue_name=EVENT_UPDATE_WORKER_QUEUE,
+        url='/task/event/update',
+        name=name,
+        params={'event': event_key.urlsafe()}
+    )
+
+    memcache.set(name, True)
 

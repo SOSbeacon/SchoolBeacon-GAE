@@ -36,8 +36,9 @@ from google.appengine.api import taskqueue
 from mako import exceptions
 from mako.lookup import TemplateLookup
 
-from sosbeacon.event import Event
 from sosbeacon.contact import Contact
+from sosbeacon.event import Event
+from sosbeacon.event import insert_event_updator
 
 
 EVENT_DOES_NOT_EXIST = "-!It's a Trap!-"
@@ -63,6 +64,10 @@ class MainHandler(TemplateHandler):
 
 class EventHandler(TemplateHandler):
     def get(self, event_id, contact_id):
+        from google.appengine.ext import ndb
+        event_key = ndb.Key(Event, int(event_id))
+        contact_key = ndb.Key(Contact, int(contact_id))
+
         event_mc_key = 'Event:%s' % (int(event_id),)
         event_html = memcache.get(event_mc_key)
         if not event_html:
@@ -95,20 +100,23 @@ class EventHandler(TemplateHandler):
         try:
             ack_marker_key = "rx:%s:%s" % (event_id, contact_id)
             seen = memcache.get(ack_marker_key)
-            if not seen:
-                taskqueue.add(
-                    queue_name="event-up",
-                    method="PULL",
-                    tag=event_id,
-                    params={
-                        'type': 'rx',
-                        'event': event_id,
-                        'contact': contact_id,
-                        'when': time()
-                    }
-                )
+            if seen:
+                return
+
+            taskqueue.add(
+                queue_name="event-up",
+                method="PULL",
+                tag=event_key.urlsafe(),
+                params={
+                    'type': 'ack',
+                    'event': event_key.urlsafe(),
+                    'contact': contact_key.urlsafe(),
+                    'when': int(time())
+                }
+            )
 
             memcache.set(ack_marker_key, True)
+            insert_event_updator(event_key)
         except:
             # This is non-critical, so ignore all exceptions.
             pass

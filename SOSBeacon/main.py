@@ -20,7 +20,6 @@
 import logging
 import os
 import sys
-from time import time
 
 # Add lib to path.
 libs_dir = os.path.join(os.path.dirname(__file__), 'lib')
@@ -31,14 +30,13 @@ if libs_dir not in sys.path:
 import webapp2
 
 from google.appengine.api import memcache
-from google.appengine.api import taskqueue
 
 from mako import exceptions
 from mako.lookup import TemplateLookup
 
 from sosbeacon.contact import Contact
 from sosbeacon.event import Event
-from sosbeacon.event import insert_event_updator
+from sosbeacon.event import acknowledge_event
 
 
 EVENT_DOES_NOT_EXIST = "-!It's a Trap!-"
@@ -98,27 +96,9 @@ class EventHandler(TemplateHandler):
 
         # Try to mark this event as acknowledged.
         try:
-            ack_marker_key = "rx:%s:%s" % (event_id, contact_id)
-            seen = memcache.get(ack_marker_key)
-            if seen:
-                return
-
-            taskqueue.add(
-                queue_name="event-up",
-                method="PULL",
-                tag=event_key.urlsafe(),
-                params={
-                    'type': 'ack',
-                    'event': event_key.urlsafe(),
-                    'contact': contact_key.urlsafe(),
-                    'when': int(time())
-                }
-            )
-
-            memcache.set(ack_marker_key, True)
-            insert_event_updator(event_key)
+            acknowledge_event(event_key, contact_key)
         except:
-            # This is non-critical, so ignore all exceptions.
+            # This is (relatively) non-critical, so ignore all exceptions.
             pass
 
 url_map = [

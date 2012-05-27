@@ -1,4 +1,6 @@
 
+impot time
+
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
@@ -146,6 +148,29 @@ def update_event_contact(event_key, contact_key, contact_method, when):
         }
     )
     insert_event_updator(ndb.Key(urlsafe=event_key))
+
+
+def acknowledge_event(event_key, contact_key):
+    """Insert a task to acknowledge an event for the given contact."""
+    ack_marker_key = "rx:%s:%s" % (event_key.id(), contact_key.id())
+    seen = memcache.get(ack_marker_key)
+    if seen:
+        return
+
+    task = taskqueue.Task(
+        method="PULL",
+        tag=event_key.urlsafe(),
+        params={
+            'type': 'ack',
+            'event': event_key.urlsafe(),
+            'contact': contact_key.urlsafe(),
+            'when': int(time.time())
+        }
+    )
+    insert_tasks((task,), EVENT_UPDATE_QUEUE)
+
+    memcache.set(ack_marker_key, True)
+    insert_event_updator(event_key)
 
 
 def insert_event_updator(event_key):

@@ -119,8 +119,7 @@ class EventMarker(EntityBase):
 
 def update_contact_counts(event_key, contact_count, group_key, group_task_no):
     """Insert a task to apply count updates to the given event."""
-    taskqueue.add(
-        queue_name=EVENT_UPDATE_QUEUE,
+    task = taskqueue.Task(
         method="PULL",
         tag=event_key,
         params={
@@ -131,12 +130,13 @@ def update_contact_counts(event_key, contact_count, group_key, group_task_no):
             'task_no': group_task_no
         }
     )
+    insert_tasks((task,), EVENT_UPDATE_QUEUE)
     insert_event_updator(ndb.Key(urlsafe=event_key))
+
 
 def update_event_contact(event_key, contact_key, contact_method, when):
     """Insert a task containing contact method details."""
-    taskqueue.add(
-        queue_name=EVENT_UPDATE_QUEUE,
+    task = taskqueue.Task(
         method="PULL",
         tag=event_key,
         params={
@@ -147,6 +147,7 @@ def update_event_contact(event_key, contact_key, contact_method, when):
             'when': when
         }
     )
+    insert_tasks((task,), EVENT_UPDATE_QUEUE)
     insert_event_updator(ndb.Key(urlsafe=event_key))
 
 
@@ -182,12 +183,12 @@ def insert_event_updator(event_key):
     if exists:
         return
 
-    taskqueue.add(
-        queue_name=EVENT_UPDATE_WORKER_QUEUE,
+    task = taskqueue.Task(
         url='/task/event/update',
         name=name,
         params={'event': event_key.urlsafe()}
     )
+    insert_tasks((task,), EVENT_UPDATE_WORKER_QUEUE)
 
     memcache.set(name, True)
 

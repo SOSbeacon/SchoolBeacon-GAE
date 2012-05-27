@@ -11,6 +11,7 @@ from sosbeacon.event import  update_event_contact
 from sosbeacon.event import EVENT_UPDATE_QUEUE
 from sosbeacon.event import Event
 from sosbeacon.event import EventMarker
+from sosbeacon.utils import insert_tasks
 
 GROUP_TX_QUEUE = "group-tx"
 CONTACT_TX_QUEUE = "contact-tx"
@@ -48,7 +49,7 @@ class EventStartTxHandler(webapp2.RequestHandler):
             return
 
         # TODO: Switch over to using a divide and retry here.
-        taskqueue.Queue(name=GROUP_TX_QUEUE).add(tasks)
+        insert_tasks(tasks, GROUP_TX_QUEUE)
 
         # TODO: Insert task to mark Event as notice sent
 
@@ -80,8 +81,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
         if more:
             name = "tx-%d-%s-%s" % (
                 task_no, event_key.urlsafe(), group_key.urlsafe())
-            taskqueue.add(
-                queue_name=GROUP_TX_QUEUE,
+            task = taskqueue.Task(
                 url='/task/event/tx/group',
                 name=name,
                 params={
@@ -91,6 +91,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
                     'task_no': task_no + 1
                 }
             )
+            insert_tasks((task,), GROUP_TX_QUEUE)
 
         event_key = event_key.urlsafe()
         notify_level = 1 if event.notify_primary_only else None
@@ -117,7 +118,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
 
         # TODO: Need batch split / retry logic here too.
         contact_work = work.values()
-        taskqueue.Queue(name=CONTACT_TX_QUEUE).add(contact_work)
+        insert_tasks(contact_work, CONTACT_TX_QUEUE)
 
         update_contact_counts(
             event_key, len(contact_work), group_key.urlsafe(), task_no)

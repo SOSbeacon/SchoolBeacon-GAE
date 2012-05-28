@@ -134,3 +134,18 @@ class EventHandler(JSONCRUDHandler):
 
         self.response.out.write(json.dumps(entities))
 
+class SendEventHandler(webapp2.RequestHandler):
+    def post(self):
+        from google.appengine.api import taskqueue
+        from google.appengine.ext import ndb
+
+        event_key = ndb.Key(urlsafe=self.request.get('event'))
+        if not event_key:
+            return
+
+        taskqueue.add(
+            url='/task/event/tx/start',
+            name='send-%s' % (event_key.urlsafe(),),
+            params={'event': event_key.urlsafe()}
+        )
+

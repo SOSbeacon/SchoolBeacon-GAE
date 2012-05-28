@@ -214,6 +214,7 @@ class App.Skel.View.ListView extends Backbone.View
 
 
 class App.Skel.View.ListApp extends App.Skel.View.App
+    fetchArgs: {}
 
     initialize: (module, view, el, collection) ->
         if el
@@ -229,7 +230,7 @@ class App.Skel.View.ListApp extends App.Skel.View.App
         @collection.bind('add', @addOne, this)
         @collection.bind('reset', @addAll, this)
         @collection.bind('all', @show, this)
-        @collection.fetch()
+        @collection.fetch(@fetchArgs)
 
     addOne: (object) =>
         view = new @modalView({model: object})

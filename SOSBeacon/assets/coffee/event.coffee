@@ -164,12 +164,16 @@ class App.SOSBeacon.View.EventSelect extends Backbone.View
 
 
 class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.ListApp
-    el: $("#sosbeaconapp")
+    template: JST['event/pendinglist']
+    #$listEl: null
 
     initialize: () =>
+        $("#sosbeaconapp").html(@render().el)
+        @$listEl = $("#Eventlist")
+
         @fetchArgs.data ?= {}
         @fetchArgs.data.sent = false
-        super('SOSBeacon', 'PendingEventList', @$el, 'EventList')
+        super('SOSBeacon', 'PendingEventList', @$listEl, 'EventList')
         App.SOSBeacon.Event.on('Event:send', @onSend)
 
     onSend: (event) =>
@@ -184,9 +188,14 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.ListApp
         if @confirmView.focusButton
             el.find(@confirmView.focusButton).focus()
 
+    render: (asModal) =>
+        @$el.html(@template())
+        return super(asModal)
+
+
 
 class App.SOSBeacon.View.PendingEventList extends App.Skel.View.ListView
-    template: JST['event/pendinglist']
+    template: JST['event/pendinglistitem']
     modelType: App.SOSBeacon.Model.Event
 
     events:

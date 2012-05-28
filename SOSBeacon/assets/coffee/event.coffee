@@ -169,5 +169,56 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.ListApp
     initialize: () =>
         @fetchArgs.data ?= {}
         @fetchArgs.data.sent = false
-        super('SOSBeacon', 'EventList', @$el)
+        super('SOSBeacon', 'PendingEventList', @$el, 'EventList')
+        App.SOSBeacon.Event.on('Event:send', @onSend)
+
+    onSend: (event) =>
+        #App.SOSBeacon.Event.bind("#{@modelType.name}:save", this.editSave, this)
+
+        @confirmView = new App.SOSBeacon.View.ConfirmSendEvent({model: event})
+
+        el = @confirmView.render(true).$el
+        el.modal('show')
+        el.find('input.code').focus()
+
+        if @confirmView.focusButton
+            el.find(@confirmView.focusButton).focus()
+
+
+class App.SOSBeacon.View.PendingEventList extends App.Skel.View.ListView
+    template: JST['event/pendinglist']
+    modelType: App.SOSBeacon.Model.Event
+
+    events:
+        "click .send-button": "onSend"
+
+    onSend: =>
+        App.SOSBeacon.Event.trigger('Event:send', @model)
+
+
+class App.SOSBeacon.View.ConfirmSendEvent extends App.Skel.View.EditView
+    template: JST['event/confirmsend']
+    modelType: App.SOSBeacon.Model.Event
+    focusButton: 'input#title'
+
+    events:
+        "submit form" : "send"
+        "hidden": "close"
+
+    send: (e) =>
+        if e
+            e.preventDefault()
+
+        # start sending the notices now
+
+        return super()
+
+    render: (asModal) =>
+        el = @$el
+        el.html(@template(@model.toJSON()))
+
+        return super(asModal)
+
+    updateOnEnter: (e) =>
+        return
 

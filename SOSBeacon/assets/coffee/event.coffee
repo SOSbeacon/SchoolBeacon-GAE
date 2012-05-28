@@ -190,6 +190,7 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.ListApp
 
     render: (asModal) =>
         @$el.html(@template())
+        @$listEl = $("#Eventlist")
         return super(asModal)
 
 

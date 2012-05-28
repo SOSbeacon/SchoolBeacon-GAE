@@ -1,5 +1,5 @@
 
-impot time
+import time
 
 from google.appengine.api import memcache
 from google.appengine.api import taskqueue

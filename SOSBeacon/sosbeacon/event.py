@@ -7,6 +7,8 @@ from google.appengine.ext import ndb
 
 import voluptuous
 
+from sosbeacon.utils import insert_tasks
+
 from . import EntityBase
 
 BATCH_SECONDS = 5

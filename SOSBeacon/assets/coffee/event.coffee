@@ -162,3 +162,12 @@ class App.SOSBeacon.View.EventSelect extends Backbone.View
         })
         return this
 
+
+class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.ListApp
+    el: $("#sosbeaconapp")
+
+    initialize: () =>
+        @fetchArgs.data ?= {}
+        @fetchArgs.data.sent = false
+        super('SOSBeacon', 'EventList', @$el)
+

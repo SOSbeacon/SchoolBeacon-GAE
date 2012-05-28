@@ -210,8 +210,12 @@ class App.SOSBeacon.View.ConfirmSendEvent extends App.Skel.View.EditView
             e.preventDefault()
 
         # start sending the notices now
-
-        return super()
+        $.ajax(
+            type: 'POST'
+            url: '/service/event/send'
+            data:
+                event: @model.id
+        )
 
     render: (asModal) =>
         el = @$el

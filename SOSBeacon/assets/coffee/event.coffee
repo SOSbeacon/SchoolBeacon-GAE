@@ -163,22 +163,29 @@ class App.SOSBeacon.View.EventSelect extends Backbone.View
         return this
 
 
-class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.ListApp
+class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.App
+    id: "sosbeaconapp"
     template: JST['event/pendinglist']
-    #$listEl: null
+    listView: null
 
-    initialize: () =>
-        $("#sosbeaconapp").html(@render().el)
-        @$listEl = $("#Eventlist")
-
-        @fetchArgs.data ?= {}
-        @fetchArgs.data.sent = false
-        super('SOSBeacon', 'PendingEventList', @$listEl, 'EventList')
+    render: =>
         App.SOSBeacon.Event.on('Event:send', @onSend)
+        @$el.html(@template())
+
+        fetchArgs = {
+            data: {
+                sent: false
+            }
+        }
+
+        @listView = new App.Skel.View.ListApp(
+            'SOSBeacon', 'PendingEventList', @$("#Eventlist"), 'EventList',
+            fetchArgs)
+
+        return this
 
     onSend: (event) =>
         #App.SOSBeacon.Event.bind("#{@modelType.name}:save", this.editSave, this)
-
         @confirmView = new App.SOSBeacon.View.ConfirmSendEvent({model: event})
 
         el = @confirmView.render(true).$el
@@ -188,11 +195,11 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.ListApp
         if @confirmView.focusButton
             el.find(@confirmView.focusButton).focus()
 
-    render: (asModal) =>
-        @$el.html(@template())
-        @$listEl = $("#Eventlist")
-        return super(asModal)
-
+    onClose: =>
+        App.SOSBeacon.Event.unbind(null, null, this)
+        if @confirmView
+            @confirmView.close()
+        @listView.close()
 
 
 class App.SOSBeacon.View.PendingEventList extends App.Skel.View.ListView

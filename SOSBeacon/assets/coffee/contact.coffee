@@ -100,16 +100,14 @@ class App.SOSBeacon.View.ContactEdit extends App.Skel.View.EditView
 
 
 class App.SOSBeacon.View.ContactApp extends App.Skel.View.ModelApp
-    el: $("#sosbeaconapp")
+    id: "sosbeaconapp"
     template: JST['contact/view']
     modelType: App.SOSBeacon.Model.Contact
     form: App.SOSBeacon.View.ContactEdit
-    module: 'SOSBeacon'
 
 
-class App.SOSBeacon.View.ContactList extends App.Skel.View.ListView
-    template: JST['contact/list']
-    modelType: App.SOSBeacon.Model.Contact
+class App.SOSBeacon.View.ContactListItem extends App.Skel.View.ListItemView
+    template: JST['contact/listitem']
 
 
 class App.SOSBeacon.View.ContactSelect extends Backbone.View

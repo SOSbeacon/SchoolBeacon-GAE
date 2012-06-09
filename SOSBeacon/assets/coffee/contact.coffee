@@ -110,7 +110,6 @@ class App.SOSBeacon.View.ContactApp extends App.Skel.View.ModelApp
         @listView = new App.SOSBeacon.View.ContactList(@collection)
 
         @collection.fetch()
-        console.log(@collection)
 
 
 class App.SOSBeacon.View.ContactListItem extends App.Skel.View.ListItemView

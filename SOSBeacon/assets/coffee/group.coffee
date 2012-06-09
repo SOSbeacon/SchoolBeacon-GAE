@@ -64,15 +64,30 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
 
 
 class App.SOSBeacon.View.GroupApp extends App.Skel.View.ModelApp
-    el: $("#sosbeaconapp")
+    id: "sosbeaconapp"
     template: JST['group/view']
     modelType: App.SOSBeacon.Model.Group
     form: App.SOSBeacon.View.GroupEdit
-    module: 'SOSBeacon'
+
+    initialize: =>
+        @collection = new App.SOSBeacon.Collection.GroupList()
+        @listView = new App.SOSBeacon.View.GroupList(@collection)
+
+        @collection.fetch()
+
+
+class App.SOSBeacon.View.GroupListItem extends App.Skel.View.ListItemView
+    template: JST['group/list']
+
+
+class App.SOSBeacon.View.GroupListHeader extends App.Skel.View.ListItemHeader
+    template: JST['group/listheader']
+
 
 class App.SOSBeacon.View.GroupList extends App.Skel.View.ListView
-    template: JST['group/list']
-    modelType: App.SOSBeacon.Model.Group
+    itemView: App.SOSBeacon.View.GroupListItem
+    headerView: App.SOSBeacon.View.GroupListHeader
+    gridFilters: null
 
 
 class App.SOSBeacon.View.GroupSelect extends Backbone.View

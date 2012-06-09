@@ -125,15 +125,31 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
 
 
 class App.SOSBeacon.View.EventApp extends App.Skel.View.ModelApp
-    el: $("#sosbeaconapp")
+    id: "sosbeaconapp"
     template: JST['event/view']
     modelType: App.SOSBeacon.Model.Event
     form: App.SOSBeacon.View.EventEdit
-    module: 'SOSBeacon'
+
+    initialize: =>
+        @collection = new App.SOSBeacon.Collection.EventList()
+        @listView = new App.SOSBeacon.View.EventList(@collection)
+
+        @collection.fetch()
+        console.log(@collection)
+
+
+class App.SOSBeacon.View.EventListItem extends App.Skel.View.ListItemView
+    template: JST['event/list']
+
+
+class App.SOSBeacon.View.EventListHeader extends App.Skel.View.ListItemHeader
+    template: JST['event/listheader']
+
 
 class App.SOSBeacon.View.EventList extends App.Skel.View.ListView
-    template: JST['event/list']
-    modelType: App.SOSBeacon.Model.Event
+    itemView: App.SOSBeacon.View.EventListItem
+    headerView: App.SOSBeacon.View.EventListHeader
+    gridFilters: null
 
 
 class App.SOSBeacon.View.EventSelect extends Backbone.View
@@ -165,22 +181,26 @@ class App.SOSBeacon.View.EventSelect extends Backbone.View
 
 class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.App
     id: "sosbeaconapp"
-    template: JST['event/pendinglist']
+    #template: JST['event/pendinglist']
     listView: null
+
+    initialize: =>
+        @collection = new App.SOSBeacon.Collection.EventList()
+        @listView = new App.SOSBeacon.View.PendingEventList(@collection)
+
+        @collection.fetch()
 
     render: =>
         App.SOSBeacon.Event.on('Event:send', @onSend)
-        @$el.html(@template())
+        #@$el.html(@template())
+        #
+        @$el.append(@listView.render().el)
 
         fetchArgs = {
             data: {
                 sent: false
             }
         }
-
-        @listView = new App.Skel.View.ListApp(
-            'SOSBeacon', 'PendingEventList', @$("#Eventlist"), 'EventList',
-            fetchArgs)
 
         return this
 
@@ -202,15 +222,35 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.App
         @listView.close()
 
 
-class App.SOSBeacon.View.PendingEventList extends App.Skel.View.ListView
+class App.SOSBeacon.View.PendingEventListItem extends App.Skel.View.ListItemView
     template: JST['event/pendinglistitem']
-    modelType: App.SOSBeacon.Model.Event
+
+
+class App.SOSBeacon.View.PendingEventListHeader extends App.Skel.View.ListItemHeader
+    template: JST['event/pendinglistheader']
+
+
+class App.SOSBeacon.View.PendingEventList extends App.Skel.View.ListView
+    itemView: App.SOSBeacon.View.PendingEventListItem
+    headerView: App.SOSBeacon.View.PendingEventListHeader
+    gridFilters: null
 
     events:
         "click .send-button": "onSend"
 
     onSend: =>
         App.SOSBeacon.Event.trigger('Event:send', @model)
+
+
+#class App.SOSBeacon.View.PendingEventList extends App.Skel.View.ListView
+    #template: JST['event/pendinglistitem']
+    #modelType: App.SOSBeacon.Model.Event
+
+    #events:
+        #"click .send-button": "onSend"
+
+    #onSend: =>
+        #App.SOSBeacon.Event.trigger('Event:send', @model)
 
 
 class App.SOSBeacon.View.ConfirmSendEvent extends App.Skel.View.EditView

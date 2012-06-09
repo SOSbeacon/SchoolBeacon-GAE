@@ -73,8 +73,9 @@ def _bundle_app_coffee(app, env, debug=False):
 def _bundle_app_jsts(app, env, debug=False):
     """Compile and bundle JSTs into template.js"""
     all_js = Bundle(
-        path.join('jst', '*.jst'),
-        path.join('jst', '*', '*.jst'),
+        path.join('templates', '*.jst'),
+        path.join('templates', '**', '*.jst'),
+        debug=False,
         filters='jst',
         output=path.join('..', '..', app, 'static', 'script', 'template.js')
     )

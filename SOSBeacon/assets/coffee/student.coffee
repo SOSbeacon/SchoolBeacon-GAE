@@ -140,14 +140,28 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
 
 
 class App.SOSBeacon.View.StudentApp extends App.Skel.View.ModelApp
-    el: $("#sosbeaconapp")
+    id: "sosbeaconapp"
     template: JST['student/view']
     modelType: App.SOSBeacon.Model.Student
     form: App.SOSBeacon.View.StudentEdit
-    module: 'SOSBeacon'
+
+    initialize: =>
+        @collection = new App.SOSBeacon.Collection.StudentList()
+        @listView = new App.SOSBeacon.View.StudentList(@collection)
+
+        @collection.fetch()
+
+
+class App.SOSBeacon.View.StudentListItem extends App.Skel.View.ListItemView
+    template: JST['student/list']
+
+
+class App.SOSBeacon.View.StudentListHeader extends App.Skel.View.ListItemHeader
+    template: JST['student/listheader']
+
 
 class App.SOSBeacon.View.StudentList extends App.Skel.View.ListView
-    template: JST['student/list']
-    modelType: App.SOSBeacon.Model.Student
-
+    itemView: App.SOSBeacon.View.StudentListItem
+    headerView: App.SOSBeacon.View.StudentListHeader
+    gridFilters: null
 

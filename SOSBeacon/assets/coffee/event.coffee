@@ -11,7 +11,10 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
             title: "",
             summary: "",
             detail: "",
-            groups: []
+            groups: [],
+            notice_sent: false,
+            notice_sent_at: null,
+            notice_sent_by: null
         }
 
     initialize: () ->
@@ -264,7 +267,6 @@ class App.SOSBeacon.View.PendingEventListItem extends App.Skel.View.ListItemView
         "click .send-button": "onSend"
 
     onSend: =>
-        console.log(@model)
         App.SOSBeacon.Event.trigger('Event:send', @model)
 
 

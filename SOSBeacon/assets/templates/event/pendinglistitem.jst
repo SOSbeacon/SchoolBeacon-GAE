@@ -8,6 +8,15 @@
     <%= summary %>
 </td>
 <td>
+    <%- notice_sent ? notice_sent: "No" %>
+</td>
+<td>
+    <%- notice_sent_by ? notice_sent_by.username: "" %>
+</td>
+<td>
+    <%- notice_sent_at ? notice_sent_at: "" %>
+</td>
+<td>
     <div class="grid-row btn-toolbar">
         <div class="grid-buttons btn-group">
             <button class="send-button btn">Send</button>

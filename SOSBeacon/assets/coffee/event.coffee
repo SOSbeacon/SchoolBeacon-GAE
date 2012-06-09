@@ -162,3 +162,84 @@ class App.SOSBeacon.View.EventSelect extends Backbone.View
         })
         return this
 
+
+class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.App
+    id: "sosbeaconapp"
+    template: JST['event/pendinglist']
+    listView: null
+
+    render: =>
+        App.SOSBeacon.Event.on('Event:send', @onSend)
+        @$el.html(@template())
+
+        fetchArgs = {
+            data: {
+                sent: false
+            }
+        }
+
+        @listView = new App.Skel.View.ListApp(
+            'SOSBeacon', 'PendingEventList', @$("#Eventlist"), 'EventList',
+            fetchArgs)
+
+        return this
+
+    onSend: (event) =>
+        #App.SOSBeacon.Event.bind("#{@modelType.name}:save", this.editSave, this)
+        @confirmView = new App.SOSBeacon.View.ConfirmSendEvent({model: event})
+
+        el = @confirmView.render(true).$el
+        el.modal('show')
+        el.find('input.code').focus()
+
+        if @confirmView.focusButton
+            el.find(@confirmView.focusButton).focus()
+
+    onClose: =>
+        App.SOSBeacon.Event.unbind(null, null, this)
+        if @confirmView
+            @confirmView.close()
+        @listView.close()
+
+
+class App.SOSBeacon.View.PendingEventList extends App.Skel.View.ListView
+    template: JST['event/pendinglistitem']
+    modelType: App.SOSBeacon.Model.Event
+
+    events:
+        "click .send-button": "onSend"
+
+    onSend: =>
+        App.SOSBeacon.Event.trigger('Event:send', @model)
+
+
+class App.SOSBeacon.View.ConfirmSendEvent extends App.Skel.View.EditView
+    template: JST['event/confirmsend']
+    modelType: App.SOSBeacon.Model.Event
+    focusButton: 'input#title'
+
+    events:
+        "submit form" : "send"
+        "hidden": "close"
+
+    send: (e) =>
+        if e
+            e.preventDefault()
+
+        # start sending the notices now
+        $.ajax(
+            type: 'POST'
+            url: '/service/event/send'
+            data:
+                event: @model.id
+        )
+
+    render: (asModal) =>
+        el = @$el
+        el.html(@template(@model.toJSON()))
+
+        return super(asModal)
+
+    updateOnEnter: (e) =>
+        return
+

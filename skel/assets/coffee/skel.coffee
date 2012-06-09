@@ -215,11 +215,11 @@ class App.Skel.View.ListView extends Backbone.View
 
 class App.Skel.View.ListApp extends App.Skel.View.App
 
-    initialize: (module, view, el, collection) ->
-        if el
-            @el = el
+    initialize: (module, view, $listEl, collection, fetchArgs) ->
+        if $listEl
+            @$listEl = $listEl
         else
-            @el = @$el
+            @$listEl = @$el
 
         if not collection
             collection = view
@@ -229,12 +229,16 @@ class App.Skel.View.ListApp extends App.Skel.View.App
         @collection.bind('add', @addOne, this)
         @collection.bind('reset', @addAll, this)
         @collection.bind('all', @show, this)
-        @collection.fetch()
+
+        if fetchArgs
+            @collection.fetch(fetchArgs)
+        else
+            @collection.fetch()
 
     addOne: (object) =>
         view = new @modalView({model: object})
         object.view = view
-        @el.append(view.render().el)
+        @$listEl.append(view.render().el)
 
     addAll: =>
         @collection.each(@addOne)

@@ -125,15 +125,31 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
 
 
 class App.SOSBeacon.View.EventApp extends App.Skel.View.ModelApp
-    el: $("#sosbeaconapp")
+    id: "sosbeaconapp"
     template: JST['event/view']
     modelType: App.SOSBeacon.Model.Event
     form: App.SOSBeacon.View.EventEdit
-    module: 'SOSBeacon'
+
+    initialize: =>
+        @collection = new App.SOSBeacon.Collection.EventList()
+        @listView = new App.SOSBeacon.View.EventList(@collection)
+
+        @collection.fetch()
+        console.log(@collection)
+
+
+class App.SOSBeacon.View.EventListItem extends App.Skel.View.ListItemView
+    template: JST['event/list']
+
+
+class App.SOSBeacon.View.EventListHeader extends App.Skel.View.ListItemHeader
+    template: JST['event/listheader']
+
 
 class App.SOSBeacon.View.EventList extends App.Skel.View.ListView
-    template: JST['event/list']
-    modelType: App.SOSBeacon.Model.Event
+    itemView: App.SOSBeacon.View.EventListItem
+    headerView: App.SOSBeacon.View.EventListHeader
+    gridFilters: null
 
 
 class App.SOSBeacon.View.EventSelect extends Backbone.View

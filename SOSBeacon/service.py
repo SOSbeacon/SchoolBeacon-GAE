@@ -33,6 +33,7 @@ url_map = [
     ('.*/group/?(.*)', 'sosbeacon.service.GroupHandler'),
     ('.*/contact/?(.*)', 'sosbeacon.service.ContactHandler'),
     ('.*/student/?(.*)', 'sosbeacon.service.StudentHandler'),
+    ('.*/event/send', 'sosbeacon.service.SendEventHandler'),
     ('.*/event/?(.*)', 'sosbeacon.service.EventHandler'),
 ]
 

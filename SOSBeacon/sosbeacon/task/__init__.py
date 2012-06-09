@@ -6,13 +6,16 @@ from google.appengine.ext import ndb
 import webapp2
 
 from sosbeacon.contact import Contact
+from sosbeacon.event import  update_contact_counts
+from sosbeacon.event import  update_event_contact
+from sosbeacon.event import EVENT_UPDATE_QUEUE
 from sosbeacon.event import Event
 from sosbeacon.event import EventMarker
+from sosbeacon.utils import insert_tasks
 
 GROUP_TX_QUEUE = "group-tx"
 CONTACT_TX_QUEUE = "contact-tx"
-EVENT_UPDATE_QUEUE = "event-up"
-EVENT_UPDATE_WORKER_QUEUE = "event-updator"
+
 
 class EventStartTxHandler(webapp2.RequestHandler):
     """Start the process of sending messages to every Contact associated
@@ -46,7 +49,7 @@ class EventStartTxHandler(webapp2.RequestHandler):
             return
 
         # TODO: Switch over to using a divide and retry here.
-        taskqueue.Queue(name=GROUP_TX_QUEUE).add(tasks)
+        insert_tasks(tasks, GROUP_TX_QUEUE)
 
         # TODO: Insert task to mark Event as notice sent
 
@@ -78,8 +81,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
         if more:
             name = "tx-%d-%s-%s" % (
                 task_no, event_key.urlsafe(), group_key.urlsafe())
-            taskqueue.add(
-                queue_name=GROUP_TX_QUEUE,
+            task = taskqueue.Task(
                 url='/task/event/tx/group',
                 name=name,
                 params={
@@ -89,6 +91,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
                     'task_no': task_no + 1
                 }
             )
+            insert_tasks((task,), GROUP_TX_QUEUE)
 
         event_key = event_key.urlsafe()
         notify_level = 1 if event.notify_primary_only else None
@@ -115,20 +118,10 @@ class EventGroupTxHandler(webapp2.RequestHandler):
 
         # TODO: Need batch split / retry logic here too.
         contact_work = work.values()
-        taskqueue.Queue(name=CONTACT_TX_QUEUE).add(contact_work)
+        insert_tasks(contact_work, CONTACT_TX_QUEUE)
 
-        taskqueue.add(
-            queue_name=EVENT_UPDATE_QUEUE,
-            method="PULL",
-            tag=event_key,
-            params={
-                'type': "cnt",
-                'event': event_key,
-                'contact_count': len(contact_work),
-                'group': group_key.urlsafe(),
-                'task_no': task_no
-            }
-        )
+        update_contact_counts(
+            event_key, len(contact_work), group_key.urlsafe(), task_no)
 
 
 class EventContactTxHandler(webapp2.RequestHandler):
@@ -183,26 +176,19 @@ class EventContactTxHandler(webapp2.RequestHandler):
         # TODO: Send message about the event
         #notify_contact(event, contact, next_contact_method)
 
-        taskqueue.add(
-            queue_name=EVENT_UPDATE_QUEUE,
-            method="PULL",
-            tag=event_key.urlsafe(),
-            params={
-                'type': "tx",
-                'event': event_key.urlsafe(),
-                'contact': contact_key.urlsafe(),
-                'method': next_contact_method,
-                'when': now
-            }
-        )
+        update_event_contact(event_key.urlsafe(), contact_key.urlsafe(),
+                             next_contact_method, now)
+
 
 class EventUpdateHandler(webapp2.RequestHandler):
     def post(self):
+        BATCH_SIZE = 500
 
         event_key = ndb.Key(urlsafe=self.request.get('event'))
         update_queue = taskqueue.Queue(name=EVENT_UPDATE_QUEUE)
 
-        updates = update_queue.lease_tasks_by_tag(30, 500, tag=event_key.urlsafe())
+        updates = update_queue.lease_tasks_by_tag(45, BATCH_SIZE,
+                                                  tag=event_key.urlsafe())
 
         count_updates = {
             'total': 0,
@@ -240,6 +226,9 @@ class EventUpdateHandler(webapp2.RequestHandler):
             marker_map[marker_key] = marker
 
         event_update(event_key, count_updates, marker_map)
+        update_queue.delete_tasks(updates)
+        if len(updates) >= BATCH_SIZE:
+            insert_event_updator(event_key)
 
 
 @ndb.transactional

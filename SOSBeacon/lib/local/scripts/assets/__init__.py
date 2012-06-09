@@ -4,7 +4,6 @@ import os
 BASE_LOCATION = os.getcwdu()
 INPUT_FILES = os.path.join(BASE_LOCATION, 'assets')
 
-
 def _bundle_images(app, env, is_skel=False):
     """Copy images into static."""
     #TODO: add png crush or something similar

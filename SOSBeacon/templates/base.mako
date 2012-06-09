@@ -1,40 +1,20 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <title>SOSBeacon</title>
-        <link rel="stylesheet" type="text/css" href="/static/css/lib.css">
-        <link rel="stylesheet" type="text/css" href="/static/css/sosbeacon.css">
-    </head>
-    <body>
-        <div id="sosbeacon">
-            <div class="navbar navbar-fixed-top">
-                <div class="navbar-inner">
-                    <div class="container">
-                        <a class="brand" href="#">SOSBeacon</a>
-                        <div id="sosbeaconheader" class="nav-collapse">
-                            <ul id="sosbeacon-menu" class="nav">
-                            </ul>
-                        </div><!--/.nav-collapse -->
-                    </div>
-                </div>
-            </div>
-            <div id="sosbeaconcontainer" class="container">
-                <div id="sosbeaconapp"></div>
-            </div>
-        </div>
-        <div class="footer">
-          <center><strong>View the source at:</strong> <a href="https://github.com/ezoxsystems/gae-skeleton">https://github.com/ezoxsystems/gae-skeleton</a></center>
-        </div>
-        <script type="application/javascript" src="/static/script/libs.js"></script>
-        <script type="application/javascript" src="/static/script/template.js"></script>
-        <script type="application/javascript" src="/static/script/skel.js"></script>
-        <script type="application/javascript" src="/static/script/sosbeacon.js"></script>
-        <script type="text/javascript">
-        $(function(){
-            var sosbeacon = new App.SOSBeacon.Router
-            Backbone.history.start();
-            App.SOSBeacon.router = sosbeacon;
-        });
-        </script>
-    </body>
+  <head>
+    <title><%block name="title">SOSBeacon</%block></title>
+    <link rel="stylesheet" type="text/css" href="/static/css/lib.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/sosbeacon.css">
+  </head>
+  <body>
+    <div id="sosbeacon">${self.body()}</div>
+    <div class="footer"><%block name="footer">
+      <center>
+        <span><strong>Copyright &copy; 2012 SOS Beacon - All Rights Reserved</strong></span> -
+        <span><a href="http://sosbeacon.com/web/about/terms">Terms of Service</a></span> -
+        <span><a href="http://sosbeacon.com/web/about/privacy">Privacy Policy</a></span>
+        <p><span>Development by <a href="http://ezoxsystems.com">Ezox Systems, LLC</a></span></p>
+      </center>
+    </%block></div>
+    <%block name="body_script"/>
+  </body>
 </html>

@@ -1,9 +1,19 @@
+
+import time
+
+from google.appengine.api import memcache
+from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
 import voluptuous
 
+from sosbeacon.utils import insert_tasks
+
 from . import EntityBase
 
+BATCH_SECONDS = 5
+EVENT_UPDATE_QUEUE = "event-up"
+EVENT_UPDATE_WORKER_QUEUE = "event-updator"
 
 event_schema = {
     'key': basestring,
@@ -107,4 +117,80 @@ class EventMarker(EntityBase):
         self.last_contact_method = max(self.last_contact_method,
                                        other.last_contact_method)
         return self
+
+
+def update_contact_counts(event_key, contact_count, group_key, group_task_no):
+    """Insert a task to apply count updates to the given event."""
+    task = taskqueue.Task(
+        method="PULL",
+        tag=event_key,
+        params={
+            'type': "cnt",
+            'event': event_key,
+            'contact_count': contact_count,
+            'group': group_key,
+            'task_no': group_task_no
+        }
+    )
+    insert_tasks((task,), EVENT_UPDATE_QUEUE)
+    insert_event_updator(ndb.Key(urlsafe=event_key))
+
+
+def update_event_contact(event_key, contact_key, contact_method, when):
+    """Insert a task containing contact method details."""
+    task = taskqueue.Task(
+        method="PULL",
+        tag=event_key,
+        params={
+            'type': "tx",
+            'event': event_key,
+            'contact': contact_key,
+            'method': contact_method,
+            'when': when
+        }
+    )
+    insert_tasks((task,), EVENT_UPDATE_QUEUE)
+    insert_event_updator(ndb.Key(urlsafe=event_key))
+
+
+def acknowledge_event(event_key, contact_key):
+    """Insert a task to acknowledge an event for the given contact."""
+    ack_marker_key = "rx:%s:%s" % (event_key.id(), contact_key.id())
+    seen = memcache.get(ack_marker_key)
+    if seen:
+        return
+
+    task = taskqueue.Task(
+        method="PULL",
+        tag=event_key.urlsafe(),
+        params={
+            'type': 'ack',
+            'event': event_key.urlsafe(),
+            'contact': contact_key.urlsafe(),
+            'when': int(time.time())
+        }
+    )
+    insert_tasks((task,), EVENT_UPDATE_QUEUE)
+
+    memcache.set(ack_marker_key, True)
+    insert_event_updator(event_key)
+
+
+def insert_event_updator(event_key):
+    """Insert a task to aggregate and apply updates to the given event."""
+    from time import time
+    time_block = int(time() / BATCH_SECONDS)
+    name = "up-%s-%s" % (event_key.id(), time_block)
+    exists = memcache.get(name)
+    if exists:
+        return
+
+    task = taskqueue.Task(
+        url='/task/event/update',
+        name=name,
+        params={'event': event_key.urlsafe()}
+    )
+    insert_tasks((task,), EVENT_UPDATE_WORKER_QUEUE)
+
+    memcache.set(name, True)
 

@@ -43,9 +43,24 @@ class App.Demo.Model.Person extends Backbone.Model
             return errors
 
 
-class App.Demo.Collection.PersonList extends Backbone.Collection
-    url: '/service/person'
+class App.Demo.Collection.PersonList extends Backbone.Paginator.requestPager
     model: App.Demo.Model.Person
+
+    paginator_core: {
+        type: 'GET'
+        dataType: 'json'
+        url: '/service/person'
+    }
+
+    paginator_ui: {
+        firstPage: 0
+        currentPage: 0
+        perPage: 20
+        totalPages: 100
+    }
+
+    server_api: {
+    }
 
 
 class App.Demo.View.PersonEdit extends App.Skel.View.EditView
@@ -112,13 +127,41 @@ class App.Demo.View.PersonEdit extends App.Skel.View.EditView
 
 
 class App.Demo.View.PersonApp extends App.Skel.View.ModelApp
-    el: $("#demoapp")
+    id: 'demoapp'
     template: JST['person/view']
     modelType: App.Demo.Model.Person
     form: App.Demo.View.PersonEdit
-    module: 'Demo'
+
+    initialize: =>
+        @collection = new App.Demo.Collection.PersonList()
+        @listView = new App.Demo.View.PersonList(@collection)
+
+        @collection.fetch()
+
+
+class App.Demo.View.PersonListItem extends App.Skel.View.ListItemView
+    template: JST['person/list']
+
+
+class App.Demo.View.PersonListHeader extends App.Skel.View.ListItemHeader
+    template: JST['person/listheader']
+
 
 class App.Demo.View.PersonList extends App.Skel.View.ListView
-    template: JST['person/list']
-    modelType: App.Demo.Model.Person
+    itemView: App.Demo.View.PersonListItem
+    headerView: App.Demo.View.PersonListHeader
+    gridFilters: null
 
+    initialize: (collection) =>
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Name'
+                type: 'text'
+                prop: 'name'
+                control: null
+                default: true
+            })
+        )
+
+        super(collection)

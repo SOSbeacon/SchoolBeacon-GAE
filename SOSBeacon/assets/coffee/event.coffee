@@ -56,6 +56,19 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Collection
     model: App.SOSBeacon.Model.Event
 
 
+class App.SOSBeacon.Model.ResendDelay extends Backbone.Model
+    idAttribute: 'seconds'
+    defaults: ->
+        return {
+            label: "",
+            seconds: 0,
+        }
+
+
+class App.SOSBeacon.Collection.ResendDelay extends Backbone.Collection
+    model: App.SOSBeacon.Model.ResendDelay
+
+
 class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
     template: JST['event/edit']
     modelType: App.SOSBeacon.Model.Event
@@ -68,6 +81,17 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         "keypress .edit": "updateOnEnter"
         "click .remove-button": "clear"
         "hidden": "close"
+
+    initialize: =>
+        @resendDelays = new App.SOSBeacon.Collection.ResendDelay()
+        @resendDelays.add({seconds: 1800, label: "30 Mintues"})
+        @resendDelays.add({seconds: 3600, label: "1 Hour"})
+        @resendDelays.add({seconds: 7200, label: "2 Hours"})
+        @resendDelays.add({seconds: 21600, label: "6 Hours"})
+        @resendDelays.add({seconds: 86400, label: "1 Day"})
+        @resendDelays.add({seconds: -1, label: "Never"})
+
+        super()
 
     save: (e) =>
         if e
@@ -85,7 +109,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
             detail: @$('textarea.detail').val()
             groups: groupList
             notify_primary_only: @$('input.notify_primary_only').prop('checked')
-            response_wait_seconds: parseInt(@$('input.response_wait_seconds').val())
+            response_wait_seconds: parseInt(@$('select.response_wait_seconds').val())
         )
 
         return super()
@@ -98,6 +122,23 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
             editView = new App.SOSBeacon.View.GroupSelect({model: group})
             el.find('fieldset.groups').append(editView.render().el)
         )
+
+        select = @$('.response_wait_seconds')
+        @resendDelays.each((resendDelay, i) =>
+            option = $('<option></option>')
+                .attr('value', resendDelay.get('seconds'))
+                .html(resendDelay.get('label'))
+
+            console.log(@model.get('response_wait_seconds'))
+            console.log(resendDelay.get('seconds'))
+
+            if parseInt(@model.get('response_wait_seconds')) == parseInt(resendDelay.get('seconds'))
+                console.log('they are equal')
+                option.attr('selected', 'selected')
+
+            select.append(option)
+        )
+        console.log(select)
 
         return super(asModal)
 

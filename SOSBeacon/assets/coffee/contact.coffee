@@ -105,9 +105,26 @@ class App.SOSBeacon.View.ContactApp extends App.Skel.View.ModelApp
     modelType: App.SOSBeacon.Model.Contact
     form: App.SOSBeacon.View.ContactEdit
 
+    initialize: =>
+        @collection = new App.SOSBeacon.Collection.ContactList()
+        @listView = new App.SOSBeacon.View.ContactList(@collection)
+
+        @collection.fetch()
+        console.log(@collection)
+
 
 class App.SOSBeacon.View.ContactListItem extends App.Skel.View.ListItemView
-    template: JST['contact/listitem']
+    template: JST['contact/list']
+
+
+class App.SOSBeacon.View.ContactListHeader extends App.Skel.View.ListItemHeader
+    template: JST['contact/listheader']
+
+
+class App.SOSBeacon.View.ContactList extends App.Skel.View.ListView
+    itemView: App.SOSBeacon.View.ContactListItem
+    headerView: App.SOSBeacon.View.ContactListHeader
+    gridFilters: null
 
 
 class App.SOSBeacon.View.ContactSelect extends Backbone.View

@@ -10,7 +10,11 @@ student_schema = {
     'name': basestring,
     'identifier': basestring,
     'groups': [voluptuous.ndbkey()],
-    'contacts': [voluptuous.ndbkey()]
+    'contacts': [{
+        'name': basestring,
+        'notes': basestring,
+        'methods': [{'type': basestring, 'value': basestring}]
+    }]
 }
 
 class Student(EntityBase):
@@ -27,7 +31,7 @@ class Student(EntityBase):
         name='i_')
 
     groups = ndb.KeyProperty('g', repeated=True)
-    contacts = ndb.KeyProperty('c', repeated=True)
+    contacts = ndb.JsonProperty('c')
 
     @classmethod
     def from_dict(cls, data):
@@ -58,7 +62,7 @@ class Student(EntityBase):
         student['name'] = self.name
         student['identifier'] = self.identifier
 
-        student['contacts'] = [key.urlsafe() for key in self.contacts]
+        student['contacts'] = self.contacts if self.contacts else []
         student['groups'] = [key.urlsafe() for key in self.groups]
 
         return student

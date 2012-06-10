@@ -4,9 +4,7 @@ class App.SOSBeacon.Model.Contact extends Backbone.Model
     urlRoot: '/service/contact'
     defaults: ->
         return {
-            key: "",
             name: "",
-            students: [],
             methods: [],
             notes: "",
         }
@@ -37,46 +35,36 @@ class App.SOSBeacon.Collection.ContactList extends Backbone.Collection
     model: App.SOSBeacon.Model.Contact
 
 
-class App.SOSBeacon.View.ContactEdit extends App.Skel.View.EditView
+class App.SOSBeacon.View.ContactEdit extends Backbone.View
     template: JST['contact/edit']
+    tagName: 'li'
+    className: 'contact'
     modelType: App.SOSBeacon.Model.Contact
-    focusButton: 'input#name'
 
     events:
-        "change": "change"
         "click button.add_method": "addMethod"
-        "submit form" : "save"
         "keypress .edit": "updateOnEnter"
-        "click .remove-button": "clear"
-        "hidden": "close"
 
-    save: (e) =>
-        if e
-            e.preventDefault()
-
+    close: =>
         @model.methods.each((method) ->
             method.editView.close()
         )
 
-        @model.save(
+        @model.set(
             name: @$('input.name').val()
             notes: $.trim(@$('textarea.notes').val())
         )
 
-        return super()
+    render: =>
+        @$el.html(@template(@model.toJSON()))
 
-    render: (asModal) =>
-        el = @$el
-        el.html(@template(@model.toJSON()))
-
-        @model.methods.each((info, i) ->
+        @model.methods.each((info, i) =>
             editView = new App.SOSBeacon.View.ContactMethodEdit({model: info})
-            el.find('fieldset.methods').append(editView.render().el)
+            @$el.find('fieldset.methods').append(editView.render().el)
         )
+        return this
 
-        return super(asModal)
-
-    addMethod: () =>
+    addMethod: =>
         method = new @model.methods.model()
         @model.methods.add(method)
 
@@ -96,20 +84,7 @@ class App.SOSBeacon.View.ContactEdit extends App.Skel.View.EditView
                 @addMethod()
                 return false
 
-        return super(e)
-
-
-class App.SOSBeacon.View.ContactApp extends App.Skel.View.ModelApp
-    id: "sosbeaconapp"
-    template: JST['contact/view']
-    modelType: App.SOSBeacon.Model.Contact
-    form: App.SOSBeacon.View.ContactEdit
-
-    initialize: =>
-        @collection = new App.SOSBeacon.Collection.ContactList()
-        @listView = new App.SOSBeacon.View.ContactList(@collection)
-
-        @collection.fetch()
+        return false
 
 
 class App.SOSBeacon.View.ContactListItem extends App.Skel.View.ListItemView

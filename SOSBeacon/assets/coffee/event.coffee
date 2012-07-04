@@ -11,7 +11,10 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
             title: "",
             summary: "",
             detail: "",
-            groups: []
+            groups: [],
+            notice_sent: false,
+            notice_sent_at: null,
+            notice_sent_by: null
         }
 
     initialize: () ->
@@ -56,6 +59,19 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Collection
     model: App.SOSBeacon.Model.Event
 
 
+class App.SOSBeacon.Model.ResendDelay extends Backbone.Model
+    idAttribute: 'seconds'
+    defaults: ->
+        return {
+            label: "",
+            seconds: 0,
+        }
+
+
+class App.SOSBeacon.Collection.ResendDelay extends Backbone.Collection
+    model: App.SOSBeacon.Model.ResendDelay
+
+
 class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
     template: JST['event/edit']
     modelType: App.SOSBeacon.Model.Event
@@ -68,6 +84,18 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         "keypress .edit": "updateOnEnter"
         "click .remove-button": "clear"
         "hidden": "close"
+
+    initialize: =>
+        @resendDelays = new App.SOSBeacon.Collection.ResendDelay([
+            {seconds: 1800, label: "30 Mintues"},
+            {seconds: 3600, label: "1 Hour"},
+            {seconds: 7200, label: "2 Hours"},
+            {seconds: 21600, label: "6 Hours"},
+            {seconds: 86400, label: "1 Day"},
+            {seconds: -1, label: "Never"}
+        ])
+
+        super()
 
     save: (e) =>
         if e
@@ -85,7 +113,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
             detail: @$('textarea.detail').val()
             groups: groupList
             notify_primary_only: @$('input.notify_primary_only').prop('checked')
-            response_wait_seconds: parseInt(@$('input.response_wait_seconds').val())
+            response_wait_seconds: parseInt(@$('select.response_wait_seconds').val())
         )
 
         return super()
@@ -97,6 +125,18 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         @model.groups.each((group, i) ->
             editView = new App.SOSBeacon.View.GroupSelect({model: group})
             el.find('fieldset.groups').append(editView.render().el)
+        )
+
+        select = @$('.response_wait_seconds')
+        @resendDelays.each((resendDelay, i) =>
+            option = $('<option></option>')
+                .attr('value', resendDelay.get('seconds'))
+                .html(resendDelay.get('label'))
+
+            if parseInt(@model.get('response_wait_seconds')) == parseInt(resendDelay.get('seconds'))
+                option.attr('selected', 'selected')
+
+            select.append(option)
         )
 
         return super(asModal)
@@ -135,7 +175,6 @@ class App.SOSBeacon.View.EventApp extends App.Skel.View.ModelApp
         @listView = new App.SOSBeacon.View.EventList(@collection)
 
         @collection.fetch()
-        console.log(@collection)
 
 
 class App.SOSBeacon.View.EventListItem extends App.Skel.View.ListItemView
@@ -191,7 +230,7 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.App
         @collection.fetch()
 
     render: =>
-        App.SOSBeacon.Event.on('Event:send', @onSend)
+        App.SOSBeacon.Event.on('Event:send', @onSend, this)
         #@$el.html(@template())
         #
         @$el.append(@listView.render().el)
@@ -225,6 +264,12 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.App
 class App.SOSBeacon.View.PendingEventListItem extends App.Skel.View.ListItemView
     template: JST['event/pendinglistitem']
 
+    events:
+        "click .send-button": "onSend"
+
+    onSend: =>
+        App.SOSBeacon.Event.trigger('Event:send', @model)
+
 
 class App.SOSBeacon.View.PendingEventListHeader extends App.Skel.View.ListItemHeader
     template: JST['event/pendinglistheader']
@@ -235,28 +280,9 @@ class App.SOSBeacon.View.PendingEventList extends App.Skel.View.ListView
     headerView: App.SOSBeacon.View.PendingEventListHeader
     gridFilters: null
 
-    events:
-        "click .send-button": "onSend"
 
-    onSend: =>
-        App.SOSBeacon.Event.trigger('Event:send', @model)
-
-
-#class App.SOSBeacon.View.PendingEventList extends App.Skel.View.ListView
-    #template: JST['event/pendinglistitem']
-    #modelType: App.SOSBeacon.Model.Event
-
-    #events:
-        #"click .send-button": "onSend"
-
-    #onSend: =>
-        #App.SOSBeacon.Event.trigger('Event:send', @model)
-
-
-class App.SOSBeacon.View.ConfirmSendEvent extends App.Skel.View.EditView
+class App.SOSBeacon.View.ConfirmSendEvent extends Backbone.View
     template: JST['event/confirmsend']
-    modelType: App.SOSBeacon.Model.Event
-    focusButton: 'input#title'
 
     events:
         "submit form" : "send"
@@ -274,12 +300,22 @@ class App.SOSBeacon.View.ConfirmSendEvent extends App.Skel.View.EditView
                 event: @model.id
         )
 
+        App.Util.Form.hideAlert()
+        App.Util.Form.showAlert(
+            "Successs!", "Save successful", "alert-success")
+
+        @$el.modal('hide')
+        @close()
+        return false
+
     render: (asModal) =>
         el = @$el
         el.html(@template(@model.toJSON()))
 
-        return super(asModal)
+        if asModal
+            @$el.attr('class', 'modal')
 
-    updateOnEnter: (e) =>
-        return
+            @$("editheadercontainter").prepend(
+                $("<button class='close' data-dismiss='modal'>&times;</button>"))
 
+        return this

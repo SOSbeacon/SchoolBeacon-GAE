@@ -86,13 +86,14 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         "hidden": "close"
 
     initialize: =>
-        @resendDelays = new App.SOSBeacon.Collection.ResendDelay()
-        @resendDelays.add({seconds: 1800, label: "30 Mintues"})
-        @resendDelays.add({seconds: 3600, label: "1 Hour"})
-        @resendDelays.add({seconds: 7200, label: "2 Hours"})
-        @resendDelays.add({seconds: 21600, label: "6 Hours"})
-        @resendDelays.add({seconds: 86400, label: "1 Day"})
-        @resendDelays.add({seconds: -1, label: "Never"})
+        @resendDelays = new App.SOSBeacon.Collection.ResendDelay([
+            {seconds: 1800, label: "30 Mintues"},
+            {seconds: 3600, label: "1 Hour"},
+            {seconds: 7200, label: "2 Hours"},
+            {seconds: 21600, label: "6 Hours"},
+            {seconds: 86400, label: "1 Day"},
+            {seconds: -1, label: "Never"}
+        ])
 
         super()
 

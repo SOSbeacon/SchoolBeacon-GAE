@@ -5,6 +5,7 @@ from google.appengine.ext import ndb
 
 import webapp2
 
+# NOTE: Contact and Event models are imported here so the schemas are loaded.
 from sosbeacon.contact import Contact
 from sosbeacon.event import  update_contact_counts
 from sosbeacon.event import  update_event_contact
@@ -31,32 +32,33 @@ class EventStartTxHandler(webapp2.RequestHandler):
             logging.error('Event %s not found!', event_key)
             return
 
+        event_urlsafe = event_key.urlsafe()
+
         tasks = []
         for group_key in event.groups:
-            event = event_key.urlsafe()
-            group = group_key.urlsafe()
-            name = "tx-s-%s-%s" % (event, group)
+            group_urlsafe = group_key.urlsafe()
+            name = "tx-s-%s-%s" % (event_urlsafe, group_urlsafe)
             tasks.append(taskqueue.Task(
                 url='/task/event/tx/group',
                 name=name,
                 params={
-                    'event': event,
-                    'group': group
+                    'event': event_urlsafe,
+                    'group': group_urlsafe
                 }
             ))
+            if len(tasks) > 10:
+                insert_tasks(tasks, GROUP_TX_QUEUE)
+                tasks = []
 
-        if not tasks:
-            return
-
-        # TODO: Switch over to using a divide and retry here.
-        insert_tasks(tasks, GROUP_TX_QUEUE)
+        if tasks:
+            insert_tasks(tasks, GROUP_TX_QUEUE)
 
         # TODO: Insert task to mark Event as notice sent
 
 
 class EventGroupTxHandler(webapp2.RequestHandler):
-    """Linearly scan the given group and insert a task for each Contact
-    indicating that a message needs sent.
+    """Scan over the given group sequentially and insert a task for each
+    Contact indicating that a message needs sent.
     """
     def post(self):
         from sosbeacon.student import Student
@@ -93,8 +95,9 @@ class EventGroupTxHandler(webapp2.RequestHandler):
             )
             insert_tasks((task,), GROUP_TX_QUEUE)
 
-        event_key = event_key.urlsafe()
-        notify_level = 1 if event.notify_primary_only else None
+        event_urlsafe = event_key.urlsafe()
+        notify_level = 1 if event.who_to_notify == 'd' else None
+        notify_parents_only = True if event.who_to_notify == 'p' else False
 
         # We want to start sending notices ASAP, so just insert a marker
         # for each contact here.  The rest can be determined after sending
@@ -103,13 +106,13 @@ class EventGroupTxHandler(webapp2.RequestHandler):
         for student in students:
             for contact in student.contacts[:notify_level]:
                 # TODO: Optimize task building with memcache markers to
-                # avoid building tasks that already exist.
+                # avoid *building* tasks that already exist.
                 contact_key = contact.urlsafe()
-                name = "tx-%s-%s" % (event_key, contact_key)
+                name = "tx-%s-%s" % (event_urlsafe, contact_key)
                 work[name] = taskqueue.Task(
                     url='/task/event/tx/contact',
                     name=name,
-                    params={'event': event_key,
+                    params={'event': event_urlsafe,
                             'contact': contact_key}
                 )
 

@@ -43,8 +43,8 @@ def insert_tasks(tasks, queue_name=None):
         if batch_count <= 1:
             return 0
 
-    actual_count = insert_tasks(tasks[:batch_count/2], queue_name)
-    actual_count += insert_tasks(tasks[batch_count/2:], queue_name)
+    midpoint = batch_count / 2
+    actual_count = insert_tasks(tasks[:midpoint], queue_name)
+    actual_count += insert_tasks(tasks[midpoint:], queue_name)
     return actual_count
-
 

@@ -3,3 +3,4 @@ static
 *.pyc
 node_modules
 .ropeproject
+settingslocal.py

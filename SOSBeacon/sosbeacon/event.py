@@ -15,6 +15,17 @@ BATCH_SECONDS = 5
 EVENT_UPDATE_QUEUE = "event-up"
 EVENT_UPDATE_WORKER_QUEUE = "event-updator"
 
+
+def format_datetime(datetime):
+    if not datetime:
+        return ''
+
+    if datetime.hour == 0 and datetime.minute == 0:
+        return datetime.strftime('%m/%d/%y')
+
+    return datetime.strftime('%m/%d/%y %H:%M')
+
+
 event_schema = {
     'key': basestring,
     'active': voluptuous.boolean(),
@@ -81,7 +92,9 @@ class Event(EntityBase):
         event["version"] = self.version_
         event['active'] = 'Yes' if self.active else ''
         event['notice_sent'] = 'Yes' if self.notice_sent else ''
-        #event['notice_sent_at'] = self.notice_sent_at
+        event['notice_sent_at'] = format_datetime(self.notice_sent_at)
+        #TODO: set notice sent by to user
+        #event['notice_sent_by'] = self.notice_sent_by
         event['title'] = self.title
         event['summary'] = self.summary
         event['detail'] = self.detail

@@ -6,6 +6,7 @@ from google.appengine.ext import ndb
 import webapp2
 
 from sosbeacon.contact import Contact
+from sosbeacon.event import  notify_contact
 from sosbeacon.event import  update_contact_counts
 from sosbeacon.event import  update_event_contact
 from sosbeacon.event import EVENT_UPDATE_QUEUE
@@ -174,7 +175,7 @@ class EventContactTxHandler(webapp2.RequestHandler):
                                   len(contact.methods))
 
         # TODO: Send message about the event
-        #notify_contact(event, contact, next_contact_method)
+        notify_contact(event, contact, next_contact_method)
 
         update_event_contact(event_key.urlsafe(), contact_key.urlsafe(),
                              next_contact_method, now)

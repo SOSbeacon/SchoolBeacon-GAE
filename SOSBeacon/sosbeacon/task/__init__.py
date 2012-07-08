@@ -6,6 +6,7 @@ from google.appengine.ext import ndb
 
 import webapp2
 
+# NOTE: Contact and Event models are imported here so the schemas are loaded.
 from sosbeacon.contact import Contact
 from sosbeacon.event import  update_event_counts
 from sosbeacon.event import  update_event_contact
@@ -78,10 +79,8 @@ class EventStartTxHandler(webapp2.RequestHandler):
 
 
 class EventGroupTxHandler(webapp2.RequestHandler):
-    """Linearly scan the given group, insert a task for each Contact
-    indicating a message needs sent, insert a task for each student indicating
-    their membership in the event, and t create the index mapping them
-    to the contact.
+    """Scan over the given group sequentially and insert a task for each
+    Contact indicating that a message needs sent.
     """
     def post(self):
         from sosbeacon.student import Student
@@ -91,7 +90,8 @@ class EventGroupTxHandler(webapp2.RequestHandler):
         # Used so we can force resends of the event.
         batch_id = self.batch_id = self.request.get('batch')
 
-        event_key = ndb.Key(urlsafe=self.request.get('event'))
+        event_urlsafe = self.request.get('event')
+        event_key = ndb.Key(urlsafe=event_urlsafe)
         group_key = ndb.Key(urlsafe=self.request.get('group'))
         if not event_key or not group_key:
             return
@@ -134,7 +134,8 @@ class EventGroupTxHandler(webapp2.RequestHandler):
             )
             insert_tasks((task,), GROUP_TX_QUEUE)
 
-        self.notify_level = 1 if event.notify_primary_only else None
+        notify_level = 1 if event.who_to_notify == 'd' else None
+        notify_parents_only = True if event.who_to_notify == 'p' else False
 
         # We want to start sending notices ASAP, so insert tx workers for each
         # contact, and a marker for the student here.  The relationship can be

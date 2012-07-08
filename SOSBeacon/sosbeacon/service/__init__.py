@@ -118,6 +118,7 @@ class EventHandler(JSONCRUDHandler):
         from sosbeacon.event import Event
         from sosbeacon.event import event_schema
 
+        # TODO: Lock event (or restrict some fields) if sending is in progress?
         super(EventHandler, self).__init__(Event, event_schema, *args, **kwargs)
 
     def get(self, args):
@@ -139,16 +140,36 @@ class SendEventHandler(webapp2.RequestHandler):
     def post(self):
         from google.appengine.api import taskqueue
         from google.appengine.ext import ndb
+        from datetime import datetime
 
-        event_key = ndb.Key(urlsafe=self.request.get('event'))
+        event_key = self.request.get('event')
         if not event_key:
+            self.error(404)
             return
 
-        taskqueue.add(
-            url='/task/event/tx/start',
-            name='send-%s' % (event_key.urlsafe(),),
-            params={'event': event_key.urlsafe()}
-        )
+        event_key = ndb.Key(urlsafe=event_key)
+
+        @ndb.transactional
+        def mark_as_sent():
+            """Update the event to mark it as sent and track who sent it."""
+            event = event_key.get()
+            if not event or event.notice_sent:
+                return
+
+            #event.notice_sent_by = current user here.
+            event.notice_sent_at = datetime.now()
+            event.notice_sent = True
+
+            event.put()
+
+            taskqueue.add(
+                url='/task/event/tx/start',
+                name='send-%s' % (event_key.urlsafe(),),
+                params={'event': event_key.urlsafe()},
+                transactional=True
+            )
+
+        mark_as_sent()
 
         @ndb.transactional
         def add_event_sent_audit():

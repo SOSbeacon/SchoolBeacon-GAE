@@ -6,7 +6,7 @@ from google.appengine.ext import ndb
 
 import webapp2
 
-# NOTE: Event models are imported here so the schemas are loaded.
+# NOTE: The Event model is imported here so the schema is loaded.
 from sosbeacon.event import EVENT_UPDATE_QUEUE
 from sosbeacon.event import Event
 from sosbeacon.event import MethodMarker
@@ -23,12 +23,12 @@ class EventStartTxHandler(webapp2.RequestHandler):
     """Start the process of sending messages to every Contact associated
     with an Event.
 
-    For each Group on an Event, insert a task that will start linearly
+    For each Group on an Event, insert a task that will start sequentially
     scanning the group inserting a send-message job for each contact, and
     an add-to-group message for each student.
     """
     def post(self):
-        # batch_id is used so that we can force a resend on an event.
+        # batch_id is used so that we can force resend of notices for an event.
         batch_id = self.request.get('batch', '')
 
         event_urlsafe = self.request.get('event')
@@ -54,14 +54,14 @@ class EventStartTxHandler(webapp2.RequestHandler):
         # TODO: Create / Handle some special "all" group.
         tasks = []
         for group_key in event.groups:
-            group = group_key.urlsafe()
-            name = "tx-s-%s-%s-%s" % (event_urlsafe, group, batch_id)
+            group_urlsafe = group_key.urlsafe()
+            name = "tx-s-%s-%s-%s" % (event_urlsafe, group_urlsafe, batch_id)
             tasks.append(taskqueue.Task(
                 url='/task/event/tx/group',
                 name=name,
                 params={
                     'event': event_urlsafe,
-                    'group': group,
+                    'group': group_urlsafe,
                     'batch': batch_id
                 }
             ))
@@ -74,21 +74,25 @@ class EventStartTxHandler(webapp2.RequestHandler):
 
 
 class EventGroupTxHandler(webapp2.RequestHandler):
-    """Scan over the given group sequentially and insert a task for each
-    Contact indicating that a message needs sent.
+    """Sequentially scan the given group, insert a task for each Contact
+    indicating a message needs sent, insert a task for each student
+    indicating their membership in the event (used to create an index mapping
+    students to each contact a message is sent for).
     """
     def post(self):
         from sosbeacon.student import Student
 
         BATCH_SIZE = 100
 
-        # Used so we can force resends of the event.
+        # Used to force resends of event notices.
         batch_id = self.batch_id = self.request.get('batch')
 
         event_urlsafe = self.request.get('event')
         event_key = ndb.Key(urlsafe=event_urlsafe)
         group_key = ndb.Key(urlsafe=self.request.get('group'))
         if not event_key or not group_key:
+            logging.error('Missing event, %s, or group, %s, key.',
+                          event_key, group_key)
             return
 
         # Used in task-names to prevent fork-bombs.
@@ -98,15 +102,17 @@ class EventGroupTxHandler(webapp2.RequestHandler):
                       event_key, iteration, batch_id, group_key)
 
         event = event_key.get()
-        event_key = self.event_key = event_key.urlsafe()
+        event_urlsafe = self.event_urlsafe = event_key.urlsafe()
         if not event:
-            logging.error('Event %s not found processing task %d for Group %s!',
-                          event_key, iteration, group_key)
+            logging.error('Event %s not found; task %d for Group %s!',
+                          event_urlsafe, iteration, group_key)
             return
 
         if not event.active:
-            logging.error('Event %s not active!', event_key)
+            logging.error('Event %s not active!', event_urlsafe)
             return
+
+        group_urlsafe = group_key.urlsafe()
 
         cursor = ndb.Cursor(urlsafe=self.request.get('cursor'))
         query = Student.query(Student.groups == group_key).order(Student.key)
@@ -115,13 +121,13 @@ class EventGroupTxHandler(webapp2.RequestHandler):
                                                   start_cursor=cursor)
         if more:
             name = "tx-%s-%s-%s-%d" % (
-                event_key, group_key.urlsafe(), batch_id, iteration)
+                event_urlsafe, group_urlsafe, batch_id, iteration)
             task = taskqueue.Task(
                 url='/task/event/tx/group',
                 name=name,
                 params={
                     'event': event_key,
-                    'group': group_key.urlsafe(),
+                    'group': group_urlsafe,
                     'batch': batch_id,
                     'cursor': cursor.urlsafe(),
                     'iter': iteration + 1
@@ -129,12 +135,12 @@ class EventGroupTxHandler(webapp2.RequestHandler):
             )
             insert_tasks((task,), GROUP_TX_QUEUE)
 
-        notify_level = 1 if event.who_to_notify == 'd' else None
-        notify_parents_only = True if event.who_to_notify == 'p' else False
+        self.notify_level = 1 if event.who_to_notify == 'd' else None
+        self.notify_parents_only = True if event.who_to_notify == 'p' else False
 
         # We want to start sending notices ASAP, so insert tx workers for each
-        # contact, and a marker for the student here.  The relationship can be
-        # determined after sending the message.
+        # contact, and a marker for the student-contact index here.  The
+        # relationship index can be updated after sending the message.
         self.seen_contacts = set()
         self.tx_workers = []
         student_markers = []

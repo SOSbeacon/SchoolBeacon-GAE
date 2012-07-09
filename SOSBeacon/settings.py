@@ -1,2 +1,14 @@
-TWILIO_ACCOUNT = 'AC19912078b8cd2159642398a1b92d8923'
-TWILIO_TOKEN = 'ede0c36e033a1a74dfee4a7a15cd480c'
+TWILIO_ACCOUNT = ''
+TWILIO_TOKEN = ''
+
+SENDGRID_ACCOUNT = ''
+SENDGRID_PASSWORD = ''
+
+try:
+    import settingslocal
+except ImportError:
+    settingslocal = None
+
+if settingslocal:
+    for setting in dir(settingslocal):
+        globals()[setting.upper()] = getattr(settingslocal, setting)

@@ -243,3 +243,27 @@ def insert_event_updator(event_key):
 
     memcache.set(name, True)
 
+
+def send_notification(event, contact, next_contact_method):
+    """Notify a contact of event information"""
+    import settings
+    #TODO: enable twilio integration.
+    #from twilio.rest import TwilioRestClient
+
+    #client = TwilioRestClient(settings.TWILIO_ACCOUNT, settings.TWILIO_TOKEN)
+    #message = client.sms.messages.create(
+        #to="+15154607935", from_="+14155992671", body=event.detail)
+
+    #TODO: enable sendgrid integration
+    #TODO: it might make sense to group emails as we can add more than one to
+    #address per email sent
+    #import sendgrid
+    #s = sendgrid.Sendgrid(
+        #settings.SENDGRID_ACCOUNT, settings.SENDGRID_PASSWORD, secure=True)
+    #message = sendgrid.Message(
+        #'robert.kluin@ezoxsystems.com', event.summary, "plain body",
+        #event.detail)
+    #message.add_to("lyddonb@gmail.com", "Beau Lyddon")
+
+    #s.web.send(message)
+

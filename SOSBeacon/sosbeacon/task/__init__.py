@@ -6,22 +6,17 @@ from google.appengine.ext import ndb
 
 import webapp2
 
-# NOTE: Contact and Event models are imported here so the schemas are loaded.
-from sosbeacon.contact import Contact
-from sosbeacon.event import  update_event_counts
-from sosbeacon.event import  update_event_contact
+# NOTE: Event models are imported here so the schemas are loaded.
 from sosbeacon.event import EVENT_UPDATE_QUEUE
 from sosbeacon.event import Event
 from sosbeacon.event import MethodMarker
+from sosbeacon.event import send_notification
+from sosbeacon.event import update_event_contact
+from sosbeacon.event import update_event_counts
 from sosbeacon.utils import insert_tasks
 
 GROUP_TX_QUEUE = "group-tx"
 CONTACT_TX_QUEUE = "contact-tx"
-
-
-# TODO: Replace with real api method...
-def send_notification(*args, **kwargs):
-    logging.info('send_notification(%s)', args)
 
 
 class EventStartTxHandler(webapp2.RequestHandler):
@@ -355,7 +350,6 @@ class EventContactTxHandler(webapp2.RequestHandler):
             try_next_contact_method(event_key.urlsafe(), method, now)
             return
 
-        # TODO: Send message about the event
         send_notification(event, method_type, method)
 
         update_event_contact(event_key.urlsafe(), method, now)

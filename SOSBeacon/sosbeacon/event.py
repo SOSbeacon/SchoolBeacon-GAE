@@ -207,3 +207,13 @@ def insert_event_updator(event_key):
 
     memcache.set(name, True)
 
+
+def notify_contact(event, contact, next_contact_method):
+    pass
+    #TODO: enable twilio integration.
+    #import settings
+    #from twilio.rest import TwilioRestClient
+
+    #client = TwilioRestClient(settings.TWILIO_ACCOUNT, settings.TWILIO_TOKEN)
+    #message = client.sms.messages.create(
+        #to="+15154607935", from_="+14155992671", body=event.detail)

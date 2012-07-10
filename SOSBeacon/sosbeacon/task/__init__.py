@@ -23,9 +23,9 @@ class EventStartTxHandler(webapp2.RequestHandler):
     """Start the process of sending messages to every Contact associated
     with an Event.
 
-    For each Group on an Event, insert a task that will start sequentially
-    scanning the group inserting a send-message job for each contact, and
-    an add-to-group message for each student.
+    For each Group on an Event, insert a task that will sequentially scan the
+    group inserting a send-message job for each contact, and an add-to-group
+    message for each student.
     """
     def post(self):
         # batch_id is used so that we can force resend of notices for an event.
@@ -36,7 +36,7 @@ class EventStartTxHandler(webapp2.RequestHandler):
             logging.error('No event key given.')
             return
 
-        # TODO: Use event id rather than key here, for namespacing purposes?
+        # TODO: Use event id rather than key here for namespacing purposes?
         event_key = ndb.Key(urlsafe=event_urlsafe)
         event = event_key.get()
         if not event:
@@ -51,7 +51,7 @@ class EventStartTxHandler(webapp2.RequestHandler):
             logging.error('Event %s not ready to send!', event_key)
             return
 
-        # TODO: Create / Handle some special "all" group.
+        # TODO: Create / handle an "all" group.
         tasks = []
         for group_key in event.groups:
             group_urlsafe = group_key.urlsafe()
@@ -76,64 +76,40 @@ class EventStartTxHandler(webapp2.RequestHandler):
 class EventGroupTxHandler(webapp2.RequestHandler):
     """Sequentially scan the given group, insert a task for each Contact
     indicating a message needs sent, insert a task for each student
-    indicating their membership in the event (used to create an index mapping
-    students to each contact a message is sent for).
+    indicating their membership in the event (also used to create an index
+    mapping students to each contact a message is sent for).
     """
-    def post(self):
-        from sosbeacon.student import Student
-
         BATCH_SIZE = 100
 
+    def post(self):
         # Used to force resends of event notices.
-        batch_id = self.batch_id = self.request.get('batch')
+        self.batch_id = self.request.get('batch', '')
 
-        event_urlsafe = self.request.get('event')
-        event_key = ndb.Key(urlsafe=event_urlsafe)
-        group_key = ndb.Key(urlsafe=self.request.get('group'))
-        if not event_key or not group_key:
+        self.event_urlsafe = event_urlsafe = self.request.get('event')
+        self.group_urlsafe = group_urlsafe = self.request.get('group')
+        if not event_urlsafe or not group_urlsafe:
             logging.error('Missing event, %s, or group, %s, key.',
-                          event_key, group_key)
+                          event_urlsafe, group_urlsafe)
             return
 
-        # Used in task-names to prevent fork-bombs.
-        iteration = int(self.request.get('iter', 0))
+        # Used in task-names to prevent task-bombs.
+        self.iteration = iteration = int(self.request.get('iter', 0))
 
         logging.debug('Processing Event %s, task %d of batch %s for Group %s.',
-                      event_key, iteration, batch_id, group_key)
+                      event_urlsafe, iteration, self.batch_id, group_urlsafe)
 
+        self.event_key = event_key = ndb.Key(urlsafe=event_urlsafe)
         event = event_key.get()
-        event_urlsafe = self.event_urlsafe = event_key.urlsafe()
         if not event:
-            logging.error('Event %s not found; task %d for Group %s!',
-                          event_urlsafe, iteration, group_key)
+            logging.error('Event %s not found; task %d, Group %s!',
+                          event_urlsafe, iteration, group_urlsafe)
             return
 
         if not event.active:
             logging.error('Event %s not active!', event_urlsafe)
             return
 
-        group_urlsafe = group_key.urlsafe()
-
-        cursor = ndb.Cursor(urlsafe=self.request.get('cursor'))
-        query = Student.query(Student.groups == group_key).order(Student.key)
-
-        students, cursor, more = query.fetch_page(BATCH_SIZE,
-                                                  start_cursor=cursor)
-        if more:
-            name = "tx-%s-%s-%s-%d" % (
-                event_urlsafe, group_urlsafe, batch_id, iteration)
-            task = taskqueue.Task(
-                url='/task/event/tx/group',
-                name=name,
-                params={
-                    'event': event_key,
-                    'group': group_urlsafe,
-                    'batch': batch_id,
-                    'cursor': cursor.urlsafe(),
-                    'iter': iteration + 1
-                }
-            )
-            insert_tasks((task,), GROUP_TX_QUEUE)
+        students = self._get_students()
 
         self.notify_level = 1 if event.who_to_notify == 'd' else None
         self.notify_parents_only = True if event.who_to_notify == 'p' else False
@@ -145,10 +121,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
         self.tx_workers = []
         student_markers = []
         for student in students:
-            self._process_student(student)
-
-            student_markers.append(get_student_marker_task(
-                event_key.urlsafe(), student.key.urlsafe()))
+            student_markers.extend(self._process_student(student))
 
             if len(student_markers) > 20:
                 insert_tasks(student_markers)
@@ -161,24 +134,69 @@ class EventGroupTxHandler(webapp2.RequestHandler):
             insert_tasks(student_markers)
 
         update_event_counts(
-            event_key, group_key.urlsafe(), iteration,
+            event_key, group_urlsafe, iteration,
             contact_count=len(self.seen_contacts),
             student_count=len(students))
 
+    def _get_students(self):
+        """Return the next batch of students in this group, insert continuation
+        task if there are more to process for this batch.
+        """
+        from sosbeacon.student import Student
+
+        group_key = ndb.Key(urlsafe=self.group_urlsafe)
+        query = Student.query(Student.groups == group_key).order(Student.key)
+
+        start_cursor = ndb.Cursor(urlsafe=self.request.get('cursor'))
+
+        students, cursor, more = query.fetch_page(self.BATCH_SIZE,
+                                                  start_cursor=start_cursor)
+        if more:
+            self._insert_continuation(cursor)
+
+        return students
+
+    def _insert_continuation(self, cursor):
+        """Insert a task to continue scanning of students in this group."""
+        name = "tx-%s-%s-%s-%d" % (
+            self.event_urlsafe, self.group_urlsafe,
+            self.batch_id, self.iteration)
+        task = taskqueue.Task(
+            url='/task/event/tx/group',
+            name=name,
+            params={
+                'event': self.event_urlsafe,
+                'group': self.group_urlsafe,
+                'batch': self.batch_id,
+                'cursor': cursor.urlsafe(),
+                'iter': self.iteration + 1
+            }
+        )
+        insert_tasks((task,), GROUP_TX_QUEUE)
+
     def _process_student(self, student):
+        markers = []
         for contact in student.contacts[:self.notify_level]:
             # TODO: Optimize task building with memcache markers to
             # avoid building tasks that already exist.
-            if not len(contact.methods) > 0:
+
+            #if self.notify_parents_only and contact.type != 'p':
+            #    continue
+
+            if not contact.methods:
                 continue
+
             method = contact.methods[0]['value']
             if not method:
                 continue
 
-            name = "tx-%s-%s-%s" % (self.event_key, self.batch_id, method)
-            if name in self.seen_contacts:
+            markers.append(get_student_marker_task(
+                self.event_key, self.batch_id, method, contact.methods[1:]))
+
+            if method in self.seen_contacts:
                 continue
-            self.seen_contacts.add(name)
+
+            self.seen_contacts.add(method)
             self.tx_workers.append(get_tx_worker_task(
                 self.event_key, self.batch_id, method))
 
@@ -186,6 +204,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
             insert_tasks(self.tx_workers)
             self.tx_workers = []
 
+        return markers
 
 class TryNextMethodTxHandler(webapp2.RequestHandler):
     """For any contacts in this group, try thier next contact method.

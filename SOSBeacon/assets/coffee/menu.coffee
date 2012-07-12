@@ -45,11 +45,6 @@ class App.SOSBeacon.View.Menu extends Backbone.View
     initialize: () ->
         items = [
             {
-                text: 'Contact',
-                title: 'contact',
-                href: '#\/contact'
-            },
-            {
                 text: 'Student',
                 title: 'student',
                 href: '#\/student'

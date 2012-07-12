@@ -229,10 +229,11 @@ def set_student_method_marker(event_key, method, student, methods):
 
 def get_tx_worker_task(event_key, batch_id, method):
     """Get a task to send the notification to method."""
+    import hashlib
     task = taskqueue.Task(
         method="POST",
         url='/task/event/tx/method',
-        name="tx-%s-%s-%s" % (event_key.id(), batch_id, method),
+        name="tx-%s-%s-%s" % (event_key.id(), batch_id, hashlib.sha1(method).hexdigest()),
         params={
             'event': event_key.urlsafe(),
             'method': method,
@@ -243,10 +244,11 @@ def get_tx_worker_task(event_key, batch_id, method):
 
 def get_try_next_method_task(event_key, batch_id, method):
     """Get a task to try sending notifications to the next contact method."""
+    import hashlib
     task = taskqueue.Task(
         method="POST",
         url='/task/event/method/next',
-        name="ntx-%s-%s-%s" % (event_key.id(), batch_id, method),
+        name="ntx-%s-%s-%s" % (event_key.id(), batch_id, hashlib.sha1(method).hexdigest()),
         params={
             'event': event_key,
             'batch': batch_id,

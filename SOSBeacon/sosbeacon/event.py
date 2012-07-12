@@ -207,6 +207,7 @@ def set_student_method_marker(event_key, method, student, methods):
     """Insert a task indicating the next contact method that should be tried
     for each student-contact.
     """
+    import json
     if isinstance(event_key, ndb.Key):
         event_key = event_key.urlsafe()
 
@@ -221,7 +222,7 @@ def set_student_method_marker(event_key, method, student, methods):
             'event': event_key,
             'method': method,
             'student': student,
-            'methods': methods
+            'methods': json.dumps(methods)
         }
     )
     return task
@@ -242,15 +243,15 @@ def get_tx_worker_task(event_key, batch_id, method):
     return task
 
 
-def get_try_next_method_task(event_key, batch_id, method):
+def get_try_next_method_task(event_urlsafe, batch_id, method):
     """Get a task to try sending notifications to the next contact method."""
     import hashlib
     task = taskqueue.Task(
         method="POST",
         url='/task/event/method/next',
-        name="ntx-%s-%s-%s" % (event_key.id(), batch_id, hashlib.sha1(method).hexdigest()),
+        name="ntx-%s-%s-%s" % (event_urlsafe, batch_id, hashlib.sha1(method).hexdigest()),
         params={
-            'event': event_key,
+            'event': event_urlsafe,
             'batch': batch_id,
             'method': method,
         }
@@ -321,16 +322,31 @@ def insert_event_updator(event_key):
 def send_notification(event, method):
     """Notify a contact of event information"""
     import logging
-    logging.info('Sending notice to: %s.', method)
-    return
+    #return
 
     import settings
-    #TODO: enable twilio integration.
-    #from twilio.rest import TwilioRestClient
 
-    #client = TwilioRestClient(settings.TWILIO_ACCOUNT, settings.TWILIO_TOKEN)
-    #message = client.sms.messages.create(
-        #to="+15154607935", from_="+14155992671", body=event.detail)
+    #TODO: enable twilio integration.
+    if '@' not in method:
+        logging.info('Sending notice to %s via twilio.', method)
+        from twilio.rest import TwilioRestClient
+
+        client = TwilioRestClient(settings.TWILIO_ACCOUNT, settings.TWILIO_TOKEN)
+        message = client.sms.messages.create(
+            to="+%s" % (method), from_="+14155992671", body=event.summary)
+        return
+
+
+    logging.info('Sending notice to %s via mail api.', method)
+    from google.appengine.api import mail
+
+    message = mail.EmailMessage(sender="SOS Beacon <robert.kluin@ezoxsystems.com>",
+                                        subject=event.title)
+
+    message.to = method
+    message.body = event.detail
+
+    message.send()
 
     #TODO: enable sendgrid integration
     #TODO: it might make sense to group emails as we can add more than one to

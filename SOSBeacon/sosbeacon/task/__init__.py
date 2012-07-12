@@ -418,7 +418,9 @@ class EventUpdateHandler(webapp2.RequestHandler):
                 workers.append(get_try_next_method_task(
                     event_key.urlsafe, method))
             elif update['type'] == 'idx':
-                student_info = (update['student'], update.get('methods', ()))
+                import json
+                student_info = (update['student'],
+                                json.loads(update.get('methods', "[]")))
                 marker = MethodMarker(
                     key=marker_key,
                     students=(student_info,)

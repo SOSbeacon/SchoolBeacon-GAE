@@ -1,5 +1,4 @@
 import logging
-import unicodedata
 
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
@@ -10,13 +9,17 @@ import webapp2
 from sosbeacon.event import EVENT_UPDATE_QUEUE
 from sosbeacon.event import Event
 from sosbeacon.event import MethodMarker
+from sosbeacon.event import get_try_next_method_task
+from sosbeacon.event import get_tx_worker_task
+from sosbeacon.event import insert_event_updator
 from sosbeacon.event import send_notification
+from sosbeacon.event import set_student_method_marker
 from sosbeacon.event import update_event_contact
 from sosbeacon.event import update_event_counts
 from sosbeacon.utils import insert_tasks
 
 GROUP_TX_QUEUE = "group-tx"
-CONTACT_TX_QUEUE = "contact-tx"
+METHOD_TX_QUEUE = "contact-tx"
 
 
 class EventStartTxHandler(webapp2.RequestHandler):
@@ -124,14 +127,14 @@ class EventGroupTxHandler(webapp2.RequestHandler):
             student_markers.extend(self._process_student(student))
 
             if len(student_markers) > 20:
-                insert_tasks(student_markers)
+                insert_tasks(student_markers, EVENT_UPDATE_QUEUE)
                 student_markers = []
 
         if self.tx_workers:
-            insert_tasks(self.tx_workers)
+            insert_tasks(self.tx_workers, METHOD_TX_QUEUE)
 
         if student_markers:
-            insert_tasks(student_markers)
+            insert_tasks(student_markers, EVENT_UPDATE_QUEUE)
 
         update_event_counts(
             event_key, group_urlsafe, iteration,
@@ -182,16 +185,18 @@ class EventGroupTxHandler(webapp2.RequestHandler):
 
             #if self.notify_parents_only and contact.type != 'p':
             #    continue
+            methods = contact.get('methods')
 
-            if not contact.methods:
+            if not methods:
                 continue
 
-            method = contact.methods[0]['value']
+            method = methods.pop()['value']
             if not method:
                 continue
 
-            markers.append(get_student_marker_task(
-                self.event_key, self.batch_id, student.key, contact.methods[1:]))
+            methods = [next_method['value'] for next_method in methods]
+            markers.append(set_student_method_marker(
+                self.event_key, method, student.key, methods))
 
             if method in self.seen_methods:
                 continue
@@ -201,7 +206,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
                 self.event_key, self.batch_id, method))
 
         if len(self.tx_workers) > 10:
-            insert_tasks(self.tx_workers)
+            insert_tasks(self.tx_workers, METHOD_TX_QUEUE)
             self.tx_workers = []
 
         return markers
@@ -263,17 +268,17 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
             student_markers.extend(self._process_student(student))
 
             if len(student_markers) > 20:
-                insert_tasks(student_markers)
+                insert_tasks(student_markers, EVENT_UPDATE_QUEUE)
                 student_markers = []
 
         if self.tx_workers:
-            insert_tasks(self.tx_workers)
+            insert_tasks(self.tx_workers, METHOD_TX_QUEUE)
 
         if student_markers:
-            insert_tasks(student_markers)
+            insert_tasks(student_markers, EVENT_UPDATE_QUEUE)
 
         update_event_counts(
-            event_key, group_urlsafe, 0,
+            event_key, None, None,
             contact_count=len(self.seen_methods),
             student_count=len(method.students))
 
@@ -284,8 +289,8 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
         except IndexError:
             return
 
-        marker = get_student_marker_task(
-            self.event_key, self.batch_id, student_key, methods)
+        marker = set_student_method_marker(
+            self.event_key, method, student_key, methods)
 
         if method in self.seen_methods:
             return marker
@@ -295,7 +300,7 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
             self.event_key, self.batch_id, method))
 
         if len(self.tx_workers) > 10:
-            insert_tasks(self.tx_workers)
+            insert_tasks(self.tx_workers, METHOD_TX_QUEUE)
             self.tx_workers = []
 
         return marker
@@ -314,7 +319,9 @@ class MethodTxHandler(webapp2.RequestHandler):
     def post(self):
         from time import time
 
-        event_key = ndb.Key(urlsafe=self.request.get('event'))
+        event_urlsafe = self.request.get('event')
+        event_key = ndb.Key(urlsafe=event_urlsafe)
+        batch_id = self.request.get('batch')
         method = self.request.get('method')
 
         if not method:
@@ -345,10 +352,11 @@ class MethodTxHandler(webapp2.RequestHandler):
             if tried_seconds_ago < event.response_wait_seconds:
                 return
 
-            try_next_contact_method(event_key.urlsafe(), method, now)
+            task = get_try_next_method_task(event_key.urlsafe(), batch_id, method)
+            insert_tasks((task,), METHOD_TX_QUEUE)
             return
 
-        send_notification(event, method_type, method)
+        send_notification(event, method)
 
         update_event_contact(event_key.urlsafe(), method, now)
 
@@ -407,10 +415,10 @@ class EventUpdateHandler(webapp2.RequestHandler):
                     key=marker_key,
                     try_next=True
                 )
-                workers.append(get_try_next_contact_task(
+                workers.append(get_try_next_method_task(
                     event_key.urlsafe, method))
             elif update['type'] == 'idx':
-                student_info = (update['student'], update['contacts'])
+                student_info = (update['student'], update.get('methods', ()))
                 marker = MethodMarker(
                     key=marker_key,
                     students=(student_info,)
@@ -427,7 +435,7 @@ class EventUpdateHandler(webapp2.RequestHandler):
         if workers:
             # Run these *after* the event update txn, since they may depend
             # on data written there.
-            insert_tasks(workers)
+            insert_tasks(workers, METHOD_TX_QUEUE)
 
         update_queue.delete_tasks(updates)
 

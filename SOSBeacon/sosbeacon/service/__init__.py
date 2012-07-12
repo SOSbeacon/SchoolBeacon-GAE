@@ -140,7 +140,8 @@ class SendEventHandler(webapp2.RequestHandler):
     def post(self):
         from google.appengine.api import taskqueue
         from google.appengine.ext import ndb
-        from datetime import datetime
+
+        from sosbeacon.event import Event
 
         event_key = self.request.get('event')
         if not event_key:
@@ -157,14 +158,13 @@ class SendEventHandler(webapp2.RequestHandler):
                 return
 
             #event.notice_sent_by = current user here.
-            event.notice_sent_at = datetime.now()
+            event.notice_sent_at = datetime.datetime.now()
             event.notice_sent = True
 
             event.put()
 
             taskqueue.add(
                 url='/task/event/tx/start',
-                name='send-%s' % (event_key.urlsafe(),),
                 params={'event': event_key.urlsafe()},
                 transactional=True
             )

@@ -16,7 +16,6 @@ skip_files: |
  (.*/RCS/.*)|
  (\..*)|
  (lib/local/.*)|
- (settingslocal\.py)|
  (.idea)|
  (.ropeproject)|
  (.git)|

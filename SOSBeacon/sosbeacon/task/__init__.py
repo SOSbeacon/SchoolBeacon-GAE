@@ -207,7 +207,8 @@ class EventGroupTxHandler(webapp2.RequestHandler):
         return markers
 
 class TryNextMethodTxHandler(webapp2.RequestHandler):
-    """For any contacts in this group, try thier next contact method.
+    """For any contacts in this event who use this method, try their next
+    contact method.
 
     Contact(s) with the given method have either failed to respond within
     retry-timeout seconds, or there was some other error sending notification.
@@ -215,73 +216,51 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
     associated contact(s).
     """
     def post(self):
-        from sosbeacon.student import Student
-
         # Used so we can force resends of the event.
-        batch_id = self.batch_id = self.request.get('batch')
+        self.batch_id = self.request.get('batch')
 
-        event_key = ndb.Key(urlsafe=self.request.get('event'))
-        if not event_key:
+        event_urlsafe = self.event_urlsafe = self.request.get('event')
+        if not event_urlsafe:
             return
+
+        event_key = ndb.Key(urlsafe=event_urlsafe)
         event_future = event_key.get_async()
-        event_key = self.event_key = event_key.urlsafe()
 
         method_id = self.request.get('method')
-        method_key = ndb.Key(MethodMarker, method_id, parent=event_key)
         if not method_id:
             return
+
+        method_key = ndb.Key(MethodMarker, method_id, parent=event_key)
         method_future = method_key.get_async()
 
         logging.debug('Trying next method for contacts with %s, for Event %s.',
-                      method_id, event_key)
+                      method_id, event_urlsafe)
 
         event = event_future.get_result()
         if not event:
             logging.error('Event %s not found trying next for %s!',
-                          event_key, method_id)
+                          event_urlsafe, method_id)
             return
-
-        student_futures = ndb.get_multi_async(event.students)
 
         if not event.active:
-            logging.error('Event %s not active!', event_key)
+            logging.warning('Event %s not active!', event_key)
             return
-
-        self.notify_level = 1 if event.notify_primary_only else None
 
         method = method_future.get_result()
         if not method:
-            logging.debug('Method %s not found trying next for Event %s!',
-                          method_id, event_key)
+            # NOTE: Should this ever happen?
+            logging.debug('MethodMarker %s not found trying next for Event %s!',
+                          method_id, event_urlsafe)
             return
 
         # Start sending notices ASAP, insert tx workers for each contact
         # method.  The relationship can be determined after sending the
         # message.
-        self.seen_contacts = set()
+        self.seen_methods = set()
         self.tx_workers = []
-        for future in student_futures:
-            # TODO: Use tasklets instead of loop here?
-            student = future.get_result()
-
-            # TODO: What marker do we insert here?  We just want the
-            # relationship.  The student should already exist at this point.
-            # Maybe we should use the same approach above too.  Insert a
-            # relationship marker, and if the student marker doesn't exist,
-            # we can create the student marker?
-            # OR, maybe the approach is wrong.  Maybe this should just be done
-            # via an indexed list of methods on the student marker?  This is
-            # safe here, since it is all in the same entity group.
-            # But, what happens when an as-of-yet unseen student is using this
-            # method?  With the query approach, do we ever know that we should
-            # go on to thier next contact?
-            # This is where the first method helps, we can simply use
-            # task-names to handle our deduplification and basically retry
-            # for all students here.
-            self._process_student(student)
-
-            student_markers.append(get_student_marker_task(
-                event_key.urlsafe(), student.key.urlsafe()))
+        student_markers = []
+        for student in method.students:
+            student_markers.extend(self._process_student(student))
 
             if len(student_markers) > 20:
                 insert_tasks(student_markers)
@@ -294,24 +273,24 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
             insert_tasks(student_markers)
 
         update_event_counts(
-            event_key, group_key.urlsafe(), iteration,
-            contact_count=len(self.seen_contacts),
-            student_count=len(students))
+            event_key, group_urlsafe, 0,
+            contact_count=len(self.seen_methods),
+            student_count=len(method.students))
 
-    def _process_student(self, student):
-        for contact in student.contacts[:self.notify_level]:
-            # TODO: Optimize task building with memcache markers to
-            # avoid building tasks that already exist.
-            if not len(contact.methods) > 0:
-                continue
-            method = contact.methods[0]['value']
-            if not method:
-                continue
+    def _process_student(self, student_info):
+        student_key, methods = student_info
+        try:
+            method = methods.pop(0)
+        except IndexError:
+            return
 
-            name = "tx-%s-%s-%s" % (self.event_key, self.batch_id, method)
-            if name in self.seen_contacts:
-                continue
-            self.seen_contacts.add(name)
+        marker = get_student_marker_task(
+            self.event_key, self.batch_id, student_key, methods)
+
+        if method in self.seen_methods:
+            return marker
+
+        self.seen_methods.add(method)
             self.tx_workers.append(get_tx_worker_task(
                 self.event_key, self.batch_id, method))
 
@@ -319,8 +298,7 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
             insert_tasks(self.tx_workers)
             self.tx_workers = []
 
-class EventContactTxHandler(webapp2.RequestHandler):
-    """Send a message about the specified Event to the specified Contact.
+        return marker
 
     Inserts a task to write a "message sent" marker for this Event-Contact
     combination.

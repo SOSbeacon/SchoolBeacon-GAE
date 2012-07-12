@@ -2,6 +2,7 @@
 class App.SOSBeacon.Model.Group extends Backbone.Model
     idAttribute: 'key'
     urlRoot: '/service/group'
+
     defaults: ->
         return {
             key: "",
@@ -79,6 +80,13 @@ class App.SOSBeacon.View.GroupApp extends App.Skel.View.ModelApp
 class App.SOSBeacon.View.GroupListItem extends App.Skel.View.ListItemView
     template: JST['group/list']
 
+    initialize: =>
+        @events['click .students-button'] = 'viewStudents'
+
+    viewStudents: =>
+        App.Skel.Event.trigger("groupstudents:selected", @model.id, this)
+        return false
+
 
 class App.SOSBeacon.View.GroupListHeader extends App.Skel.View.ListItemHeader
     template: JST['group/listheader']
@@ -110,7 +118,7 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
                     type: 'GET'
                     dataType: 'json'
                     url: '/service/group'
-                    data: {query: query}
+                    data: {flike_name: query}
                     success: (data) ->
                         typeahead.process(data)
                 })

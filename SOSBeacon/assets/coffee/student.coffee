@@ -17,13 +17,13 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
         groups = @get('groups')
         if not _.isEmpty(groups)
             url = @groups.url + '/' + groups.join()
-            @groups.fetch({url: url})
+            @groups.fetch({url: url, async: false})
 
         @contacts = new App.SOSBeacon.Collection.ContactList()
         contacts = @get('contacts')
         if not _.isEmpty(contacts)
             url = @contacts.url + '/' + contacts.join()
-            @contacts.fetch({url: url})
+            @contacts.fetch({url: url, async: false})
 
     validate: (attrs) =>
         hasError = false
@@ -163,5 +163,27 @@ class App.SOSBeacon.View.StudentListHeader extends App.Skel.View.ListItemHeader
 class App.SOSBeacon.View.StudentList extends App.Skel.View.ListView
     itemView: App.SOSBeacon.View.StudentListItem
     headerView: App.SOSBeacon.View.StudentListHeader
+    gridFilters: null
+
+
+class App.SOSBeacon.View.SelectableStudentListHeader extends App.Skel.View.ListItemHeader
+    template: JST['student/selectable-listheader']
+
+
+class App.SOSBeacon.View.SelectableStudentListItem extends App.SOSBeacon.View.StudentListItem
+    template: JST['student/selectable-listitem']
+    className: "selectable"
+
+    events:
+        "click": "select"
+
+    select: =>
+        selected = !@model.selected
+        @$('input.selected').prop('checked', selected)
+        @model.selected = selected
+
+class App.SOSBeacon.View.SelectableStudentList extends App.SOSBeacon.View.StudentList
+    itemView: App.SOSBeacon.View.SelectableStudentListItem
+    headerView: App.SOSBeacon.View.SelectableStudentListHeader
     gridFilters: null
 

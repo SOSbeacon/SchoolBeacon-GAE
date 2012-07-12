@@ -4,6 +4,8 @@ import logging
 
 import webapp2
 
+from skel.rest_api import handler as rest_handler
+
 
 def request_query(entity, **kwargs):
     #TODO: had in other collection handling
@@ -104,13 +106,25 @@ class StudentHandler(JSONCRUDHandler):
 
         super(StudentHandler, self).__init__(Student, student_schema, *args, **kwargs)
 
-class GroupHandler(JSONCRUDHandler):
+class GroupHandler(rest_handler.RestApiHandler):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, request=None, response=None):
         from sosbeacon.group import Group
         from sosbeacon.group import group_schema
 
-        super(GroupHandler, self).__init__(Group, group_schema, *args, **kwargs)
+        super(GroupHandler, self).__init__(
+            Group, group_schema, request, response)
+
+class GroupListHandler(rest_handler.RestApiListHandler):
+
+    def __init__(self, request=None, response=None):
+        from sosbeacon.group import Group
+        from sosbeacon.group import group_schema
+        from sosbeacon.group import group_query_schema
+
+        super(GroupListHandler, self).__init__(
+            Group, group_schema, request, response,
+            query_schema=group_query_schema)
 
 class EventHandler(JSONCRUDHandler):
 
@@ -151,12 +165,12 @@ class SendEventHandler(webapp2.RequestHandler):
         )
 
         @ndb.transactional
-        def add_event_sent_audit():
+        def add_event_sent_props():
             event = event_key.get()
             event.notice_sent = True
             event.notice_sent_at = datetime.datetime.utcnow()
             #TODO: save the user that sent the event
             event.put()
 
-        add_event_sent_audit()
+        add_event_sent_props()
 

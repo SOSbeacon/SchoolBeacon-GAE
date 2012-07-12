@@ -21,6 +21,7 @@ class App.SOSBeacon.Router extends Backbone.Router
 
     routes:
         "": "showContact"
+        "groupstudents/:id": "showGroupStudents"
         "contact": "showContact"
         "student": "showStudent"
         "group": "showGroup"
@@ -53,3 +54,5 @@ class App.SOSBeacon.Router extends Backbone.Router
     showSendEvent: () =>
         @swap(App.SOSBeacon.View.PendingEventApp)
 
+    showGroupStudents: (id) =>
+        @swap(App.SOSBeacon.View.GroupStudentsApp, id)

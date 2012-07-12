@@ -29,7 +29,14 @@
         var sosbeacon = new App.SOSBeacon.Router
         Backbone.history.start();
         App.SOSBeacon.router = sosbeacon;
-        });
+
+        //setup some urls.
+        //TODO: move this to urls file?
+        App.Skel.Event.bind("groupstudents:selected", function(id) {
+          sosbeacon.showGroupStudents(id)
+          sosbeacon.navigate('groupstudents/' + id);
+        })
+      });
   </script>
 </%block>
 

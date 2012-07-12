@@ -79,7 +79,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
     indicating their membership in the event (also used to create an index
     mapping students to each contact a message is sent for).
     """
-        BATCH_SIZE = 100
+    BATCH_SIZE = 100
 
     def post(self):
         # Used to force resends of event notices.
@@ -291,8 +291,8 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
             return marker
 
         self.seen_methods.add(method)
-            self.tx_workers.append(get_tx_worker_task(
-                self.event_key, self.batch_id, method))
+        self.tx_workers.append(get_tx_worker_task(
+            self.event_key, self.batch_id, method))
 
         if len(self.tx_workers) > 10:
             insert_tasks(self.tx_workers)
@@ -300,19 +300,21 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
 
         return marker
 
-    Inserts a task to write a "message sent" marker for this Event-Contact
-    combination.
+class MethodTxHandler(webapp2.RequestHandler):
+    """Send a message about the Event to the specified Contact Method.
 
-    If the Contact has already been contacted within the specified
-    response-wait time, return without contact attempt.  Otherwise, if the
-    last contact attempt was longer than response-wait time, try the next
-    contact method.
+    After sending, a message to write a "message sent" marker for this
+    Event-Contact Method combination is inserted.
+
+    If the Contact Method has already been contacted within the specified
+    response-wait time, return without another contact attempt.  Otherwise,
+    if the last contact attempt was longer than response-wait time, try the
+    next contact method.
     """
     def post(self):
         from time import time
 
         event_key = ndb.Key(urlsafe=self.request.get('event'))
-        method_type = self.request.get('type')
         method = self.request.get('method')
 
         if not method:
@@ -322,19 +324,12 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
                 event_key.urlsafe())
             return
 
-        if not method_type:
-            # TODO: Insert failed attempt marker.
-            logging.error(
-                'Contact method type not provided, trying to notify %s for '
-                'Event %s!', method, event_key.urlsafe())
-            return
-
-        logging.debug('Notifying Contact %s of Event %s.',
+        logging.debug('Notifying Contact Method %s of Event %s.',
                       method, event_key)
 
         event = event_key.get()
         if not event:
-            logging.error('Event %s not found, notifying Contact %s!',
+            logging.error('Event %s not found, notifying Contact Method %s!',
                           event_key, method)
             return
 

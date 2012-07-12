@@ -30,11 +30,15 @@ if libs_dir not in sys.path:
 import webapp2
 
 url_map = [
-    ('.*/group/?(.*)', 'sosbeacon.service.GroupHandler'),
     ('.*/contact/?(.*)', 'sosbeacon.service.ContactHandler'),
     ('.*/student/?(.*)', 'sosbeacon.service.StudentHandler'),
     ('.*/event/send', 'sosbeacon.service.SendEventHandler'),
     ('.*/event/?(.*)', 'sosbeacon.service.EventHandler'),
+
+    webapp2.Route(r'/service/group/<resource_id:.+>',
+        handler='sosbeacon.service.GroupHandler'),
+    webapp2.Route(r'/service/group<:/?>',
+        handler='sosbeacon.service.GroupListHandler'),
 ]
 
 app = webapp2.WSGIApplication(url_map)

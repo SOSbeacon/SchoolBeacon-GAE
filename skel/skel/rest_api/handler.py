@@ -178,7 +178,7 @@ class RestQueryFilters(object):
         self.filters = {
             'eq': self._add_equality_filter,
             'like': self._add_like_filter,
-            'gt': self._add_greater_than_filter,
+            'gt': self._add_greater_than_filter
         }
 
     def get(self, query, query_filter, prop, val):

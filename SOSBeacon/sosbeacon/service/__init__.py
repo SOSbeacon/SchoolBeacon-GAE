@@ -171,13 +171,3 @@ class SendEventHandler(webapp2.RequestHandler):
 
         mark_as_sent()
 
-        @ndb.transactional
-        def add_event_sent_audit():
-            event = event_key.get()
-            event.notice_sent = True
-            event.notice_sent_at = datetime.datetime.utcnow()
-            #TODO: save the user that sent the event
-            event.put()
-
-        add_event_sent_audit()
-

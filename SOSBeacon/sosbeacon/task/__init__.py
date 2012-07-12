@@ -190,7 +190,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
             if not methods:
                 continue
 
-            method = methods.pop()['value']
+            method = methods.pop(0)['value']
             if not method:
                 continue
 

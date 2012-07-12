@@ -137,9 +137,14 @@ class MethodMarker(EntityBase):
 
         self.last_try = max(self.last_try, other.last_try)
 
-        students = set(self.students if self.students else ())
-        other_students = set(other.students if other.students else ())
-        self.students = list(students | other_students)
+        students = set()
+        if self.students:
+            for student, methods in self.students:
+                students.add((student, tuple(methods)))
+        if other.students:
+            for student, methods in other.students:
+                students.add((student, tuple(methods)))
+        self.students = list(students)
         return self
 
 

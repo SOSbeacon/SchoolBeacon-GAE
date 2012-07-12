@@ -354,20 +354,22 @@ class MethodTxHandler(webapp2.RequestHandler):
 
 
 class EventUpdateHandler(webapp2.RequestHandler):
-    """Handle operations on the event entity group.
+    """Handle applying changes to the event entity group.
 
-    This includes updating counts, managing acknowledgments, and retries.
+    This includes updating counts, managing acknowledgments, and retries, and
+    also applying changes to the student-method entities.
     """
     def post(self):
         # Max number of work-units to process in one go, and how long to lease.
         BATCH_SIZE = 500
         LEASE_SECONDS = 45
 
-        event_key = ndb.Key(urlsafe=self.request.get('event'))
+        event_urlsafe = self.request.get('event')
+        event_key = ndb.Key(urlsafe=event_urlsafe)
 
         update_queue = taskqueue.Queue(name=EVENT_UPDATE_QUEUE)
         updates = update_queue.lease_tasks_by_tag(LEASE_SECONDS, BATCH_SIZE,
-                                                  tag=event_key.urlsafe())
+                                                  tag=event_urlsafe)
 
         count_updates = {
             'contacts': 0,
@@ -407,6 +409,12 @@ class EventUpdateHandler(webapp2.RequestHandler):
                 )
                 workers.append(get_try_next_contact_task(
                     event_key.urlsafe, method))
+            elif update['type'] == 'idx':
+                student_info = (update['student'], update['contacts'])
+                marker = MethodMarker(
+                    key=marker_key,
+                    students=(student_info,)
+                )
 
             if marker_key in marker_map:
                 marker_map[marker_key].merge(marker)
@@ -429,7 +437,7 @@ class EventUpdateHandler(webapp2.RequestHandler):
 
 @ndb.transactional
 def event_update(event_key, count_updates, marker_map):
-    """Apply the given updates to an Event and its associated ContactMarkers
+    """Apply the given updates to an Event and its associated MethodMarkers
     and StudentMarkers.
     """
     keys = marker_map.keys()
@@ -437,7 +445,7 @@ def event_update(event_key, count_updates, marker_map):
 
     marker_entities = ndb.get_multi(keys)
     event = marker_entities.pop()
-    keys.pop() # Discard event key for loop...
+    keys.pop() # Discard event key so for loop works...
 
     event.student_count += count_updates['students']
     event.contact_count += count_updates['contacts']

@@ -121,7 +121,7 @@ class MethodMarker(EntityBase):
     acknowledged_at = ndb.IntegerProperty('at', indexed=False)
 
     last_try = ndb.IntegerProperty('t', indexed=False, default=0)
-    students = ndb.KeyProperty('s', indexed=True, repeated=True)
+    students = ndb.JsonProperty('s', indexed=False)
 
     # This method is considered failed, suggest trying next method.
     try_next = ndb.BooleanProperty('n', default=False)

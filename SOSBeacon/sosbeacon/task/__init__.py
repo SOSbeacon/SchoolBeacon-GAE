@@ -117,7 +117,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
         # We want to start sending notices ASAP, so insert tx workers for each
         # contact, and a marker for the student-contact index here.  The
         # relationship index can be updated after sending the message.
-        self.seen_contacts = set()
+        self.seen_methods = set()
         self.tx_workers = []
         student_markers = []
         for student in students:
@@ -135,7 +135,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
 
         update_event_counts(
             event_key, group_urlsafe, iteration,
-            contact_count=len(self.seen_contacts),
+            contact_count=len(self.seen_methods),
             student_count=len(students))
 
     def _get_students(self):
@@ -191,12 +191,12 @@ class EventGroupTxHandler(webapp2.RequestHandler):
                 continue
 
             markers.append(get_student_marker_task(
-                self.event_key, self.batch_id, method, contact.methods[1:]))
+                self.event_key, self.batch_id, student.key, contact.methods[1:]))
 
-            if method in self.seen_contacts:
+            if method in self.seen_methods:
                 continue
 
-            self.seen_contacts.add(method)
+            self.seen_methods.add(method)
             self.tx_workers.append(get_tx_worker_task(
                 self.event_key, self.batch_id, method))
 

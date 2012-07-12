@@ -47,6 +47,8 @@ class Event(EntityBase):
     acknowledged_count = ndb.IntegerProperty('ac', default=0, indexed=False)
 
     notify_primary_only = ndb.BooleanProperty('po', indexed=False, default=False)
+    who_to_notify = ndb.StringProperty('who', indexed=False, default='')
+
     response_wait_seconds = ndb.IntegerProperty(default=3600, indexed=False)
 
     notice_sent_by = ndb.UserProperty('nsb')
@@ -134,7 +136,10 @@ class MethodMarker(EntityBase):
             other.acknowledged_at or self.acknowledged_at)
 
         self.last_try = max(self.last_try, other.last_try)
-        self.students = list(set(self.students) + set(other.students))
+
+        students = set(self.students if self.students else ())
+        other_students = set(other.students if other.students else ())
+        self.students = list(students | other_students)
         return self
 
 
@@ -153,6 +158,9 @@ class StudentMarker(EntityBase):
 def update_event_counts(event_key, group_key, group_iter,
                         contact_count, student_count):
     """Insert a task to apply count updates to the given event."""
+    if isinstance(event_key, ndb.Key):
+        event_key = event_key.urlsafe()
+
     task = taskqueue.Task(
         method="PULL",
         tag=event_key,
@@ -173,6 +181,9 @@ def try_next_contact_method(event_key, method, when):
     """Insert a task indicating the next contact method for contacts with
     method should be tried.
     """
+    if isinstance(event_key, ndb.Key):
+        event_key = event_key.urlsafe()
+
     task = taskqueue.Task(
         method="PULL",
         tag=event_key,
@@ -186,8 +197,64 @@ def try_next_contact_method(event_key, method, when):
     insert_tasks((task,), EVENT_UPDATE_QUEUE)
     insert_event_updator(ndb.Key(urlsafe=event_key))
 
+
+def set_student_method_marker(event_key, method, student, methods):
+    """Insert a task indicating the next contact method that should be tried
+    for each student-contact.
+    """
+    if isinstance(event_key, ndb.Key):
+        event_key = event_key.urlsafe()
+
+    if isinstance(student, ndb.Key):
+        student = student.urlsafe()
+
+    task = taskqueue.Task(
+        method="PULL",
+        tag=event_key,
+        params={
+            'type': "idx",
+            'event': event_key,
+            'method': method,
+            'student': student,
+            'methods': methods
+        }
+    )
+    return task
+
+
+def get_tx_worker_task(event_key, batch_id, method):
+    """Get a task to send the notification to method."""
+    task = taskqueue.Task(
+        method="POST",
+        url='/task/event/tx/method',
+        name="tx-%s-%s-%s" % (event_key.id(), batch_id, method),
+        params={
+            'event': event_key.urlsafe(),
+            'method': method,
+        }
+    )
+    return task
+
+
+def get_try_next_method_task(event_key, batch_id, method):
+    """Get a task to try sending notifications to the next contact method."""
+    task = taskqueue.Task(
+        method="POST",
+        url='/task/event/method/next',
+        name="ntx-%s-%s-%s" % (event_key.id(), batch_id, method),
+        params={
+            'event': event_key,
+            'batch': batch_id,
+            'method': method,
+        }
+    )
+    return task
+
 def update_event_contact(event_key, method, when):
     """Insert a task containing contact method details."""
+    if isinstance(event_key, ndb.Key):
+        event_key = event_key.urlsafe()
+
     task = taskqueue.Task(
         method="PULL",
         tag=event_key,
@@ -244,8 +311,12 @@ def insert_event_updator(event_key):
     memcache.set(name, True)
 
 
-def send_notification(event, contact, next_contact_method):
+def send_notification(event, method):
     """Notify a contact of event information"""
+    import logging
+    logging.info('Sending notice to: %s.', method)
+    return
+
     import settings
     #TODO: enable twilio integration.
     #from twilio.rest import TwilioRestClient

@@ -1,7 +1,9 @@
 from google.appengine.ext import ndb
 
-from . import EntityBase
+import voluptuous
 
+from skel.datastore import EntityBase
+from skel.rest_api.rules import RestQueryRule
 
 contact_schema = {
     'key': basestring,
@@ -10,8 +12,19 @@ contact_schema = {
     'methods': list
 }
 
+contact_query_schema = {
+    'flike_name': basestring,
+    'feq_students': voluptuous.any('', voluptuous.ndbkey())
+}
+
 class Contact(EntityBase):
     """Represents a contact."""
+
+    _query_properties = {
+        'name': RestQueryRule('name_', lambda x: x.lower()),
+        'students': RestQueryRule('students', lambda x: None if x == '' else x)
+    }
+
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
@@ -20,6 +33,10 @@ class Contact(EntityBase):
 
     students = ndb.KeyProperty('s', repeated=True)
     methods = ndb.JsonProperty('m')
+
+    def _pre_put_hook(self):
+        """Ran before the entity is written to the datastore."""
+        self.revision += 1
 
     @classmethod
     def from_dict(cls, data):

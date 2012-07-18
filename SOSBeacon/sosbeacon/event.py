@@ -9,7 +9,9 @@ import voluptuous
 
 from sosbeacon.utils import insert_tasks
 
-from . import EntityBase
+from skel.datastore import EntityBase
+from skel.rest_api.rules import RestQueryRule
+
 
 BATCH_SECONDS = 5
 EVENT_UPDATE_QUEUE = "event-up"
@@ -37,8 +39,20 @@ event_schema = {
     'response_wait_seconds': int,
 }
 
+event_query_schema = {
+    'flike_title': basestring,
+    'feq_active': voluptuous.boolean(),
+    'feq_groups': voluptuous.any('', voluptuous.ndbkey())
+}
+
 class Event(EntityBase):
     """Represents a event."""
+
+    _query_properties = {
+        'title': RestQueryRule('title_', lambda x: x.lower()),
+        'groups': RestQueryRule('groups', lambda x: None if x == '' else x)
+    }
+
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
@@ -64,6 +78,10 @@ class Event(EntityBase):
     detail = ndb.TextProperty('d')
 
     groups = ndb.KeyProperty('g', repeated=True)
+
+    def _pre_put_hook(self):
+        """Ran before the entity is written to the datastore."""
+        self.revision += 1
 
     @classmethod
     def from_dict(cls, data):

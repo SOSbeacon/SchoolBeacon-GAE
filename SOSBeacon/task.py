@@ -17,8 +17,9 @@ import webapp2
 url_map = [
     ('.*/event/tx/start', 'sosbeacon.task.EventStartTxHandler'),
     ('.*/event/tx/group', 'sosbeacon.task.EventGroupTxHandler'),
-    ('.*/event/tx/contact', 'sosbeacon.task.EventContactTxHandler'),
+    ('.*/event/tx/method', 'sosbeacon.task.MethodTxHandler'),
     ('.*/event/update', 'sosbeacon.task.EventUpdateHandler'),
+    ('.*/event/method/next', 'sosbeacon.task.TryNextMethodTxHandler'),
 ]
 
 app = webapp2.WSGIApplication(url_map)

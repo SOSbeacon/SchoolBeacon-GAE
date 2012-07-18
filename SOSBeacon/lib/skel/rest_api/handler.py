@@ -76,14 +76,19 @@ class RestApiHandler(RestApiSaveHandler):
     def get(self, resource_id, *args, **kwargs):
         from google.appengine.ext import ndb
 
-        key = ndb.Key(urlsafe=resource_id)
-        resource = key.get()
-
-        if not resource:
-            self.error(404)
-            response = {}
+        if ',' in resource_id:
+            #assume this is a list of keys
+            keys = [ndb.Key(urlsafe=keystr) for keystr in resource_id.split(',')]
+            response = [entity.to_dict() for entity in ndb.get_multi(keys)]
         else:
-            response = resource.to_dict()
+            key = ndb.Key(urlsafe=resource_id)
+            resource = key.get()
+
+            if not resource:
+                self.error(404)
+                response = {}
+            else:
+                response = resource.to_dict()
 
         self.write_json_response(response)
 

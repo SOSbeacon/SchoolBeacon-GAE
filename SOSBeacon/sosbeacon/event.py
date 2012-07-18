@@ -42,9 +42,13 @@ class Event(EntityBase):
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
-    contact_count = ndb.IntegerProperty(default=0, indexed=False)
-    acknowledged_count = ndb.IntegerProperty(default=0, indexed=False)
+    student_count = ndb.IntegerProperty('sc', default=0, indexed=False)
+    contact_count = ndb.IntegerProperty('cc', default=0, indexed=False)
+    acknowledged_count = ndb.IntegerProperty('ac', default=0, indexed=False)
+
     notify_primary_only = ndb.BooleanProperty('po', indexed=False, default=False)
+    who_to_notify = ndb.StringProperty('who', indexed=False, default='')
+
     response_wait_seconds = ndb.IntegerProperty(default=3600, indexed=False)
 
     notice_sent_by = ndb.UserProperty('nsb')
@@ -100,15 +104,17 @@ class Event(EntityBase):
         event['detail'] = self.detail
         event['groups'] = [key.urlsafe() for key in self.groups]
 
-        event['contact_count'] = self.contact_count
-        event['acknowledged_count'] = self.acknowledged_count
         event['notify_primary_only'] = self.notify_primary_only
         event['response_wait_seconds'] = self.response_wait_seconds
+
+        event['student_count'] = self.student_count
+        event['contact_count'] = self.contact_count
+        event['acknowledged_count'] = self.acknowledged_count
 
         return event
 
 
-class EventMarker(EntityBase):
+class MethodMarker(EntityBase):
     """Used to store Contact-Events tx / view metadata."""
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
@@ -117,23 +123,49 @@ class EventMarker(EntityBase):
     acknowledged_at = ndb.IntegerProperty('at', indexed=False)
 
     last_try = ndb.IntegerProperty('t', indexed=False, default=0)
-    last_contact_method = ndb.IntegerProperty('m', indexed=False, default=-1)
+    students = ndb.JsonProperty('s', indexed=False)
+
+    # This method is considered failed, suggest trying next method.
+    try_next = ndb.BooleanProperty('n', default=False)
 
     def merge(self, other):
-        """Merge this EventMarker entity with another EventMarker."""
+        """Merge this MethodMarker entity with another MethodMarker."""
         self.acknowledged = max(self.acknowledged, other.acknowledged)
         self.acknowledged_at = min(
             self.acknowledged_at or other.acknowledged_at,
             other.acknowledged_at or self.acknowledged_at)
 
         self.last_try = max(self.last_try, other.last_try)
-        self.last_contact_method = max(self.last_contact_method,
-                                       other.last_contact_method)
+
+        students = set()
+        if self.students:
+            for student, methods in self.students:
+                students.add((student, tuple(methods)))
+        if other.students:
+            for student, methods in other.students:
+                students.add((student, tuple(methods)))
+        self.students = list(students)
         return self
 
 
-def update_contact_counts(event_key, contact_count, group_key, group_task_no):
+class StudentMarker(EntityBase):
+    """Used to store Student-Events tx / ack metadata."""
+    # Store the schema version, to aid in migrations.
+    version_ = ndb.IntegerProperty('v_', default=1)
+
+    name = ndb.StringProperty('n', indexed=False)
+    contacts = ndb.JsonProperty('c')
+
+    all_acknowledged = ndb.BooleanProperty('a', default=False)
+    all_acknowledged_at = ndb.IntegerProperty('at', indexed=False)
+
+
+def update_event_counts(event_key, group_key, group_iter,
+                        contact_count, student_count):
     """Insert a task to apply count updates to the given event."""
+    if isinstance(event_key, ndb.Key):
+        event_key = event_key.urlsafe()
+
     task = taskqueue.Task(
         method="PULL",
         tag=event_key,
@@ -141,24 +173,29 @@ def update_contact_counts(event_key, contact_count, group_key, group_task_no):
             'type': "cnt",
             'event': event_key,
             'contact_count': contact_count,
+            'student_count': student_count,
             'group': group_key,
-            'task_no': group_task_no
+            'iter': group_iter
         }
     )
     insert_tasks((task,), EVENT_UPDATE_QUEUE)
     insert_event_updator(ndb.Key(urlsafe=event_key))
 
 
-def update_event_contact(event_key, contact_key, contact_method, when):
-    """Insert a task containing contact method details."""
+def try_next_contact_method(event_key, method, when):
+    """Insert a task indicating the next contact method for contacts with
+    method should be tried.
+    """
+    if isinstance(event_key, ndb.Key):
+        event_key = event_key.urlsafe()
+
     task = taskqueue.Task(
         method="PULL",
         tag=event_key,
         params={
-            'type': "tx",
+            'type': "ntxm",
             'event': event_key,
-            'contact': contact_key,
-            'method': contact_method,
+            'method': method,
             'when': when
         }
     )
@@ -166,9 +203,83 @@ def update_event_contact(event_key, contact_key, contact_method, when):
     insert_event_updator(ndb.Key(urlsafe=event_key))
 
 
-def acknowledge_event(event_key, contact_key):
+def set_student_method_marker(event_key, method, student, methods):
+    """Insert a task indicating the next contact method that should be tried
+    for each student-contact.
+    """
+    import json
+    if isinstance(event_key, ndb.Key):
+        event_key = event_key.urlsafe()
+
+    if isinstance(student, ndb.Key):
+        student = student.urlsafe()
+
+    task = taskqueue.Task(
+        method="PULL",
+        tag=event_key,
+        params={
+            'type': "idx",
+            'event': event_key,
+            'method': method,
+            'student': student,
+            'methods': json.dumps(methods)
+        }
+    )
+    return task
+
+
+def get_tx_worker_task(event_key, batch_id, method):
+    """Get a task to send the notification to method."""
+    import hashlib
+    task = taskqueue.Task(
+        method="POST",
+        url='/task/event/tx/method',
+        name="tx-%s-%s-%s" % (event_key.id(), batch_id, hashlib.sha1(method).hexdigest()),
+        params={
+            'event': event_key.urlsafe(),
+            'method': method,
+        }
+    )
+    return task
+
+
+def get_try_next_method_task(event_urlsafe, batch_id, method):
+    """Get a task to try sending notifications to the next contact method."""
+    import hashlib
+    task = taskqueue.Task(
+        method="POST",
+        url='/task/event/method/next',
+        name="ntx-%s-%s-%s" % (event_urlsafe, batch_id, hashlib.sha1(method).hexdigest()),
+        params={
+            'event': event_urlsafe,
+            'batch': batch_id,
+            'method': method,
+        }
+    )
+    return task
+
+def update_event_contact(event_key, method, when):
+    """Insert a task containing contact method details."""
+    if isinstance(event_key, ndb.Key):
+        event_key = event_key.urlsafe()
+
+    task = taskqueue.Task(
+        method="PULL",
+        tag=event_key,
+        params={
+            'type': "tx",
+            'event': event_key,
+            'method': method,
+            'when': when
+        }
+    )
+    insert_tasks((task,), EVENT_UPDATE_QUEUE)
+    insert_event_updator(ndb.Key(urlsafe=event_key))
+
+
+def acknowledge_event(event_key, method):
     """Insert a task to acknowledge an event for the given contact."""
-    ack_marker_key = "rx:%s:%s" % (event_key.id(), contact_key.id())
+    ack_marker_key = "rx:%s:%s" % (event_key.id(), method)
     seen = memcache.get(ack_marker_key)
     if seen:
         return
@@ -179,7 +290,7 @@ def acknowledge_event(event_key, contact_key):
         params={
             'type': 'ack',
             'event': event_key.urlsafe(),
-            'contact': contact_key.urlsafe(),
+            'method': method,
             'when': int(time.time())
         }
     )
@@ -208,15 +319,34 @@ def insert_event_updator(event_key):
     memcache.set(name, True)
 
 
-def notify_contact(event, contact, next_contact_method):
+def send_notification(event, method):
     """Notify a contact of event information"""
-    import settings
-    #TODO: enable twilio integration.
-    #from twilio.rest import TwilioRestClient
+    import logging
+    #return
 
-    #client = TwilioRestClient(settings.TWILIO_ACCOUNT, settings.TWILIO_TOKEN)
-    #message = client.sms.messages.create(
-        #to="+15154607935", from_="+14155992671", body=event.detail)
+    import settings
+
+    #TODO: enable twilio integration.
+    if '@' not in method:
+        logging.info('Sending notice to %s via twilio.', method)
+        from twilio.rest import TwilioRestClient
+
+        client = TwilioRestClient(settings.TWILIO_ACCOUNT, settings.TWILIO_TOKEN)
+        message = client.sms.messages.create(
+            to="+%s" % (method), from_="+14155992671", body=event.summary)
+        return
+
+
+    logging.info('Sending notice to %s via mail api.', method)
+    from google.appengine.api import mail
+
+    message = mail.EmailMessage(sender="SOS Beacon <robert.kluin@ezoxsystems.com>",
+                                        subject=event.title)
+
+    message.to = method
+    message.body = event.detail
+
+    message.send()
 
     #TODO: enable sendgrid integration
     #TODO: it might make sense to group emails as we can add more than one to

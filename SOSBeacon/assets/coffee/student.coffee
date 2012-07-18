@@ -12,18 +12,16 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
             notes: "",
         }
 
-    initialize: () ->
+    initialize: =>
         @groups = new App.SOSBeacon.Collection.GroupList()
         groups = @get('groups')
         if not _.isEmpty(groups)
             url = @groups.url + '/' + groups.join()
-            @groups.fetch({url: url})
+            @groups.fetch({url: url, async: false})
 
-        @contacts = new App.SOSBeacon.Collection.ContactList()
-        contacts = @get('contacts')
-        if not _.isEmpty(contacts)
-            url = @contacts.url + '/' + contacts.join()
-            @contacts.fetch({url: url})
+        @contacts = @nestCollection(
+            'contacts',
+            new App.SOSBeacon.Collection.ContactList(@get('contacts')))
 
     validate: (attrs) =>
         hasError = false
@@ -69,18 +67,18 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
             groupList.push(group.id)
         )
 
-        contactList = []
         @model.contacts.each((contact) ->
-            contactList.push(contact.id)
+            contact.editView.close()
         )
 
-        @model.save(
+        @model.save({
             name: @$('input.name').val()
             identifier: @$('input.identifier').val()
             groups: groupList
-            contacts: contactList
             notes: $.trim(@$('textarea.notes').val())
-        )
+        }, {
+            error: App.Util.Form.processErrors
+        })
 
         return super()
 
@@ -93,9 +91,11 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
             el.find('fieldset.groups').append(editView.render().el)
         )
 
+        contactList = @$('ul.contacts')
         @model.contacts.each((contact, i) ->
-            editView = new App.SOSBeacon.View.ContactSelect({model: contact})
-            el.find('fieldset.contacts').append(editView.render().el)
+            editView = new App.SOSBeacon.View.ContactEdit({model: contact})
+            contact.editView = editView
+            contactList.append(editView.render().el)
         )
 
         return super(asModal)
@@ -113,14 +113,16 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         return false
 
     addContact: () =>
-        editView = new App.SOSBeacon.View.ContactSelect(
-            model: new @model.contacts.model()
-            contactCollection: @model.contacts
-        )
-        rendered = editView.render()
-        @$el.find('fieldset.contacts').append(rendered.el)
+        contact = new @model.contacts.model()
+        @model.contacts.add(contact)
 
-        rendered.$el.find('input.contact').focus()
+        editView = new App.SOSBeacon.View.ContactEdit(
+            model: new @model.contacts.model())
+        contact.editView = editView
+        rendered = editView.render()
+        @$('ul.contacts').append(rendered.el)
+
+        rendered.$el.find('input.name').focus()
 
         return false
 
@@ -163,5 +165,27 @@ class App.SOSBeacon.View.StudentListHeader extends App.Skel.View.ListItemHeader
 class App.SOSBeacon.View.StudentList extends App.Skel.View.ListView
     itemView: App.SOSBeacon.View.StudentListItem
     headerView: App.SOSBeacon.View.StudentListHeader
+    gridFilters: null
+
+
+class App.SOSBeacon.View.SelectableStudentListHeader extends App.Skel.View.ListItemHeader
+    template: JST['student/selectable-listheader']
+
+
+class App.SOSBeacon.View.SelectableStudentListItem extends App.SOSBeacon.View.StudentListItem
+    template: JST['student/selectable-listitem']
+    className: "selectable"
+
+    events:
+        "click": "select"
+
+    select: =>
+        selected = !@model.selected
+        @$('input.selected').prop('checked', selected)
+        @model.selected = selected
+
+class App.SOSBeacon.View.SelectableStudentList extends App.SOSBeacon.View.StudentList
+    itemView: App.SOSBeacon.View.SelectableStudentListItem
+    headerView: App.SOSBeacon.View.SelectableStudentListHeader
     gridFilters: null
 

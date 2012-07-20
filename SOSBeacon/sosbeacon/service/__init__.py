@@ -7,67 +7,13 @@ import webapp2
 from skel.rest_api import handler as rest_handler
 
 
-def request_query(entity, **kwargs):
-    #TODO: had in other collection handling
-    user_query = kwargs.get('query')
-    query_filter = kwargs.get('filter', "name_")
-    limit = int(kwargs.get('limit', 10))
+class ProcessMixin(object):
 
-    query = entity.query()
-
-    if user_query:
-        filter_property = getattr(entity, query_filter)
-        search = user_query.strip().lower()
-        query = query.filter(filter_property >= search)
-        query = query.filter(filter_property < search + u"\uFFFD")
-
-    if limit > 0:
-        query = query.fetch(limit)
-
-    return [entity.to_dict() for entity in query]
-
-
-class JSONCRUDHandler(webapp2.RequestHandler):
-
-    def __init__(self, entity, schema, *args, **kwargs):
-        super(JSONCRUDHandler, self).__init__(*args, **kwargs)
-
-        self.entity = entity
-        self.schema = schema
-
-    def get(self, args):
-        if not args:
-            entities = list(request_query(self.entity, **self.request.params))
-        else:
-            from google.appengine.ext import ndb
-            keys = [ndb.Key(urlsafe=key) for key in args.split(',')]
-            entities = [entity.to_dict() if entity else None
-                        for entity in ndb.get_multi(keys)]
-
-        self.response.out.write(json.dumps(entities))
-
-    def delete(self, args):
-        from google.appengine.ext import ndb
-
-        urlsafe = self.request.path.rsplit('/', 1)[-1]
-        if not urlsafe:
-            return
-
-        ndb.Key(urlsafe=urlsafe).delete()
-        logging.info("Deleted %s with key: %s", self.entity, urlsafe)
-
-    def post(self, args):
-        self.process(args)
-
-    def put(self, args):
-        self.process(args)
-
-    def process(self, args):
+    def process(self, resource_id=None, *arg, **kwrgs):
         from voluptuous import Schema
 
         obj = json.loads(self.request.body)
         schema = Schema(self.schema, extra=True)
-
         try:
             obj = schema(obj)
         except:
@@ -81,32 +27,73 @@ class JSONCRUDHandler(webapp2.RequestHandler):
         self.response.out.write(json.dumps(out))
 
 
-class PersonHandler(JSONCRUDHandler):
+class PersonHandler(rest_handler.RestApiHandler, ProcessMixin):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, request, response):
         from sosbeacon.person import Person
         from sosbeacon.person import person_schema
 
-        super(PersonHandler, self).__init__(Person, person_schema, *args, **kwargs)
+        super(PersonHandler, self).__init__(
+            Person, person_schema, request, response)
 
 
-class ContactHandler(JSONCRUDHandler):
+class PersonListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, request, response):
+        from sosbeacon.person import Person
+        from sosbeacon.person import person_schema
+        from sosbeacon.person import person_query_schema
+
+        super(PersonListHandler, self).__init__(
+            Person, person_schema, request, response,
+            query_schema=person_query_schema)
+
+
+class ContactHandler(rest_handler.RestApiHandler, ProcessMixin):
+
+    def __init__(self, request, response):
         from sosbeacon.contact import Contact
         from sosbeacon.contact import contact_schema
 
-        super(ContactHandler, self).__init__(Contact, contact_schema, *args, **kwargs)
+        super(ContactHandler, self).__init__(
+            Contact, contact_schema, request, response)
 
-class StudentHandler(JSONCRUDHandler):
 
-    def __init__(self, *args, **kwargs):
+class ContactListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+
+    def __init__(self, request, response):
+        from sosbeacon.contact import Contact
+        from sosbeacon.contact import contact_schema
+        from sosbeacon.contact import contact_query_schema
+
+        super(ContactListHandler, self).__init__(
+            Contact, contact_schema, request, response,
+            query_schema=contact_query_schema)
+
+
+class StudentHandler(rest_handler.RestApiHandler, ProcessMixin):
+
+    def __init__(self, request, response):
         from sosbeacon.student import Student
         from sosbeacon.student import student_schema
 
-        super(StudentHandler, self).__init__(Student, student_schema, *args, **kwargs)
+        super(StudentHandler, self).__init__(
+            Student, student_schema, request, response)
 
-class GroupHandler(rest_handler.RestApiHandler):
+
+class StudentListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+
+    def __init__(self, request, response):
+        from sosbeacon.student import Student
+        from sosbeacon.student import student_schema
+        from sosbeacon.student import student_query_schema
+
+        super(StudentListHandler, self).__init__(
+            Student, student_schema, request, response,
+            query_schema=student_query_schema)
+
+
+class GroupHandler(rest_handler.RestApiHandler, ProcessMixin):
 
     def __init__(self, request=None, response=None):
         from sosbeacon.group import Group
@@ -115,7 +102,8 @@ class GroupHandler(rest_handler.RestApiHandler):
         super(GroupHandler, self).__init__(
             Group, group_schema, request, response)
 
-class GroupListHandler(rest_handler.RestApiListHandler):
+
+class GroupListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
     def __init__(self, request=None, response=None):
         from sosbeacon.group import Group
@@ -126,29 +114,45 @@ class GroupListHandler(rest_handler.RestApiListHandler):
             Group, group_schema, request, response,
             query_schema=group_query_schema)
 
-class EventHandler(JSONCRUDHandler):
 
-    def __init__(self, *args, **kwargs):
+class EventHandler(rest_handler.RestApiHandler):
+
+    def __init__(self, request, response):
         from sosbeacon.event import Event
         from sosbeacon.event import event_schema
 
         # TODO: Lock event (or restrict some fields) if sending is in progress?
-        super(EventHandler, self).__init__(Event, event_schema, *args, **kwargs)
+        super(EventHandler, self).__init__(
+            Event, event_schema, request, response)
 
-    def get(self, args):
-        if not args:
-            context = {}
-            context.update(self.request.params)
-            context['filter'] = "title_"
 
-            entities = list(request_query(self.entity, **context))
-        else:
-            from google.appengine.ext import ndb
-            keys = [ndb.Key(urlsafe=key) for key in args.split(',')]
-            entities = [entity.to_dict() if entity else None
-                        for entity in ndb.get_multi(keys)]
+class EventListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
-        self.response.out.write(json.dumps(entities))
+    def __init__(self, request, response):
+        from sosbeacon.event import Event
+        from sosbeacon.event import event_schema
+        from sosbeacon.event import event_query_schema
+
+        # TODO: Lock event (or restrict some fields) if sending is in progress?
+        super(EventListHandler, self).__init__(
+            Event, event_schema, request, response,
+            query_schema=event_query_schema)
+
+
+    #def get(self, args):
+        #if not args:
+            #context = {}
+            #context.update(self.request.params)
+            #context['filter'] = "title_"
+
+            #entities = list(request_query(self.entity, **context))
+        #else:
+            #from google.appengine.ext import ndb
+            #keys = [ndb.Key(urlsafe=key) for key in args.split(',')]
+            #entities = [entity.to_dict() if entity else None
+                        #for entity in ndb.get_multi(keys)]
+
+        #self.response.out.write(json.dumps(entities))
 
 class SendEventHandler(webapp2.RequestHandler):
     def post(self):

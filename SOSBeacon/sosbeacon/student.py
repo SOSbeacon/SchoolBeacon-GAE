@@ -27,7 +27,7 @@ class Student(EntityBase):
     """Represents a student."""
 
     _query_properties = {
-        'name': RestQueryRule('name_', lambda x: x.lower()),
+        'name': RestQueryRule('name_', lambda x: x.lower() if x else ''),
         'groups': RestQueryRule('groups', lambda x: None if x == '' else x)
     }
 

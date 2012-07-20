@@ -39,9 +39,23 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
             return errors
 
 
-class App.SOSBeacon.Collection.StudentList extends Backbone.Collection
-    url: '/service/student'
+class App.SOSBeacon.Collection.StudentList extends Backbone.Paginator.requestPager
     model: App.SOSBeacon.Model.Student
+
+    paginator_core: {
+        type: 'GET',
+        dataType: 'json'
+        url: '/service/student'
+    }
+
+    paginator_ui: {
+        firstPage: 0
+        currentPage: 0
+        perPage: 100
+        totalPages: 100
+    }
+
+    server_api: {}
 
 
 class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
@@ -151,8 +165,6 @@ class App.SOSBeacon.View.StudentApp extends App.Skel.View.ModelApp
         @collection = new App.SOSBeacon.Collection.StudentList()
         @listView = new App.SOSBeacon.View.StudentList(@collection)
 
-        @collection.fetch()
-
 
 class App.SOSBeacon.View.StudentListItem extends App.Skel.View.ListItemView
     template: JST['student/list']
@@ -166,6 +178,21 @@ class App.SOSBeacon.View.StudentList extends App.Skel.View.ListView
     itemView: App.SOSBeacon.View.StudentListItem
     headerView: App.SOSBeacon.View.StudentListHeader
     gridFilters: null
+
+    initialize: (collection) =>
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Name'
+                type: 'text'
+                prop: 'flike_name'
+                default: false
+                control: App.Ui.Datagrid.InputFilter
+            }
+        ))
+
+        super(collection)
 
 
 class App.SOSBeacon.View.SelectableStudentListHeader extends App.Skel.View.ListItemHeader

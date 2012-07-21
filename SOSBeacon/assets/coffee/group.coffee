@@ -125,3 +125,28 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
         })
         return this
 
+
+class App.SOSBeacon.View.GroupTypeahaedFilter extends App.Ui.Datagrid.TypeaheadFilter
+
+    render: =>
+        @$el.html(@template(@model.toJSON()))
+
+        @$('input.filter-input').typeahead({
+            value_property: 'name'
+            updater: (item) =>
+                @value = item.key
+                return item.name
+            matcher: (item) ->
+                return true
+            source: (typeahead, query) =>
+                $.ajax({
+                    type: 'GET'
+                    dataType: 'json'
+                    url: '/service/group'
+                    data: {flike_name: query}
+                    success: (data) ->
+                        typeahead.process(data)
+                })
+        })
+            
+        return this

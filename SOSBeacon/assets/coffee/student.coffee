@@ -192,6 +192,16 @@ class App.SOSBeacon.View.StudentList extends App.Skel.View.ListView
             }
         ))
 
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Group'
+                type: 'text'
+                prop: 'feq_groups'
+                default: false
+                control: App.SOSBeacon.View.GroupTypeahaedFilter
+            }
+        ))
+
         super(collection)
 
 

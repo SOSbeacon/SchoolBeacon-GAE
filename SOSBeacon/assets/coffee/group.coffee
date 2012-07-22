@@ -25,6 +25,7 @@ class App.SOSBeacon.Model.Group extends Backbone.Model
 
 class App.SOSBeacon.Collection.GroupList extends Backbone.Paginator.requestPager
     model: App.SOSBeacon.Model.Group
+    url: '/service/group'
 
     paginator_core: {
         type: 'GET',

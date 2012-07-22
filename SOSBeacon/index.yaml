@@ -10,6 +10,22 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: Event
+  properties:
+  - name: a
+  - name: g
+  - name: t_
+
+- kind: Event
+  properties:
+  - name: a
+  - name: t_
+
+- kind: Event
+  properties:
+  - name: g
+  - name: t_
+
 - kind: Group
   properties:
   - name: a

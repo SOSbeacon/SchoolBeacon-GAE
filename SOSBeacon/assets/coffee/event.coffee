@@ -54,9 +54,23 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
             return errors
 
 
-class App.SOSBeacon.Collection.EventList extends Backbone.Collection
-    url: '/service/event'
+class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
     model: App.SOSBeacon.Model.Event
+
+    paginator_core: {
+        type: 'GET',
+        dataType: 'json'
+        url: '/service/event'
+    }
+
+    paginator_ui: {
+        firstPage: 0
+        currentPage: 0
+        perPage: 100
+        totalPages: 100
+    }
+
+    server_api: {}
 
 
 class App.SOSBeacon.Model.ResendDelay extends Backbone.Model
@@ -190,6 +204,42 @@ class App.SOSBeacon.View.EventList extends App.Skel.View.ListView
     headerView: App.SOSBeacon.View.EventListHeader
     gridFilters: null
 
+    initialize: (collection) =>
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Title'
+                type: 'text'
+                prop: 'flike_title'
+                default: false
+                control: App.Ui.Datagrid.InputFilter
+            }
+        ))
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Is Active'
+                type: 'checkbox'
+                prop: 'feq_active'
+                default: true
+                control: App.Ui.Datagrid.CheckboxFilter
+                default_value: true
+            }
+        ))
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Group'
+                type: 'text'
+                prop: 'feq_groups'
+                default: false
+                control: App.SOSBeacon.View.GroupTypeahaedFilter
+            }
+        ))
+
+        super(collection)
+
 
 class App.SOSBeacon.View.EventSelect extends Backbone.View
     template: JST['event/select']
@@ -279,6 +329,42 @@ class App.SOSBeacon.View.PendingEventList extends App.Skel.View.ListView
     itemView: App.SOSBeacon.View.PendingEventListItem
     headerView: App.SOSBeacon.View.PendingEventListHeader
     gridFilters: null
+
+    initialize: (collection) =>
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Title'
+                type: 'text'
+                prop: 'flike_title'
+                default: false
+                control: App.Ui.Datagrid.InputFilter
+            }
+        ))
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Is Active'
+                type: 'checkbox'
+                prop: 'feq_active'
+                default: true
+                control: App.Ui.Datagrid.CheckboxFilter
+                default_value: true
+            }
+        ))
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Group'
+                type: 'text'
+                prop: 'feq_groups'
+                default: false
+                control: App.SOSBeacon.View.GroupTypeahaedFilter
+            }
+        ))
+
+        super(collection)
 
 
 class App.SOSBeacon.View.ConfirmSendEvent extends Backbone.View

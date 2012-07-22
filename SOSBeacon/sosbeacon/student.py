@@ -12,6 +12,7 @@ student_schema = {
     'groups': [voluptuous.ndbkey()],
     'contacts': [{
         'name': basestring,
+        'type': voluptuous.any('p', 'o', 'd'),
         'notes': basestring,
         'methods': [{'type': basestring, 'value': basestring}]
     }]

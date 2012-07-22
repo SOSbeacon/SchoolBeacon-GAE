@@ -5,8 +5,8 @@
     </div>
     <div class="modal-body">
       <dl class="dl-horizontal">
-        <dt>Primary Only:</dt>
-        <dd><%= notify_primary_only ? "Yes": "No" %></dd>
+        <dt>Notify:</dt>
+        <dd><%= (who_to_notify == 'p' ? "Parents/Guardians Only": (who_to_notify == 'd' ? "Default Contact Only": "All Contacts")) %></dd>
 
         <dt>Resend Delay:</dt>
         <dd><%= response_wait_seconds %></dd>

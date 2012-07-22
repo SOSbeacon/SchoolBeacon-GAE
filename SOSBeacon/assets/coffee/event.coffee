@@ -71,6 +71,12 @@ class App.SOSBeacon.Model.NotifyLevel extends Backbone.Model
 class App.SOSBeacon.Collection.NotifyLevel extends Backbone.Collection
     model: App.SOSBeacon.Model.NotifyLevel
 
+App.SOSBeacon.notifyLevels = new App.SOSBeacon.Collection.NotifyLevel([
+    {level: 'a', label: "All Contacts"},
+    {level: 'd', label: "Default Contact Only"},
+    {level: 'p', label: "Parents/Guardians Only"},
+])
+
 
 class App.SOSBeacon.Model.ResendDelay extends Backbone.Model
     idAttribute: 'seconds'
@@ -83,6 +89,16 @@ class App.SOSBeacon.Model.ResendDelay extends Backbone.Model
 
 class App.SOSBeacon.Collection.ResendDelay extends Backbone.Collection
     model: App.SOSBeacon.Model.ResendDelay
+
+
+App.SOSBeacon.resendDelays = new App.SOSBeacon.Collection.ResendDelay([
+    {seconds: 1800, label: "30 Mintues"},
+    {seconds: 3600, label: "1 Hour"},
+    {seconds: 7200, label: "2 Hours"},
+    {seconds: 21600, label: "6 Hours"},
+    {seconds: 86400, label: "1 Day"},
+    {seconds: -1, label: "Never"}
+])
 
 
 class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
@@ -98,31 +114,14 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         "click .remove-button": "clear"
         "hidden": "close"
 
-    initialize: =>
-        @notifyLevels = new App.SOSBeacon.Collection.NotifyLevel([
-            {level: 'a', label: "All Contacts"},
-            {level: 'd', label: "Default Contact Only"},
-            {level: 'p', label: "Parents/Guardians Only"},
-        ])
-
-        @resendDelays = new App.SOSBeacon.Collection.ResendDelay([
-            {seconds: 1800, label: "30 Mintues"},
-            {seconds: 3600, label: "1 Hour"},
-            {seconds: 7200, label: "2 Hours"},
-            {seconds: 21600, label: "6 Hours"},
-            {seconds: 86400, label: "1 Day"},
-            {seconds: -1, label: "Never"}
-        ])
-
-        super()
-
     save: (e) =>
         if e
             e.preventDefault()
 
         groupList = []
         @model.groups.each((group) ->
-            groupList.push(group.id)
+            if not _.isEmpty(group.id)
+                groupList.push(group.id)
         )
 
         @model.save(
@@ -147,7 +146,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         )
 
         select = @$('.who_to_notify')
-        @notifyLevels.each((notifyLevel, i) =>
+        App.SOSBeacon.notifyLevels.each((notifyLevel, i) =>
             option = $('<option></option>')
                 .attr('value', notifyLevel.get('level'))
                 .html(notifyLevel.get('label'))
@@ -159,7 +158,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         )
 
         select = @$('.response_wait_seconds')
-        @resendDelays.each((resendDelay, i) =>
+        App.SOSBeacon.resendDelays.each((resendDelay, i) =>
             option = $('<option></option>')
                 .attr('value', resendDelay.get('seconds'))
                 .html(resendDelay.get('label'))

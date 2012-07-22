@@ -6,7 +6,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
         return {
             key: "",
             active: true,
-            notify_primary_only: false,
+            who_to_notify: 'a',
             response_wait_seconds: 3600,
             title: "",
             summary: "",
@@ -59,6 +59,19 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Collection
     model: App.SOSBeacon.Model.Event
 
 
+class App.SOSBeacon.Model.NotifyLevel extends Backbone.Model
+    idAttribute: 'level'
+    defaults: ->
+        return {
+            label: "",
+            level: "",
+        }
+
+
+class App.SOSBeacon.Collection.NotifyLevel extends Backbone.Collection
+    model: App.SOSBeacon.Model.NotifyLevel
+
+
 class App.SOSBeacon.Model.ResendDelay extends Backbone.Model
     idAttribute: 'seconds'
     defaults: ->
@@ -86,6 +99,12 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         "hidden": "close"
 
     initialize: =>
+        @notifyLevels = new App.SOSBeacon.Collection.NotifyLevel([
+            {level: 'a', label: "All Contacts"},
+            {level: 'd', label: "Default Contact Only"},
+            {level: 'p', label: "Parents/Guardians Only"},
+        ])
+
         @resendDelays = new App.SOSBeacon.Collection.ResendDelay([
             {seconds: 1800, label: "30 Mintues"},
             {seconds: 3600, label: "1 Hour"},
@@ -112,7 +131,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
             summary: @$('textarea.summary').val()
             detail: @$('textarea.detail').val()
             groups: groupList
-            notify_primary_only: @$('input.notify_primary_only').prop('checked')
+            who_to_notify: @$('select.who_to_notify').val()
             response_wait_seconds: parseInt(@$('select.response_wait_seconds').val())
         )
 
@@ -125,6 +144,18 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         @model.groups.each((group, i) ->
             editView = new App.SOSBeacon.View.GroupSelect({model: group})
             el.find('fieldset.groups').append(editView.render().el)
+        )
+
+        select = @$('.who_to_notify')
+        @notifyLevels.each((notifyLevel, i) =>
+            option = $('<option></option>')
+                .attr('value', notifyLevel.get('level'))
+                .html(notifyLevel.get('label'))
+
+            if @model.get('who_to_notify') == notifyLevel.get('level')
+                option.attr('selected', 'selected')
+
+            select.append(option)
         )
 
         select = @$('.response_wait_seconds')

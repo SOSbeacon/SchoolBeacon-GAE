@@ -23,9 +23,23 @@ class App.SOSBeacon.Model.Group extends Backbone.Model
             return errors
 
 
-class App.SOSBeacon.Collection.GroupList extends Backbone.Collection
-    url: '/service/group'
+class App.SOSBeacon.Collection.GroupList extends Backbone.Paginator.requestPager
     model: App.SOSBeacon.Model.Group
+
+    paginator_core: {
+        type: 'GET',
+        dataType: 'json'
+        url: '/service/group'
+    }
+
+    paginator_ui: {
+        firstPage: 0
+        currentPage: 0
+        perPage: 100
+        totalPages: 100
+    }
+
+    server_api: {}
 
 
 class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
@@ -96,6 +110,32 @@ class App.SOSBeacon.View.GroupList extends App.Skel.View.ListView
     itemView: App.SOSBeacon.View.GroupListItem
     headerView: App.SOSBeacon.View.GroupListHeader
     gridFilters: null
+
+    initialize: (collection) =>
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Name'
+                type: 'text'
+                prop: 'flike_name'
+                default: false
+                control: App.Ui.Datagrid.InputFilter
+            }
+        ))
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Is Active'
+                type: 'checkbox'
+                prop: 'feq_active'
+                default: true
+                control: App.Ui.Datagrid.CheckboxFilter
+                default_value: true
+            }
+        ))
+
+        super(collection)
 
 
 class App.SOSBeacon.View.GroupSelect extends Backbone.View

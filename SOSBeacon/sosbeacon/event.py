@@ -35,7 +35,7 @@ event_schema = {
     'summary': basestring,
     'detail': basestring,
     'groups': [voluptuous.ndbkey()],
-    'notify_primary_only': voluptuous.boolean(),
+    'who_to_notify': voluptuous.any('a', 'd', 'p'),
     'response_wait_seconds': int,
 }
 
@@ -60,7 +60,6 @@ class Event(EntityBase):
     contact_count = ndb.IntegerProperty('cc', default=0, indexed=False)
     acknowledged_count = ndb.IntegerProperty('ac', default=0, indexed=False)
 
-    notify_primary_only = ndb.BooleanProperty('po', indexed=False, default=False)
     who_to_notify = ndb.StringProperty('who', indexed=False, default='')
 
     response_wait_seconds = ndb.IntegerProperty(default=3600, indexed=False)
@@ -95,7 +94,7 @@ class Event(EntityBase):
         if not event:
             event = cls()
 
-        event.notify_primary_only = data.get('notify_primary_only')
+        event.who_to_notify = data.get('who_to_notify')
         event.response_wait_seconds = data.get('response_wait_seconds')
 
         event.active = data.get('active')
@@ -122,7 +121,7 @@ class Event(EntityBase):
         event['detail'] = self.detail
         event['groups'] = [key.urlsafe() for key in self.groups]
 
-        event['notify_primary_only'] = self.notify_primary_only
+        event['who_to_notify'] = self.who_to_notify
         event['response_wait_seconds'] = self.response_wait_seconds
 
         event['student_count'] = self.student_count

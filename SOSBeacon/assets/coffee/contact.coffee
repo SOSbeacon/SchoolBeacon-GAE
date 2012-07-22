@@ -5,6 +5,7 @@ class App.SOSBeacon.Model.Contact extends Backbone.Model
     defaults: ->
         return {
             name: "",
+            type: "",
             methods: [],
             notes: "",
         }
@@ -35,6 +36,26 @@ class App.SOSBeacon.Collection.ContactList extends Backbone.Collection
     model: App.SOSBeacon.Model.Contact
 
 
+class App.SOSBeacon.Model.ContactType extends Backbone.Model
+    idAttribute: 'key'
+    defaults: ->
+        return {
+            type: "",
+            label: ""
+        }
+
+
+class App.SOSBeacon.Collection.ContactType extends Backbone.Collection
+    model: App.SOSBeacon.Model.ContactType
+
+
+App.SOSBeacon.contactTypes = new App.SOSBeacon.Collection.ContactType([
+    {type: 'p', label: 'Parent/Guardian'},
+    {type: 'o', label: 'Other'},
+    {type: 'd', label: 'Direct (self)'},
+])
+
+
 class App.SOSBeacon.View.ContactEdit extends Backbone.View
     template: JST['contact/edit']
     tagName: 'li'
@@ -51,7 +72,8 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
         )
 
         @model.set(
-            name: @$('input.name').val()
+            name: @$('input.name').val(),
+            type: @$('select.type').val(),
             notes: $.trim(@$('textarea.notes').val())
         )
 
@@ -62,6 +84,19 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
             editView = new App.SOSBeacon.View.ContactMethodEdit({model: info})
             @$el.find('fieldset.methods').append(editView.render().el)
         )
+
+        select = @$('select.type')
+        App.SOSBeacon.contactTypes.each((type, i) =>
+            option = $('<option></option>')
+                .attr('value', type.get('type'))
+                .html(type.get('label'))
+
+            if @model.get('type') == type.get('type')
+                option.attr('selected', 'selected')
+
+            select.append(option)
+        )
+
         return this
 
     addMethod: =>

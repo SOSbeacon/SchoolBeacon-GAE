@@ -6,7 +6,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
         return {
             key: "",
             active: true,
-            notify_primary_only: false,
+            who_to_notify: 'a',
             response_wait_seconds: 3600,
             title: "",
             summary: "",
@@ -73,6 +73,25 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
     server_api: {}
 
 
+class App.SOSBeacon.Model.NotifyLevel extends Backbone.Model
+    idAttribute: 'level'
+    defaults: ->
+        return {
+            label: "",
+            level: "",
+        }
+
+
+class App.SOSBeacon.Collection.NotifyLevel extends Backbone.Collection
+    model: App.SOSBeacon.Model.NotifyLevel
+
+App.SOSBeacon.notifyLevels = new App.SOSBeacon.Collection.NotifyLevel([
+    {level: 'a', label: "All Contacts"},
+    {level: 'd', label: "Default Contact Only"},
+    {level: 'p', label: "Parents/Guardians Only"},
+])
+
+
 class App.SOSBeacon.Model.ResendDelay extends Backbone.Model
     idAttribute: 'seconds'
     defaults: ->
@@ -84,6 +103,16 @@ class App.SOSBeacon.Model.ResendDelay extends Backbone.Model
 
 class App.SOSBeacon.Collection.ResendDelay extends Backbone.Collection
     model: App.SOSBeacon.Model.ResendDelay
+
+
+App.SOSBeacon.resendDelays = new App.SOSBeacon.Collection.ResendDelay([
+    {seconds: 1800, label: "30 Mintues"},
+    {seconds: 3600, label: "1 Hour"},
+    {seconds: 7200, label: "2 Hours"},
+    {seconds: 21600, label: "6 Hours"},
+    {seconds: 86400, label: "1 Day"},
+    {seconds: -1, label: "Never"}
+])
 
 
 class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
@@ -99,25 +128,14 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         "click .remove-button": "clear"
         "hidden": "close"
 
-    initialize: =>
-        @resendDelays = new App.SOSBeacon.Collection.ResendDelay([
-            {seconds: 1800, label: "30 Mintues"},
-            {seconds: 3600, label: "1 Hour"},
-            {seconds: 7200, label: "2 Hours"},
-            {seconds: 21600, label: "6 Hours"},
-            {seconds: 86400, label: "1 Day"},
-            {seconds: -1, label: "Never"}
-        ])
-
-        super()
-
     save: (e) =>
         if e
             e.preventDefault()
 
         groupList = []
         @model.groups.each((group) ->
-            groupList.push(group.id)
+            if not _.isEmpty(group.id)
+                groupList.push(group.id)
         )
 
         @model.save(
@@ -126,7 +144,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
             summary: @$('textarea.summary').val()
             detail: @$('textarea.detail').val()
             groups: groupList
-            notify_primary_only: @$('input.notify_primary_only').prop('checked')
+            who_to_notify: @$('select.who_to_notify').val()
             response_wait_seconds: parseInt(@$('select.response_wait_seconds').val())
         )
 
@@ -141,8 +159,20 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
             el.find('fieldset.groups').append(editView.render().el)
         )
 
+        select = @$('.who_to_notify')
+        App.SOSBeacon.notifyLevels.each((notifyLevel, i) =>
+            option = $('<option></option>')
+                .attr('value', notifyLevel.get('level'))
+                .html(notifyLevel.get('label'))
+
+            if @model.get('who_to_notify') == notifyLevel.get('level')
+                option.attr('selected', 'selected')
+
+            select.append(option)
+        )
+
         select = @$('.response_wait_seconds')
-        @resendDelays.each((resendDelay, i) =>
+        App.SOSBeacon.resendDelays.each((resendDelay, i) =>
             option = $('<option></option>')
                 .attr('value', resendDelay.get('seconds'))
                 .html(resendDelay.get('label'))

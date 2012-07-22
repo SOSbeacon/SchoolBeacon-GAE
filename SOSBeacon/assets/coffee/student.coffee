@@ -174,7 +174,7 @@ class App.SOSBeacon.View.StudentListHeader extends App.Skel.View.ListItemHeader
     template: JST['student/listheader']
 
 
-class App.SOSBeacon.View.StudentList extends App.Skel.View.ListView
+class App.SOSBeacon.View.BaseStudentList extends App.Skel.View.ListView
     itemView: App.SOSBeacon.View.StudentListItem
     headerView: App.SOSBeacon.View.StudentListHeader
     gridFilters: null
@@ -192,6 +192,14 @@ class App.SOSBeacon.View.StudentList extends App.Skel.View.ListView
             }
         ))
 
+        super(collection)
+
+
+class App.SOSBeacon.View.StudentList extends App.SOSBeacon.View.BaseStudentList
+
+    initialize: (collection) =>
+        super(collection)
+
         @gridFilters.add(new App.Ui.Datagrid.FilterItem(
             {
                 name: 'Group'
@@ -201,8 +209,6 @@ class App.SOSBeacon.View.StudentList extends App.Skel.View.ListView
                 control: App.SOSBeacon.View.GroupTypeahaedFilter
             }
         ))
-
-        super(collection)
 
 
 class App.SOSBeacon.View.SelectableStudentListHeader extends App.Skel.View.ListItemHeader
@@ -221,8 +227,17 @@ class App.SOSBeacon.View.SelectableStudentListItem extends App.SOSBeacon.View.St
         @$('input.selected').prop('checked', selected)
         @model.selected = selected
 
-class App.SOSBeacon.View.SelectableStudentList extends App.SOSBeacon.View.StudentList
+
+class App.SOSBeacon.View.SelectableStudentList extends App.SOSBeacon.View.BaseStudentList
     itemView: App.SOSBeacon.View.SelectableStudentListItem
     headerView: App.SOSBeacon.View.SelectableStudentListHeader
     gridFilters: null
 
+    run: (filters) =>
+        @collection.server_api = {
+            limit: @$("div.gridFooter > .size-select").val() ? 25
+        }
+
+        _.extend(@collection.server_api, filters)
+
+        App.Skel.Event.trigger("studentlist:filter:#{@.cid}", filters)

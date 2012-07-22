@@ -1,3 +1,22 @@
+class App.SOSBeacon.Collection.GroupStudentList extends Backbone.Paginator.requestPager
+    model: App.SOSBeacon.Model.Student
+
+    paginator_core: {
+        type: 'GET',
+        dataType: 'json'
+        url: '/service/student'
+    }
+
+    paginator_ui: {
+        firstPage: 0
+        currentPage: 0
+        perPage: 100
+        totalPages: 100
+    }
+
+    server_api: {}
+
+
 class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
     id: "sosbeaconapp"
     template: JST['group_students/view']
@@ -12,29 +31,41 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
         @model.fetch({async: false})
 
         @allstudents = new App.SOSBeacon.Collection.StudentList()
-
+        @groupstudents = new App.SOSBeacon.Collection.GroupStudentList()
         @students = new App.SOSBeacon.Collection.StudentList()
-        @groupstudents = new App.SOSBeacon.Collection.StudentList()
 
         @studentList = new App.SOSBeacon.View.SelectableStudentList(@students)
-        @groupStudentList = new App.SOSBeacon.View.SelectableStudentList(@groupstudents)
+        App.Skel.Event.bind("studentlist:filter:#{@studentList.cid}", @filterStudents, this)
 
-    render: =>
-        @$el.html(@template(@model.toJSON()))
+        @groupStudentList = new App.SOSBeacon.View.SelectableStudentList(@groupstudents)
+        App.Skel.Event.bind("studentlist:filter:#{@groupStudentList.cid}", @groupFilterStudents, this)
+
+    filterStudents: (filters) =>
+        @students.reset()
+        @allstudents.server_api = {}
+
+        if filters
+            _.extend(@allstudents.server_api, filters)
 
         that = this
         @allstudents.fetch({success: (students) =>
             students.each((student) =>
-                set_student = false
+                not_in = true
                 student.groups.each((group) =>
                     if group.id == @model.id
-                        that.groupstudents.add(student)
-                        set_student = true
+                        not_in = false
                 )
-                if not set_student
+                if not_in
                     that.students.add(student)
             )
         })
+
+    groupFilterStudents: (filters) =>
+        @groupstudents.server_api['feq_groups'] = @model.id
+        @groupstudents.fetch()
+
+    render: =>
+        @$el.html(@template(@model.toJSON()))
 
         @$("#studentlist").append(@studentList.render().el)
         @$("#groupstudentlist").append(@groupStudentList.render().el)

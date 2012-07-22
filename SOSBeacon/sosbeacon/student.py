@@ -20,7 +20,8 @@ student_schema = {
 
 student_query_schema = {
     'flike_name': basestring,
-    'feq_groups': voluptuous.any('', voluptuous.ndbkey())
+    'feq_groups': voluptuous.any('', voluptuous.ndbkey()),
+    'fneq_groups': voluptuous.any('', voluptuous.ndbkey())
 }
 
 class Student(EntityBase):

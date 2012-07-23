@@ -139,21 +139,6 @@ class EventListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             query_schema=event_query_schema)
 
 
-    #def get(self, args):
-        #if not args:
-            #context = {}
-            #context.update(self.request.params)
-            #context['filter'] = "title_"
-
-            #entities = list(request_query(self.entity, **context))
-        #else:
-            #from google.appengine.ext import ndb
-            #keys = [ndb.Key(urlsafe=key) for key in args.split(',')]
-            #entities = [entity.to_dict() if entity else None
-                        #for entity in ndb.get_multi(keys)]
-
-        #self.response.out.write(json.dumps(entities))
-
 class SendEventHandler(webapp2.RequestHandler):
     def post(self):
         from google.appengine.api import taskqueue

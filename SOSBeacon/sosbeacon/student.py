@@ -46,10 +46,6 @@ class Student(EntityBase):
     groups = ndb.KeyProperty('g', repeated=True)
     contacts = ndb.JsonProperty('c')
 
-    def _pre_put_hook(self):
-        """Ran before the entity is written to the datastore."""
-        self.revision += 1
-
     @classmethod
     def from_dict(cls, data):
         """Instantiate a Student entity from a dict of values."""

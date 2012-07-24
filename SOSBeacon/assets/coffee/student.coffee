@@ -15,7 +15,7 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
     initialize: =>
         @groups = new App.SOSBeacon.Collection.GroupList()
         groups = @get('groups')
-        if groups and not _.isEmpty(groups)
+        if groups
             url = @groups.url + '/' + groups.join()
             @groups.fetch({url: url, async: false})
 
@@ -202,6 +202,8 @@ class App.SOSBeacon.View.BaseStudentList extends App.Skel.View.ListView
 class App.SOSBeacon.View.StudentList extends App.SOSBeacon.View.BaseStudentList
 
     initialize: (collection) =>
+        #the super needs to be first here to generate the gridfilters list
+        #in the inherited class
         super(collection)
 
         @gridFilters.add(new App.Ui.Datagrid.FilterItem(

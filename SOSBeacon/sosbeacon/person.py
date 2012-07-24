@@ -34,10 +34,6 @@ class Person(EntityBase):
     groups = ndb.KeyProperty('g', repeated=True)
     contacts = ndb.KeyProperty('c', repeated=True)
 
-    def _pre_put_hook(self):
-        """Ran before the entity is written to the datastore."""
-        self.revision += 1
-
     @classmethod
     def from_dict(cls, data):
         """Instantiate a Person entity from a dict of values."""

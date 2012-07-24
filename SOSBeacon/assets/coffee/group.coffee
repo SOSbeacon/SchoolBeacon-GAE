@@ -191,3 +191,6 @@ class App.SOSBeacon.View.GroupTypeahaedFilter extends App.Ui.Datagrid.TypeaheadF
         })
             
         return this
+
+    onClose: =>
+        @$('input.filter-input').trigger('cleanup')

@@ -117,6 +117,7 @@ class RestQuery(object):
 
     def __init__(self, default_filters=None, **kwargs):
         self.default_filters = default_filters if default_filters else []
+        self.sort_orders = []
 
     def fetch(self, entity, params, query_schema=None):
         if query_schema:
@@ -138,12 +139,44 @@ class RestQuery(object):
             query = query.filter(default_filters)
 
         query = self._parse(entity, query, params)
+        query = self._add_ordering(entity, query, params)
 
         return query.fetch(limit)
+
+    def _add_ordering(self, entity, query, params):
+        if 'orderBy' not in params:
+            if self.sort_orders:
+                query.order(*self.sort_orders)
+            return query
+
+        order_asc = True
+        if ('orderDirection' in params and
+            params['orderDirection'] == 'desc'):
+            order_asc = False
+
+        prop_string = params.pop('orderBy')
+
+        query_rule = self._get_query_rule(entity, prop_string)
+        if query_rule and isinstance(query_rule, RestQueryRule):
+            prop_string = query_rule.prop
+
+        prop = getattr(entity, prop_string, None)
+        if prop:
+            if order_asc:
+                self.sort_orders.append(prop)
+            else:
+                self.sort_orders.append(-prop)
+
+        return query.order(*self.sort_orders)
+
+    def _get_query_rule(self, entity, prop_string):
+        if hasattr(entity, '_query_properties'):
+            return entity.get_query_property(prop_string)
 
     def _parse(self, entity, query, params):
         filters = ["f%s" % (f) for f in self.query_filters.filters.iterkeys()]
 
+        sort_matches = False
         for prop, value in params.iteritems():
 
             psplit = prop.split('_')
@@ -154,27 +187,52 @@ class RestQuery(object):
             if f not in filters:
                 continue
 
-            prop_string = '_'.join(psplit[1:])
+            prop_string = query_prop_string  = '_'.join(psplit[1:])
 
-            if hasattr(entity, '_query_properties'):
-                query_rule = entity.get_query_property(prop_string)
+            query_rule = self._get_query_rule(entity, prop_string)
+            if query_rule and isinstance(query_rule, RestQueryRule):
+                prop_string = query_rule.prop
+                if query_rule.empty_as_none and not value:
+                    value = None
 
-                if query_rule and isinstance(query_rule, RestQueryRule):
-                    prop_string = query_rule.prop
-                    if query_rule.empty_as_none and not value:
-                        value = None
-
-                    value = query_rule.parse_value(value)
+                value = query_rule.parse_value(value)
 
             entity_prop = getattr(entity, prop_string)
 
             if isinstance(value, basestring):
                 value = value.strip()
 
-            query = self.query_filters.get(
+            query, sort = self.query_filters.get(
                 query, f, entity_prop, value)
 
+            if self._check_is_order(sort, query_prop_string, params):
+                sort_matches = True
+
+        if sort_matches:
+            if 'orderBy' in params:
+                params.pop('orderBy')
+            if 'orderDirection' in params:
+                params.pop('orderDirection')
+
         return query
+
+    def _check_is_order(self, sort, prop_string, params):
+        if not sort:
+            return False
+
+        #we need to check if the orderBy is the same property as this
+        #if it is we should remove as we don't need it in the query
+        if not 'orderBy' in params:
+            return False
+
+        if params['orderBy'] == prop_string:
+            if ('orderDirection' in params and
+                params['orderDirection'] == 'desc'):
+                self.sort_orders.append(-sort)
+                return True
+
+            self.sort_orders.append(sort)
+        return True
 
 
 class RestQueryFilters(object):
@@ -195,14 +253,14 @@ class RestQueryFilters(object):
         return f(query, prop, val)
 
     def _add_equality_filter(self, query, filter_property, val):
-        return query.filter(filter_property == val)
+        return query.filter(filter_property == val), None
 
     def _add_inequality_filter(self, query, filter_property, val):
-        return query.filter(filter_property != val)
+        return query.filter(filter_property != val), filter_property
 
     def _add_like_filter(self, query, filter_property, val):
         query = query.filter(filter_property >= val)
-        return query.filter(filter_property < val + u"\uFFFD")
+        return query.filter(filter_property < val + u"\uFFFD"), filter_property
 
     def _add_greater_than_filter(self, query, filter_property, val):
-        return query.filter(filter_property >= val)
+        return query.filter(filter_property >= val), filter_property

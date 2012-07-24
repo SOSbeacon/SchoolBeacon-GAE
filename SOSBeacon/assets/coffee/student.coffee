@@ -55,6 +55,10 @@ class App.SOSBeacon.Collection.StudentList extends Backbone.Paginator.requestPag
         totalPages: 100
     }
 
+    query_defaults: {
+        orderBy: 'name'
+    }
+
     server_api: {}
 
 

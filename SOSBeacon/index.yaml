@@ -35,3 +35,9 @@ indexes:
   properties:
   - name: g
   - name: n_
+
+- kind: Student
+  properties:
+  - name: g
+  - name: n_
+    direction: desc

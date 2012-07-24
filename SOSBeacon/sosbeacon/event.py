@@ -118,6 +118,9 @@ class MethodMarker(EntityBase):
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
+    # Used to query for short URLs
+    short_id = ndb.StringProperty('i')
+
     acknowledged = ndb.BooleanProperty('a', default=False)
     acknowledged_at = ndb.IntegerProperty('at', indexed=False)
 
@@ -133,6 +136,8 @@ class MethodMarker(EntityBase):
         self.acknowledged_at = min(
             self.acknowledged_at or other.acknowledged_at,
             other.acknowledged_at or self.acknowledged_at)
+
+        self.short_id = self.short_id or other.short_id
 
         self.last_try = max(self.last_try, other.last_try)
 
@@ -257,7 +262,7 @@ def get_try_next_method_task(event_urlsafe, batch_id, method):
     )
     return task
 
-def update_event_contact(event_key, method, when):
+def update_event_contact(event_key, method, when, short_id):
     """Insert a task containing contact method details."""
     if isinstance(event_key, ndb.Key):
         event_key = event_key.urlsafe()
@@ -269,6 +274,7 @@ def update_event_contact(event_key, method, when):
             'type': "tx",
             'event': event_key,
             'method': method,
+            'short_id': short_id,
             'when': when
         }
     )
@@ -276,11 +282,16 @@ def update_event_contact(event_key, method, when):
     insert_event_updator(ndb.Key(urlsafe=event_key))
 
 
-def acknowledge_event(event_key, method):
+def acknowledge_event(event_key, method_id):
     """Insert a task to acknowledge an event for the given contact."""
-    ack_marker_key = "rx:%s:%s" % (event_key.id(), method)
+    ack_marker_key = "rx:%s:%s" % (event_key.id(), method_id)
     seen = memcache.get(ack_marker_key)
     if seen:
+        return
+
+    method_marker = MethodMarker.query(MethodMarker.short_id == method_id).get()
+    if not method_marker:
+        # TODO: Somehow retry this...
         return
 
     task = taskqueue.Task(
@@ -289,7 +300,7 @@ def acknowledge_event(event_key, method):
         params={
             'type': 'ack',
             'event': event_key.urlsafe(),
-            'method': method,
+            'method': method_marker.key.id(),
             'when': int(time.time())
         }
     )
@@ -318,21 +329,31 @@ def insert_event_updator(event_key):
     memcache.set(name, True)
 
 
-def send_notification(event, method):
+def send_notification(event, method, short_id):
     """Notify a contact of event information"""
     import logging
-    #return
+    import os
 
     import settings
 
-    #TODO: enable twilio integration.
+    from sosbeacon import utils
+
+    host = os.environ['HTTP_HOST']
+    encoded_event = utils.number_encode(event.key.id())
+    encoded_method = utils.number_encode(short_id)
+
+    url = "http://%s/e/%s/%s" % (host, encoded_event, encoded_method)
+
     if '@' not in method:
         logging.info('Sending notice to %s via twilio.', method)
         from twilio.rest import TwilioRestClient
 
+        body = event.summary
+        body = "%s - %s" % (body, url)
+
         client = TwilioRestClient(settings.TWILIO_ACCOUNT, settings.TWILIO_TOKEN)
         message = client.sms.messages.create(
-            to="+%s" % (method), from_="+14155992671", body=event.summary)
+            to="+%s" % (method), from_="+14155992671", body=body)
         return
 
 
@@ -343,7 +364,9 @@ def send_notification(event, method):
                                         subject=event.title)
 
     message.to = method
-    message.body = event.detail
+
+    body = "%s\n\n%s" % (event.detail, url)
+    message.body = body
 
     message.send()
 

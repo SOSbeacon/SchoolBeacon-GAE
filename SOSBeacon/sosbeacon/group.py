@@ -15,6 +15,7 @@ group_schema = {
 
 group_query_schema = {
     'flike_name': basestring,
+    'feq_active': voluptuous.boolean()
 }
 
 class Group(EntityBase):
@@ -33,10 +34,6 @@ class Group(EntityBase):
     active = ndb.BooleanProperty('a')
 
     notes = ndb.TextProperty('nt')
-
-    def _pre_put_hook(self):
-        """Ran before the entity is written to the datastore."""
-        self.revision += 1
 
     @classmethod
     def from_dict(cls, data):

@@ -2,7 +2,8 @@ from google.appengine.ext import ndb
 
 import voluptuous
 
-from . import EntityBase
+from skel.datastore import EntityBase
+from skel.rest_api.rules import RestQueryRule
 
 
 student_schema = {
@@ -18,8 +19,19 @@ student_schema = {
     }]
 }
 
+student_query_schema = {
+    'flike_name': basestring,
+    'feq_groups': voluptuous.any('', voluptuous.ndbkey()),
+}
+
 class Student(EntityBase):
     """Represents a student."""
+
+    _query_properties = {
+        'name': RestQueryRule('name_', lambda x: x.lower() if x else ''),
+        'groups': RestQueryRule('groups', lambda x: None if x == '' else x)
+    }
+
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 

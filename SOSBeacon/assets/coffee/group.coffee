@@ -23,9 +23,24 @@ class App.SOSBeacon.Model.Group extends Backbone.Model
             return errors
 
 
-class App.SOSBeacon.Collection.GroupList extends Backbone.Collection
-    url: '/service/group'
+class App.SOSBeacon.Collection.GroupList extends Backbone.Paginator.requestPager
     model: App.SOSBeacon.Model.Group
+    url: '/service/group'
+
+    paginator_core: {
+        type: 'GET',
+        dataType: 'json'
+        url: '/service/group'
+    }
+
+    paginator_ui: {
+        firstPage: 0
+        currentPage: 0
+        perPage: 100
+        totalPages: 100
+    }
+
+    server_api: {}
 
 
 class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
@@ -97,6 +112,32 @@ class App.SOSBeacon.View.GroupList extends App.Skel.View.ListView
     headerView: App.SOSBeacon.View.GroupListHeader
     gridFilters: null
 
+    initialize: (collection) =>
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Name'
+                type: 'text'
+                prop: 'flike_name'
+                default: false
+                control: App.Ui.Datagrid.InputFilter
+            }
+        ))
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Is Active'
+                type: 'checkbox'
+                prop: 'feq_active'
+                default: true
+                control: App.Ui.Datagrid.CheckboxFilter
+                default_value: true
+            }
+        ))
+
+        super(collection)
+
 
 class App.SOSBeacon.View.GroupSelect extends Backbone.View
     template: JST['group/select']
@@ -125,3 +166,31 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
         })
         return this
 
+
+class App.SOSBeacon.View.GroupTypeahaedFilter extends App.Ui.Datagrid.TypeaheadFilter
+
+    render: =>
+        @$el.html(@template(@model.toJSON()))
+
+        @$('input.filter-input').typeahead({
+            value_property: 'name'
+            updater: (item) =>
+                @value = item.key
+                return item.name
+            matcher: (item) ->
+                return true
+            source: (typeahead, query) =>
+                $.ajax({
+                    type: 'GET'
+                    dataType: 'json'
+                    url: '/service/group'
+                    data: {flike_name: query}
+                    success: (data) ->
+                        typeahead.process(data)
+                })
+        })
+            
+        return this
+
+    onClose: =>
+        @$('input.filter-input').trigger('cleanup')

@@ -15,7 +15,7 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
     initialize: =>
         @groups = new App.SOSBeacon.Collection.GroupList()
         groups = @get('groups')
-        if not _.isEmpty(groups)
+        if groups
             url = @groups.url + '/' + groups.join()
             @groups.fetch({url: url, async: false})
 
@@ -39,9 +39,27 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
             return errors
 
 
-class App.SOSBeacon.Collection.StudentList extends Backbone.Collection
-    url: '/service/student'
+class App.SOSBeacon.Collection.StudentList extends Backbone.Paginator.requestPager
     model: App.SOSBeacon.Model.Student
+
+    paginator_core: {
+        type: 'GET',
+        dataType: 'json'
+        url: '/service/student'
+    }
+
+    paginator_ui: {
+        firstPage: 0
+        currentPage: 0
+        perPage: 100
+        totalPages: 100
+    }
+
+    query_defaults: {
+        orderBy: 'name'
+    }
+
+    server_api: {}
 
 
 class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
@@ -151,8 +169,6 @@ class App.SOSBeacon.View.StudentApp extends App.Skel.View.ModelApp
         @collection = new App.SOSBeacon.Collection.StudentList()
         @listView = new App.SOSBeacon.View.StudentList(@collection)
 
-        @collection.fetch()
-
 
 class App.SOSBeacon.View.StudentListItem extends App.Skel.View.ListItemView
     template: JST['student/list']
@@ -162,10 +178,43 @@ class App.SOSBeacon.View.StudentListHeader extends App.Skel.View.ListItemHeader
     template: JST['student/listheader']
 
 
-class App.SOSBeacon.View.StudentList extends App.Skel.View.ListView
+class App.SOSBeacon.View.BaseStudentList extends App.Skel.View.ListView
     itemView: App.SOSBeacon.View.StudentListItem
     headerView: App.SOSBeacon.View.StudentListHeader
     gridFilters: null
+
+    initialize: (collection) =>
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Name'
+                type: 'text'
+                prop: 'flike_name'
+                default: false
+                control: App.Ui.Datagrid.InputFilter
+            }
+        ))
+
+        super(collection)
+
+
+class App.SOSBeacon.View.StudentList extends App.SOSBeacon.View.BaseStudentList
+
+    initialize: (collection) =>
+        #the super needs to be first here to generate the gridfilters list
+        #in the inherited class
+        super(collection)
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Group'
+                type: 'text'
+                prop: 'feq_groups'
+                default: false
+                control: App.SOSBeacon.View.GroupTypeahaedFilter
+            }
+        ))
 
 
 class App.SOSBeacon.View.SelectableStudentListHeader extends App.Skel.View.ListItemHeader
@@ -184,8 +233,17 @@ class App.SOSBeacon.View.SelectableStudentListItem extends App.SOSBeacon.View.St
         @$('input.selected').prop('checked', selected)
         @model.selected = selected
 
-class App.SOSBeacon.View.SelectableStudentList extends App.SOSBeacon.View.StudentList
+
+class App.SOSBeacon.View.SelectableStudentList extends App.SOSBeacon.View.BaseStudentList
     itemView: App.SOSBeacon.View.SelectableStudentListItem
     headerView: App.SOSBeacon.View.SelectableStudentListHeader
     gridFilters: null
 
+    run: (filters) =>
+        @collection.server_api = {
+            limit: @$("div.gridFooter > .size-select").val() ? 25
+        }
+
+        _.extend(@collection.server_api, filters)
+
+        App.Skel.Event.trigger("studentlist:filter:#{@.cid}", filters)

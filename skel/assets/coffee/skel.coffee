@@ -227,6 +227,8 @@ class App.Skel.View.ListView extends Backbone.View
         @collection.server_api = {
             limit: @$("div.gridFooter > .size-select").val() ? 25
         }
+        if @collection.query_defaults
+            _.extend(@collection.server_api, @collection.query_defaults)
         _.extend(@collection.server_api, filters)
 
         @collection.fetch()

@@ -1,6 +1,9 @@
 from google.appengine.ext import ndb
 
-from . import EntityBase
+import voluptuous
+
+from skel.datastore import EntityBase
+from skel.rest_api.rules import RestQueryRule
 
 
 person_schema = {
@@ -10,9 +13,19 @@ person_schema = {
     'contacts': list
 }
 
+person_query_schema = {
+    'flike_name': basestring,
+    'feq_contacts': voluptuous.any('', voluptuous.ndbkey())
+}
+
 class Person(EntityBase):
     """Represents a person."""
     # Store the schema version, to aid in migrations.
+
+    _query_properties = {
+        'name': RestQueryRule('name_', lambda x: x.lower()),
+        'contacts': RestQueryRule('contacts', lambda x: None if x == '' else x)
+    }
     version_ = ndb.IntegerProperty('v_', default=1)
 
     name = ndb.StringProperty('n')

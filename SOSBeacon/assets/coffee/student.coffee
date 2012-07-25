@@ -73,7 +73,6 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         "click button.add_contact": "addContact"
         "submit form" : "save"
         "keypress .edit": "updateOnEnter"
-        "click .remove-button": "clear"
         "hidden": "close"
 
     save: (e) =>

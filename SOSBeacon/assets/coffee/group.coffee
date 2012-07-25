@@ -56,7 +56,6 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
         "change": "change"
         "submit form" : "save"
         "keypress .edit": "updateOnEnter"
-        "click .remove-button": "clear"
         "hidden": "close"
 
     save: (e) =>

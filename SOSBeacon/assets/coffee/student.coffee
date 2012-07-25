@@ -243,7 +243,8 @@ class App.SOSBeacon.View.SelectableStudentList extends App.SOSBeacon.View.BaseSt
         @collection.server_api = {
             limit: @$("div.gridFooter > .size-select").val() ? 25
         }
-
+        if @collection.query_defaults
+            _.extend(@collection.server_api, @collection.query_defaults)
         _.extend(@collection.server_api, filters)
 
         App.Skel.Event.trigger("studentlist:filter:#{@.cid}", filters)

@@ -22,7 +22,7 @@ class Group(EntityBase):
     """Represents a group."""
 
     _query_properties = {
-        'name': RestQueryRule('name_', lambda x: x.lower()),
+        'name': RestQueryRule('name_', lambda x: x.lower() if x else ''),
     }
 
     # Store the schema version, to aid in migrations.

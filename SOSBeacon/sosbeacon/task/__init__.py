@@ -348,17 +348,25 @@ class MethodTxHandler(webapp2.RequestHandler):
             if marker.acknowledged:
                 return
 
-            tried_seconds_ago = now - marker.last_try
-            if tried_seconds_ago < event.response_wait_seconds:
+            if marker.last_try:
+                tried_seconds_ago = now - marker.last_try
+                if tried_seconds_ago < event.response_wait_seconds:
+                    return
+
+                task = get_try_next_method_task(
+                    event_key.urlsafe(), batch_id, method)
+                insert_tasks((task,), METHOD_TX_QUEUE)
                 return
 
-            task = get_try_next_method_task(event_key.urlsafe(), batch_id, method)
-            insert_tasks((task,), METHOD_TX_QUEUE)
-            return
+        # TODO: Use memcache check here to help prevent duplicate IDs.
+        if marker and marker.short_id:
+            short_id = marker.short_id
+        else:
+            short_id = MethodMarker.allocate_ids(size=1, parent=event.key)[0]
 
-        send_notification(event, method)
+        send_notification(event, method, short_id)
 
-        update_event_contact(event_key.urlsafe(), method, now)
+        update_event_contact(event_key.urlsafe(), method, now, short_id)
 
 
 class EventUpdateHandler(webapp2.RequestHandler):
@@ -409,6 +417,7 @@ class EventUpdateHandler(webapp2.RequestHandler):
                 marker = MethodMarker(
                     key=marker_key,
                     last_try=int(update['when']),
+                    short_id=update['short_id'],
                 )
             elif update['type'] == 'ntxm':
                 marker = MethodMarker(

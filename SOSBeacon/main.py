@@ -61,10 +61,14 @@ class MainHandler(TemplateHandler):
 
 
 class EventHandler(TemplateHandler):
-    def get(self, event_id, contact_id):
+    def get(self, event_id, method_id):
         from google.appengine.ext import ndb
-        event_key = ndb.Key(Event, int(event_id))
-        contact_key = ndb.Key(Contact, int(contact_id))
+        from sosbeacon import utils
+
+        event_id = utils.number_decode(event_id)
+        method_id = str(utils.number_decode(method_id))
+
+        event_key = ndb.Key(Event, event_id)
 
         event_mc_key = 'Event:%s' % (int(event_id),)
         event_html = memcache.get(event_mc_key)
@@ -96,9 +100,10 @@ class EventHandler(TemplateHandler):
 
         # Try to mark this event as acknowledged.
         try:
-            acknowledge_event(event_key, contact_key)
+            acknowledge_event(event_key, method_id)
         except:
-            # This is (relatively) non-critical, so ignore all exceptions.
+            # This is (relatively) non-critical, so log and ignore exceptions.
+            logging.exception('Ack failed')
             pass
 
 url_map = [

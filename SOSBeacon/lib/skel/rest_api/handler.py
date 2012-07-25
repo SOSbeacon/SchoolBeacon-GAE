@@ -225,13 +225,16 @@ class RestQuery(object):
         if not 'orderBy' in params:
             return False
 
-        if params['orderBy'] == prop_string:
-            if ('orderDirection' in params and
-                params['orderDirection'] == 'desc'):
-                self.sort_orders.append(-sort)
-                return True
-
+        if params['orderBy'] != prop_string:
             self.sort_orders.append(sort)
+            return False
+
+        if ('orderDirection' in params and
+            params['orderDirection'] == 'desc'):
+            self.sort_orders.append(-sort)
+            return True
+
+        self.sort_orders.append(sort)
         return True
 
 

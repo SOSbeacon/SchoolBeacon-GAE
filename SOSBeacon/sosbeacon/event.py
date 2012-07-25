@@ -49,7 +49,7 @@ class Event(EntityBase):
     """Represents a event."""
 
     _query_properties = {
-        'title': RestQueryRule('title_', lambda x: x.lower()),
+        'title': RestQueryRule('title_', lambda x: x.lower() if x else ''),
         'groups': RestQueryRule('groups', lambda x: None if x == '' else x)
     }
 

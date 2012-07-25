@@ -6,6 +6,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
         return {
             key: "",
             active: true,
+            type: 'e',
             who_to_notify: 'a',
             response_wait_seconds: 3600,
             title: "",
@@ -98,6 +99,25 @@ App.SOSBeacon.notifyLevels = new App.SOSBeacon.Collection.NotifyLevel([
 ])
 
 
+class App.SOSBeacon.Model.EventType extends Backbone.Model
+    idAttribute: 'type'
+    defaults: ->
+        return {
+            label: "",
+            type: '',
+        }
+
+
+class App.SOSBeacon.Collection.EventType extends Backbone.Collection
+    model: App.SOSBeacon.Model.EventType
+
+
+App.SOSBeacon.eventTypes = new App.SOSBeacon.Collection.EventType([
+    {type: 'e', label: "Emergency Broadcast"},
+    {type: 'o', label: "Test Broadcast"},
+])
+
+
 class App.SOSBeacon.Model.ResendDelay extends Backbone.Model
     idAttribute: 'seconds'
     defaults: ->
@@ -149,6 +169,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
             summary: @$('textarea.summary').val()
             detail: @$('textarea.detail').val()
             groups: groupList
+            type: @$('select.type').val()
             who_to_notify: @$('select.who_to_notify').val()
             response_wait_seconds: parseInt(@$('select.response_wait_seconds').val())
         )
@@ -162,6 +183,18 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         @model.groups.each((group, i) ->
             editView = new App.SOSBeacon.View.GroupSelect({model: group})
             el.find('fieldset.groups').append(editView.render().el)
+        )
+
+        select = @$('.type')
+        App.SOSBeacon.eventTypes.each((eventType, i) =>
+            option = $('<option></option>')
+                .attr('value', eventType.get('type'))
+                .html(eventType.get('label'))
+
+            if @model.get('type') == eventType.get('type')
+                option.attr('selected', 'selected')
+
+            select.append(option)
         )
 
         select = @$('.who_to_notify')

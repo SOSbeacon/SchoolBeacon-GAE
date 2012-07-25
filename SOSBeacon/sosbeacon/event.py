@@ -35,6 +35,7 @@ event_schema = {
     'summary': basestring,
     'detail': basestring,
     'groups': [voluptuous.ndbkey()],
+    'type': voluptuous.any('e', 'o'),
     'who_to_notify': voluptuous.any('a', 'd', 'p'),
     'response_wait_seconds': int,
 }
@@ -59,6 +60,8 @@ class Event(EntityBase):
     student_count = ndb.IntegerProperty('sc', default=0, indexed=False)
     contact_count = ndb.IntegerProperty('cc', default=0, indexed=False)
     acknowledged_count = ndb.IntegerProperty('ac', default=0, indexed=False)
+
+    event_type = ndb.StringProperty('et', indexed=False)
 
     who_to_notify = ndb.StringProperty('who', indexed=False, default='')
 
@@ -93,6 +96,7 @@ class Event(EntityBase):
         event.who_to_notify = data.get('who_to_notify')
         event.response_wait_seconds = data.get('response_wait_seconds')
 
+        event.event_type = data.get('type')
         event.active = data.get('active')
         event.title = data.get('title')
         event.summary = data.get('summary')
@@ -112,6 +116,7 @@ class Event(EntityBase):
         event['notice_sent_at'] = format_datetime(self.notice_sent_at)
         #TODO: set notice sent by to user
         #event['notice_sent_by'] = self.notice_sent_by
+        event['type'] = self.event_type
         event['title'] = self.title
         event['summary'] = self.summary
         event['detail'] = self.detail

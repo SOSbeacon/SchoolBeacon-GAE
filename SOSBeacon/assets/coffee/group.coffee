@@ -40,6 +40,10 @@ class App.SOSBeacon.Collection.GroupList extends Backbone.Paginator.requestPager
         totalPages: 100
     }
 
+    query_defaults: {
+        orderBy: 'name'
+    }
+
     server_api: {}
 
 

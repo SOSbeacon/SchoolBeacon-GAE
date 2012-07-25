@@ -14,7 +14,28 @@ indexes:
   properties:
   - name: a
   - name: g
+  - name: m_
+    direction: desc
+
+- kind: Event
+  properties:
+  - name: a
+  - name: g
   - name: t_
+
+- kind: Event
+  properties:
+  - name: a
+  - name: g
+  - name: t_
+  - name: m_
+    direction: desc
+
+- kind: Event
+  properties:
+  - name: a
+  - name: m_
+    direction: desc
 
 - kind: Event
   properties:
@@ -23,8 +44,28 @@ indexes:
 
 - kind: Event
   properties:
+  - name: a
+  - name: t_
+  - name: m_
+    direction: desc
+
+- kind: Event
+  properties:
+  - name: g
+  - name: m_
+    direction: desc
+
+- kind: Event
+  properties:
   - name: g
   - name: t_
+
+- kind: Event
+  properties:
+  - name: g
+  - name: t_
+  - name: m_
+    direction: desc
 
 - kind: Group
   properties:

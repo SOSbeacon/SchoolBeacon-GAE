@@ -15,6 +15,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
             notice_sent: false,
             notice_sent_at: null,
             notice_sent_by: null
+            modified: null
         }
 
     initialize: () ->
@@ -68,6 +69,11 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
         currentPage: 0
         perPage: 100
         totalPages: 100
+    }
+
+    query_defaults: {
+        orderBy: 'modified'
+        orderDirection: 'desc'
     }
 
     server_api: {}

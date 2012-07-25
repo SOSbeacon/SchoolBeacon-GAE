@@ -131,7 +131,6 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         "click button.add_group": "addGroup"
         "submit form" : "save"
         "keypress .edit": "updateOnEnter"
-        "click .remove-button": "clear"
         "hidden": "close"
 
     save: (e) =>

@@ -35,7 +35,7 @@ event_schema = {
     'summary': basestring,
     'detail': basestring,
     'groups': [voluptuous.ndbkey()],
-    'type': voluptuous.any('e', 'o'),
+    'type': voluptuous.any('e', 'n'),
     'who_to_notify': voluptuous.any('a', 'd', 'p'),
     'response_wait_seconds': int,
 }

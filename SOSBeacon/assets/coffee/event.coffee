@@ -114,7 +114,7 @@ class App.SOSBeacon.Collection.EventType extends Backbone.Collection
 
 App.SOSBeacon.eventTypes = new App.SOSBeacon.Collection.EventType([
     {type: 'e', label: "Emergency Broadcast"},
-    {type: 'o', label: "Test Broadcast"},
+    {type: 'n', label: "Notification"},
 ])
 
 

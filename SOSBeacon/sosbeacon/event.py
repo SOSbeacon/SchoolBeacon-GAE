@@ -132,6 +132,18 @@ class Event(EntityBase):
         return event
 
 
+marker_schema = {
+    'key': basestring,
+    'acknowledged': voluptuous.boolean(),
+    'name': basestring,
+    'responded': [basestring],
+}
+
+marker_query_schema = {
+    'feq_acknowledged': voluptuous.boolean(),
+    'fan_key': voluptuous.ndbkey()
+}
+
 class MethodMarker(EntityBase):
     """Used to store Contact-Events tx / view metadata."""
     # Store the schema version, to aid in migrations.
@@ -169,6 +181,17 @@ class MethodMarker(EntityBase):
                 students.add((student, tuple(methods)))
         self.students = list(students)
         return self
+
+    def to_dict(self):
+        """Return a MethodMarker entity represented as a dict of values."""
+
+        marker = self._default_dict()
+        marker["version"] = self.version_
+        marker['acknowledged'] = self.acknowledged
+        marker['name'] = self.key.id()
+        marker['responded'] = self.students
+
+        return marker
 
 
 class StudentMarker(EntityBase):

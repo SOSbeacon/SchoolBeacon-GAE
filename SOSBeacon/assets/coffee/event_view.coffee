@@ -4,7 +4,7 @@ class App.SOSBeacon.Model.StudentMarker extends Backbone.Model
     defaults: ->
         return {
             key: "",
-            all_acked: false,
+            acknowledged: false,
             name: "",
             responded: "contacts",
         }
@@ -27,15 +27,15 @@ class App.SOSBeacon.Collection.EventStudentList extends Backbone.Paginator.reque
     }
 
     query_defaults: {
-        event: null
-        all_acked: false
+        fan_key: null,
+        feq_acknowledged: 'false',
     }
 
     server_api: {}
 
-    initialize: (event_key, acked) =>
-        @query_defaults.event = event_key
-        @query_defaults.all_acked = acked
+    initialize: (options) =>
+        @query_defaults.fan_key = options.event_key
+        @query_defaults.feq_acknowledged = if options.acked then 'true' else 'false'
 
 
 class App.SOSBeacon.View.EventStudentListItem extends App.Skel.View.ListItemView
@@ -91,8 +91,10 @@ class App.SOSBeacon.View.ViewEventApp extends App.Skel.View.App
         @model = new App.SOSBeacon.Model.Event({key: id})
         @model.fetch({async: false})
 
-        @acknowledged = new App.SOSBeacon.Collection.EventStudentList(id, true)
-        @nonacknowledged = new App.SOSBeacon.Collection.EventStudentList(id, false)
+        @acknowledged = new App.SOSBeacon.Collection.EventStudentList(
+            {event_key: id, acked: true})
+        @nonacknowledged = new App.SOSBeacon.Collection.EventStudentList(
+            {event_key: id, acked: false})
 
         @ackList = new App.SOSBeacon.View.EventStudentList(@acknowledged)
         App.Skel.Event.bind("eventstudentlist:filter:#{@ackList.cid}",

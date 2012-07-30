@@ -61,7 +61,7 @@ class Event(EntityBase):
     contact_count = ndb.IntegerProperty('cc', default=0, indexed=False)
     acknowledged_count = ndb.IntegerProperty('ac', default=0, indexed=False)
 
-    event_type = ndb.StringProperty('et', indexed=False)
+    event_type = ndb.StringProperty('et')
 
     who_to_notify = ndb.StringProperty('who', indexed=False, default='')
 

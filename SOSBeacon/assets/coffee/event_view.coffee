@@ -27,12 +27,14 @@ class App.SOSBeacon.Collection.EventStudentList extends Backbone.Paginator.reque
     }
 
     query_defaults: {
+        event: null
         all_acked: false
     }
 
     server_api: {}
 
-    initialize: (acked) =>
+    initialize: (event_key, acked) =>
+        @query_defaults.event = event_key
         @query_defaults.all_acked = acked
 
 
@@ -76,7 +78,7 @@ class App.SOSBeacon.View.EventStudentList extends App.Skel.View.ListView
             _.extend(@collection.server_api, @collection.query_defaults)
         _.extend(@collection.server_api, filters)
 
-        App.Skel.Event.trigger("eventstudentlist:filter:#{@.cid}", filters)
+        App.Skel.Event.trigger("eventstudentlist:filter:#{@cid}", filters)
 
 
 class App.SOSBeacon.View.ViewEventApp extends App.Skel.View.App
@@ -89,11 +91,22 @@ class App.SOSBeacon.View.ViewEventApp extends App.Skel.View.App
         @model = new App.SOSBeacon.Model.Event({key: id})
         @model.fetch({async: false})
 
-        @acknowledged = new App.SOSBeacon.Collection.EventStudentList(true)
-        @nonacknowledged = new App.SOSBeacon.Collection.EventStudentList(false)
+        @acknowledged = new App.SOSBeacon.Collection.EventStudentList(id, true)
+        @nonacknowledged = new App.SOSBeacon.Collection.EventStudentList(id, false)
 
         @ackList = new App.SOSBeacon.View.EventStudentList(@acknowledged)
+        App.Skel.Event.bind("eventstudentlist:filter:#{@ackList.cid}",
+                            @filterAcked, this)
+
         @nonAckList = new App.SOSBeacon.View.EventStudentList(@nonacknowledged)
+        App.Skel.Event.bind("eventstudentlist:filter:#{@nonAckList.cid}",
+                            @filterNonAcked, this)
+
+    filterAcked: (filters) =>
+        @acknowledged.fetch()
+
+    filterNonAcked: (filters) =>
+        @nonacknowledged.fetch()
 
     render: =>
         @$el.html(@template(@model.toJSON()))

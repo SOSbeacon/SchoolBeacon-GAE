@@ -62,7 +62,7 @@ class App.SOSBeacon.View.Menu extends Backbone.View
             {
                 text: 'Send Broadcast',
                 title: 'sendbroadcast',
-                href: '#\/sendbroadcast'
+                href: '#\/broadcast/send'
             },
         ]
         @collection = new App.SOSBeacon.Collection.MenuItems(items)

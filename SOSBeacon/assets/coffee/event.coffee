@@ -349,6 +349,7 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.App
 
     render: =>
         App.SOSBeacon.Event.on('Event:send', @onSend, this)
+        App.SOSBeacon.Event.on('Event:view', @onView, this)
         #@$el.html(@template())
         #
         @$el.append(@listView.render().el)
@@ -372,6 +373,11 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.App
         if @confirmView.focusButton
             el.find(@confirmView.focusButton).focus()
 
+    onView: (event) =>
+        if not event.id
+            return
+        App.SOSBeacon.router.navigate("/broadcast/view/" + event.id, {trigger: true})
+
     onClose: =>
         App.SOSBeacon.Event.unbind(null, null, this)
         if @confirmView
@@ -384,9 +390,13 @@ class App.SOSBeacon.View.PendingEventListItem extends App.Skel.View.ListItemView
 
     events:
         "click .send-button": "onSend"
+        "click .view-button": "onView"
 
     onSend: =>
         App.SOSBeacon.Event.trigger('Event:send', @model)
+
+    onView: =>
+        App.SOSBeacon.Event.trigger('Event:view', @model)
 
 
 class App.SOSBeacon.View.PendingEventListHeader extends App.Skel.View.ListItemHeader

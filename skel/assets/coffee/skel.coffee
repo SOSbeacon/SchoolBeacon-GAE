@@ -231,7 +231,6 @@ class App.Skel.View.ListView extends Backbone.View
             _.extend(@collection.server_api, @collection.query_defaults)
         _.extend(@collection.server_api, filters)
 
-        @collection.fetch()
 
         return false
 

@@ -71,8 +71,7 @@ class App.Skel.View.ModelApp extends App.Skel.View.App
 
     addOpen: =>
         App.Skel.Event.bind("model:save", this.addSave, this)
-        App.Skel.Event.unbind(
-            "model:save", this.editSave, this)
+        App.Skel.Event.unbind("model:save", this.editSave, this)
 
         @searchMode = false
 

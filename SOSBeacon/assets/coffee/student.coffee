@@ -15,7 +15,7 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
     initialize: =>
         @groups = new App.SOSBeacon.Collection.GroupList()
         groups = @get('groups')
-        if groups
+        if groups and not _.isEmpty(groups)
             url = @groups.url + '/' + groups.join()
             @groups.fetch({url: url, async: false})
 
@@ -100,6 +100,7 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         return super()
 
     render: (asModal) =>
+        console.log(@model)
         el = @$el
         el.html(@template(@model.toJSON()))
 

@@ -133,8 +133,7 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         contact = new @model.contacts.model()
         @model.contacts.add(contact)
 
-        editView = new App.SOSBeacon.View.ContactEdit(
-            model: new @model.contacts.model())
+        editView = new App.SOSBeacon.View.ContactEdit(model: contact)
         contact.editView = editView
         rendered = editView.render()
         @$('ul.contacts').append(rendered.el)

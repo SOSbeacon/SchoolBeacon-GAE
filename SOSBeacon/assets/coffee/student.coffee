@@ -100,7 +100,6 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         return super()
 
     render: (asModal) =>
-        console.log(@model)
         el = @$el
         el.html(@template(@model.toJSON()))
 

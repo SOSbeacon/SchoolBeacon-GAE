@@ -30,17 +30,22 @@ if libs_dir not in sys.path:
 import webapp2
 
 url_map = [
-    #contact
+    # Contact
     webapp2.Route(r'/service/contact/<resource_id:.+>',
         handler='sosbeacon.service.ContactHandler'),
     webapp2.Route(r'/service/contact<:/?>',
         handler='sosbeacon.service.ContactListHandler'),
-    #student
+    # Student
     webapp2.Route(r'/service/student/<resource_id:.+>',
         handler='sosbeacon.service.StudentHandler'),
     webapp2.Route(r'/service/student<:/?>',
         handler='sosbeacon.service.StudentListHandler'),
-    #Event
+    # Event - Student Marker
+    webapp2.Route(r'/service/event/student',
+        handler='sosbeacon.service.EventStudentListHandler'),
+    webapp2.Route(r'/service/event/student/<resource_id>',
+        handler='sosbeacon.service.EventStudentHandler'),
+    # Event
     webapp2.Route(r'/service/event/send',
         handler='sosbeacon.service.SendEventHandler'),
     webapp2.Route(r'/service/event/<resource_id>',
@@ -48,7 +53,7 @@ url_map = [
     webapp2.Route(r'/service/event<:/?>',
         handler='sosbeacon.service.EventListHandler'),
 
-    #group
+    # Group
     webapp2.Route(r'/service/group/<resource_id:.+>',
         handler='sosbeacon.service.GroupHandler'),
     webapp2.Route(r'/service/group<:/?>',

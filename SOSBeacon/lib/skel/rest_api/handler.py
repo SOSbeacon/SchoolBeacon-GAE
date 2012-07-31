@@ -246,6 +246,7 @@ class RestQueryFilters(object):
             'neq': self._add_inequality_filter,
             'like': self._add_like_filter,
             'gt': self._add_greater_than_filter,
+            'an': self._add_ancestor_filter
         }
 
     def get(self, query, query_filter, prop, val):
@@ -254,6 +255,15 @@ class RestQueryFilters(object):
             return query
 
         return f(query, prop, val)
+
+    def _add_ancestor_filter(self, query, filter_property, val):
+        # TODO:  This needs done at query instantiation.
+        from google.appengine.ext import ndb
+        key = val
+        if not isinstance(val, ndb.Key):
+            key = ndb.Key(urlsafe=val)
+        query._Query__ancestor = key
+        return query, None
 
     def _add_equality_filter(self, query, filter_property, val):
         return query.filter(filter_property == val), None

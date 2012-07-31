@@ -25,7 +25,8 @@ class App.SOSBeacon.Router extends Backbone.Router
         "student": "showStudent"
         "group": "showGroup"
         "broadcast": "showBroadcast"
-        "sendbroadcast": "showSendBroadcast"
+        "broadcast/send": "showSendBroadcast"
+        "broadcast/view/:id": "showViewBroadcast"
 
     initialize: (data) ->
         @menu = new App.SOSBeacon.View.Menu()
@@ -49,6 +50,9 @@ class App.SOSBeacon.Router extends Backbone.Router
 
     showSendBroadcast: () =>
         @swap(App.SOSBeacon.View.PendingEventApp)
+
+    showViewBroadcast: (id) =>
+        @swap(App.SOSBeacon.View.ViewEventApp, id)
 
     showGroupStudents: (id) =>
         @swap(App.SOSBeacon.View.GroupStudentsApp, id)

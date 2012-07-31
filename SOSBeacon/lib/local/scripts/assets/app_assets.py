@@ -46,12 +46,14 @@ def _bundle_app_coffee(app, env, debug=False):
     """Compile the apps coffeescript and bundle it into demo.js"""
     COFFEE_PATH = 'coffee'
     scripts = (
+        path.join(COFFEE_PATH, 'request_paginator.coffee'),
         path.join(COFFEE_PATH, 'app.coffee'),
         path.join(COFFEE_PATH, 'contact-method.coffee'),
         path.join(COFFEE_PATH, 'contact.coffee'),
         path.join(COFFEE_PATH, 'group.coffee'),
         path.join(COFFEE_PATH, 'student.coffee'),
         path.join(COFFEE_PATH, 'event.coffee'),
+        path.join(COFFEE_PATH, 'event_view.coffee'),
         path.join(COFFEE_PATH, 'group_students.coffee'),
         path.join(COFFEE_PATH, 'menu.coffee'),
         path.join(COFFEE_PATH, 'router.coffee'),

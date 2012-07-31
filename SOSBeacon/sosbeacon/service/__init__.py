@@ -139,6 +139,54 @@ class EventListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             query_schema=event_query_schema)
 
 
+class EventStudentListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+
+    def __init__(self, request, response):
+        from sosbeacon.event import MethodMarker
+        from sosbeacon.event import marker_schema
+        from sosbeacon.event import marker_query_schema
+
+        super(EventStudentListHandler, self).__init__(
+            MethodMarker, marker_schema, request, response,
+            query_schema=marker_query_schema)
+
+    def post(self):
+        self.error(405)
+        return
+
+    def put(self):
+        self.error(405)
+        return
+
+    def delete(self):
+        self.error(405)
+        return
+
+
+class EventStudentHandler(rest_handler.RestApiHandler):
+
+    def __init__(self, request, response):
+        from sosbeacon.event import MethodMarker
+        from sosbeacon.event import marker_schema
+        from sosbeacon.event import marker_query_schema
+
+        # TODO: Lock event (or restrict some fields) if sending is in progress?
+        super(EventListHandler, self).__init__(
+            MethodMarker, marker_schema, request, response,
+            query_schema=marker_query_schema)
+
+    def post(self):
+        self.error(405)
+        return
+
+    def put(self):
+        self.error(405)
+        return
+
+    def delete(self):
+        self.error(405)
+        return
+
 class SendEventHandler(webapp2.RequestHandler):
     def post(self):
         from google.appengine.api import taskqueue

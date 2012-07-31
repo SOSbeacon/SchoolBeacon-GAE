@@ -10,8 +10,10 @@ class App.SOSBeacon.Model.StudentMarker extends Backbone.Model
         }
 
 
-class App.SOSBeacon.Collection.EventStudentList extends Backbone.Paginator.requestPager
+class App.SOSBeacon.Collection.EventStudentList extends App.Skel.REST.RequestPager
     model: App.SOSBeacon.Model.StudentMarker
+
+    server_api: {}
 
     paginator_core: {
         type: 'GET',
@@ -26,16 +28,15 @@ class App.SOSBeacon.Collection.EventStudentList extends Backbone.Paginator.reque
         totalPages: 100
     }
 
-    query_defaults: {
-        fan_key: null,
-        feq_acknowledged: 'false',
-    }
-
-    server_api: {}
+    defaults: =>
+        return {
+            fan_key: @event_key,
+            feq_acknowledged: @acked,
+        }
 
     initialize: (options) =>
-        @query_defaults.fan_key = options.event_key
-        @query_defaults.feq_acknowledged = if options.acked then 'true' else 'false'
+        @event_key = options.event_key
+        @acked = if options.acked then 'true' else 'false'
 
 
 class App.SOSBeacon.View.EventStudentListItem extends App.Skel.View.ListItemView
@@ -72,11 +73,11 @@ class App.SOSBeacon.View.EventStudentList extends App.Skel.View.ListView
 
     run: (filters) =>
         @collection.server_api = {
-            limit: @$("div.gridFooter > .size-select").val() ? 25
+            limit: @$("div.gridFooter > select.size-select").val() ? 25
         }
-        if @collection.query_defaults
-            _.extend(@collection.server_api, @collection.query_defaults)
-        _.extend(@collection.server_api, filters)
+
+        defaults = @collection.defaults() ? {}
+        _.extend(@collection.server_api, defaults, filters)
 
         App.Skel.Event.trigger("eventstudentlist:filter:#{@cid}", filters)
 

@@ -92,18 +92,21 @@ class App.SOSBeacon.View.GroupApp extends App.Skel.View.ModelApp
         @collection = new App.SOSBeacon.Collection.GroupList()
         @listView = new App.SOSBeacon.View.GroupList(@collection)
 
-        @collection.fetch()
-
 
 class App.SOSBeacon.View.GroupListItem extends App.Skel.View.ListItemView
     template: JST['group/list']
 
-    initialize: =>
-        @events['click .students-button'] = 'viewStudents'
+    events:
+        "click .students-button": "viewStudents"
+        "click .edit-button": "edit"
+        "click .remove-button": "delete"
 
     viewStudents: =>
         App.Skel.Event.trigger("groupstudents:selected", @model.id, this)
         return false
+
+    onClose: =>
+        App.Skel.Event.unbind(null, null, this)
 
 
 class App.SOSBeacon.View.GroupListHeader extends App.Skel.View.ListItemHeader

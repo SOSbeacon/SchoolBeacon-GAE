@@ -256,8 +256,6 @@ class App.SOSBeacon.View.EventApp extends App.Skel.View.ModelApp
         @collection = new App.SOSBeacon.Collection.EventList()
         @listView = new App.SOSBeacon.View.EventList(@collection)
 
-        @collection.fetch()
-
 
 class App.SOSBeacon.View.EventListItem extends App.Skel.View.ListItemView
     template: JST['event/list']
@@ -345,8 +343,6 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.App
         @collection = new App.SOSBeacon.Collection.EventList()
         @listView = new App.SOSBeacon.View.PendingEventList(@collection)
 
-        @collection.fetch()
-
     render: =>
         App.SOSBeacon.Event.on('Event:send', @onSend, this)
         App.SOSBeacon.Event.on('Event:view', @onView, this)
@@ -380,6 +376,7 @@ class App.SOSBeacon.View.PendingEventApp extends App.Skel.View.App
 
     onClose: =>
         App.SOSBeacon.Event.unbind(null, null, this)
+
         if @confirmView
             @confirmView.close()
         @listView.close()

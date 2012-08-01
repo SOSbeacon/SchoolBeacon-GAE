@@ -230,6 +230,7 @@ class App.Skel.View.ListView extends Backbone.View
             _.extend(@collection.server_api, @collection.query_defaults)
         _.extend(@collection.server_api, filters)
 
+        @collection.fetch()
 
         return false
 
@@ -272,7 +273,6 @@ class App.Skel.View.ListItemView extends Backbone.View
         proceed = confirm('Are you sure you want to delete?  This can not be undone.')
         if proceed
             @model.destroy()
-
 
 class App.Skel.View.ListItemHeader extends Backbone.View
     tagName: "thead"

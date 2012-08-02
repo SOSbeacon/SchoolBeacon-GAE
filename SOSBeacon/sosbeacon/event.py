@@ -152,6 +152,9 @@ class MethodMarker(EntityBase):
     # Used to query for short URLs
     short_id = ndb.StringProperty('i')
 
+    # contact name, for display only
+    name = ndb.StringProperty('nm')
+
     acknowledged = ndb.BooleanProperty('a', default=False)
     acknowledged_at = ndb.IntegerProperty('at', indexed=False)
 
@@ -170,15 +173,17 @@ class MethodMarker(EntityBase):
 
         self.short_id = self.short_id or other.short_id
 
+        self.name = self.name or other.name
+
         self.last_try = max(self.last_try, other.last_try)
 
         students = set()
         if self.students:
-            for student, methods in self.students:
-                students.add((student, tuple(methods)))
+            for student, contact_name, methods in self.students:
+                students.add((student, contact_name, tuple(methods)))
         if other.students:
-            for student, methods in other.students:
-                students.add((student, tuple(methods)))
+            for student, contact_name, methods in other.students:
+                students.add((student, contact_name, tuple(methods)))
         self.students = list(students)
         return self
 
@@ -188,7 +193,8 @@ class MethodMarker(EntityBase):
         marker = self._default_dict()
         marker["version"] = self.version_
         marker['acknowledged'] = self.acknowledged
-        marker['name'] = self.key.id()
+        marker['name'] = self.name
+        marker['method'] = self.key.id()
         marker['responded'] = self.students
 
         return marker
@@ -249,7 +255,7 @@ def try_next_contact_method(event_key, method, when):
     insert_event_updator(ndb.Key(urlsafe=event_key))
 
 
-def set_student_method_marker(event_key, method, student, methods):
+def get_student_method_marker(event_key, method, methods, student, name=None):
     """Insert a task indicating the next contact method that should be tried
     for each student-contact.
     """
@@ -267,6 +273,7 @@ def set_student_method_marker(event_key, method, student, methods):
             'type': "idx",
             'event': event_key,
             'method': method,
+            'contact_name': name if name else '',
             'student': student,
             'methods': json.dumps(methods)
         }

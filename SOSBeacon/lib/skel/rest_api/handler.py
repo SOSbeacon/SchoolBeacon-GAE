@@ -96,13 +96,14 @@ class RestApiHandler(RestApiSaveHandler):
 class RestApiListHandler(RestApiSaveHandler):
 
     def __init__(self, entity, schema, request=None, response=None,
-                 default_filters=None, query_schema=None):
+                 default_filters=None, query_schema=None, query_options=None):
         super(RestApiListHandler, self).__init__(request, response)
 
         self.entity = entity
         self.schema = schema
         self.query_schema = query_schema
-        self.query = RestQuery(default_filters=default_filters)
+        self.query = RestQuery(default_filters=default_filters,
+                               query_options=query_options)
 
     def get(self, *args, **kwargs):
         resources = self.query.fetch(
@@ -119,6 +120,9 @@ class RestQuery(object):
         self.default_filters = default_filters if default_filters else []
         self.sort_orders = []
 
+        query_options = kwargs.get('query_options')
+        self.query_options = query_options or {}
+
     def fetch(self, entity, params, query_schema=None):
         if query_schema:
             from voluptuous import Schema
@@ -133,7 +137,7 @@ class RestQuery(object):
         self.query_filters = RestQueryFilters()
         limit = int(params.get('limit', 100))
 
-        query = entity.query()
+        query = entity.query(**self.query_options)
 
         for default_filters in self.default_filters:
             query = query.filter(default_filters)

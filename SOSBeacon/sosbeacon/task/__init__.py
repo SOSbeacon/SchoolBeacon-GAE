@@ -13,7 +13,7 @@ from sosbeacon.event import get_try_next_method_task
 from sosbeacon.event import get_tx_worker_task
 from sosbeacon.event import insert_event_updator
 from sosbeacon.event import send_notification
-from sosbeacon.event import set_student_method_marker
+from sosbeacon.event import get_student_method_marker
 from sosbeacon.event import update_event_contact
 from sosbeacon.event import update_event_counts
 from sosbeacon.utils import insert_tasks
@@ -195,8 +195,9 @@ class EventGroupTxHandler(webapp2.RequestHandler):
                 continue
 
             methods = [next_method['value'] for next_method in methods]
-            markers.append(set_student_method_marker(
-                self.event_key, method, student.key, methods))
+            markers.append(get_student_method_marker(
+                self.event_key, method, methods,
+                student.key, name=contact.get('name')))
 
             if method in self.seen_methods:
                 continue
@@ -210,6 +211,7 @@ class EventGroupTxHandler(webapp2.RequestHandler):
             self.tx_workers = []
 
         return markers
+
 
 class TryNextMethodTxHandler(webapp2.RequestHandler):
     """For any contacts in this event who use this method, try their next
@@ -283,14 +285,14 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
             student_count=len(method.students))
 
     def _process_student(self, student_info):
-        student_key, methods = student_info
+        student_key, contact_name, methods = student_info
         try:
             method = methods.pop(0)
         except IndexError:
             return
 
-        marker = set_student_method_marker(
-            self.event_key, method, student_key, methods)
+        marker = get_student_method_marker(
+            self.event_key, method, methods, student_key, name=contact_name)
 
         if method in self.seen_methods:
             return marker
@@ -304,6 +306,7 @@ class TryNextMethodTxHandler(webapp2.RequestHandler):
             self.tx_workers = []
 
         return marker
+
 
 class MethodTxHandler(webapp2.RequestHandler):
     """Send a message about the Event to the specified Contact Method.
@@ -429,9 +432,11 @@ class EventUpdateHandler(webapp2.RequestHandler):
             elif update['type'] == 'idx':
                 import json
                 student_info = (update['student'],
+                                update.get('contact_name', ''),
                                 json.loads(update.get('methods', "[]")))
                 marker = MethodMarker(
                     key=marker_key,
+                    name=update.get('contact_name', ''),
                     students=(student_info,)
                 )
 

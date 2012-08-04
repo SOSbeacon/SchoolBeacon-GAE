@@ -6,6 +6,7 @@ class App.SOSBeacon.Model.StudentMarker extends Backbone.Model
             key: "",
             acknowledged: false,
             name: "",
+            method: "",
             responded: "contacts",
         }
 

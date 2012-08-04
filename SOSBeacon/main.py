@@ -73,7 +73,7 @@ class EventHandler(TemplateHandler):
         event_mc_key = 'Event:%s' % (int(event_id),)
         event_html = memcache.get(event_mc_key)
         if not event_html:
-            event = Event.get_by_id(int(event_id))
+            event = Event.get_by_id(int(event_id), namespace='_x_')
             if not event:
                 memcache.set(event_mc_key, EVENT_DOES_NOT_EXIST)
                 self.error(404)

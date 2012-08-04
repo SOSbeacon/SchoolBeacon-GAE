@@ -40,6 +40,20 @@ indexes:
 - kind: Event
   properties:
   - name: a
+  - name: sc
+  - name: m_
+    direction: desc
+
+- kind: Event
+  properties:
+  - name: a
+  - name: sch
+  - name: m_
+    direction: desc
+
+- kind: Event
+  properties:
+  - name: a
   - name: t_
 
 - kind: Event

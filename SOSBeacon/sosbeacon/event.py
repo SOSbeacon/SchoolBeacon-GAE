@@ -57,6 +57,8 @@ class Event(EntityBase):
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
+    school = ndb.StringProperty('sch')
+
     student_count = ndb.IntegerProperty('sc', default=0, indexed=False)
     contact_count = ndb.IntegerProperty('cc', default=0, indexed=False)
     acknowledged_count = ndb.IntegerProperty('ac', default=0, indexed=False)
@@ -91,7 +93,9 @@ class Event(EntityBase):
             event = key.get()
 
         if not event:
-            event = cls()
+            from google.appengine.api import namespace_manager
+            school = namespace_manager.get_namespace()
+            event = cls(namespace='_x_', school=unicode(school))
 
         event.who_to_notify = data.get('who_to_notify')
         event.response_wait_seconds = data.get('response_wait_seconds')
@@ -338,7 +342,8 @@ def acknowledge_event(event_key, method_id):
     if seen:
         return
 
-    method_marker = MethodMarker.query(MethodMarker.short_id == method_id).get()
+    method_marker = MethodMarker.query(MethodMarker.short_id == method_id,
+                                       namespace='_x_').get()
     if not method_marker:
         # TODO: Somehow retry this...
         return

@@ -133,10 +133,16 @@ class EventListHandler(rest_handler.RestApiListHandler, ProcessMixin):
         from sosbeacon.event import event_schema
         from sosbeacon.event import event_query_schema
 
+        from google.appengine.api import namespace_manager
+        school = namespace_manager.get_namespace()
+        school_filter = Event.school == unicode(school)
+
         # TODO: Lock event (or restrict some fields) if sending is in progress?
         super(EventListHandler, self).__init__(
             Event, event_schema, request, response,
-            query_schema=event_query_schema)
+            query_schema=event_query_schema,
+            default_filters=(school_filter,),
+            query_options={'namespace': '_x_'})
 
 
 class EventStudentListHandler(rest_handler.RestApiListHandler, ProcessMixin):

@@ -45,7 +45,7 @@ class App.SOSBeacon.View.ContactMethodEdit extends Backbone.View
 
     close: =>
         @model.set(
-            type: @$('input.type').val()
+            #type: @$('input.type').val()
             value: @$('input.value').val()
         )
         return this

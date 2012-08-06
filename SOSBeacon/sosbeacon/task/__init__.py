@@ -54,9 +54,14 @@ class EventStartTxHandler(webapp2.RequestHandler):
             logging.error('Event %s not ready to send!', event_key)
             return
 
+        groups = event.groups
+        if len(groups) == 1 and groups[0].id() == '__all_groups__':
+            from sosbeacon.group import Group
+            groups = Group.query().iter(keys_only=True)
+
         # TODO: Create / handle an "all" group.
         tasks = []
-        for group_key in event.groups:
+        for group_key in groups:
             group_urlsafe = group_key.urlsafe()
             name = "tx-s-%s-%s-%s" % (event_urlsafe, group_urlsafe, batch_id)
             tasks.append(taskqueue.Task(
@@ -147,8 +152,11 @@ class EventGroupTxHandler(webapp2.RequestHandler):
         """
         from sosbeacon.student import Student
 
+        query = Student.query().order(Student.key)
+
         group_key = ndb.Key(urlsafe=self.group_urlsafe)
-        query = Student.query(Student.groups == group_key).order(Student.key)
+        if group_key.id() != '__all__':
+            query = query.filter(Student.groups == group_key)
 
         start_cursor = ndb.Cursor(urlsafe=self.request.get('cursor'))
 

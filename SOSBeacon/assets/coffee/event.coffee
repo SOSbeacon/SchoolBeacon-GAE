@@ -152,6 +152,12 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         "submit form" : "save"
         "keypress .edit": "updateOnEnter"
         "hidden": "close"
+        "keyup textarea.sms": "smsUpdated"
+
+    smsUpdated: =>
+        smsMessage = @$('textarea.summary').val()
+        remaining = 100 - smsMessage.length
+        @$('p.sms-remain').text("#{remaining} characters remaining.")
 
     save: (e) =>
         if e

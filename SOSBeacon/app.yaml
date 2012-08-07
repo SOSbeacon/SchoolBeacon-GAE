@@ -57,6 +57,15 @@ handlers:
   script: task.app
   login: admin
 
+- url: /shell/static
+  static_dir: shell/static
+  expiration: 1d
+  login: admin
+
+- url: /shell/.*
+  script: shell.shell.application
+  login: admin
+
 - url: .*
   script: main.app
 

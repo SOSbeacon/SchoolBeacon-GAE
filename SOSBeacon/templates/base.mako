@@ -3,6 +3,7 @@
   <head>
     <title><%block name="title">SOSBeacon</%block></title>
     <link rel="stylesheet" type="text/css" href="/static/css/lib.css">
+    <link rel="stylesheet" type="text/css" href="/static/css/responsive.css">
     <link rel="stylesheet" type="text/css" href="/static/css/sosbeacon.css">
   </head>
   <body>

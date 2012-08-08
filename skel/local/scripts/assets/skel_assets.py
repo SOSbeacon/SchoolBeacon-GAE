@@ -101,6 +101,12 @@ def _bundle_3rd_party_css(app_path, env, debug=False):
 
     env.add(bundle)
 
+    resp_bundle = Bundle(
+                path.join('css', 'bootstrap-responsive.css'),
+                output=path.join(app_path, 'css', 'responsive.css')
+            )
+    env.add(resp_bundle)
+
 
 def _setup_env(app='', debug=True, cache=True):
     """Setup the webassets environment."""

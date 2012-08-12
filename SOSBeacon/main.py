@@ -54,9 +54,17 @@ class TemplateHandler(webapp2.RequestHandler):
 
         return out
 
+
 class MainHandler(TemplateHandler):
     def get(self):
         out = self.render('default.mako')
+        self.response.out.write(out)
+
+
+#TODO: Move to it's own app?
+class AdminHandler(TemplateHandler):
+    def get(self):
+        out = self.render('admin.mako')
         self.response.out.write(out)
 
 
@@ -108,6 +116,7 @@ class EventHandler(TemplateHandler):
 
 url_map = [
     ('/', MainHandler),
+    ('/admin/', AdminHandler),
     ('/e/(.*)/(.*)', EventHandler),
 ]
 app = webapp2.WSGIApplication(url_map)

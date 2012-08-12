@@ -149,6 +149,9 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
     template: JST['group/select']
     className: "control"
 
+    events:
+        "click a.remove": "close"
+
     render: () =>
         @$el.html(@template(@model.toJSON()))
         @$el.find('input.name').typeahead({
@@ -171,6 +174,9 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
                 })
         })
         return this
+
+    onClose: =>
+        @$('input.name').trigger('cleanup')
 
 
 class App.SOSBeacon.View.GroupTypeahaedFilter extends App.Ui.Datagrid.TypeaheadFilter
@@ -200,3 +206,4 @@ class App.SOSBeacon.View.GroupTypeahaedFilter extends App.Ui.Datagrid.TypeaheadF
 
     onClose: =>
         @$('input.filter-input').trigger('cleanup')
+

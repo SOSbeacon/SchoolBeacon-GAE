@@ -27,7 +27,7 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
         hasError = false
         errors = {}
 
-        if _.isEmpty(attrs.name)
+        if attrs.type != 'd' and _.isEmpty(attrs.name)
             hasError = true
             errors.name = "Missing name."
 

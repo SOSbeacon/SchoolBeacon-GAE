@@ -64,7 +64,15 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
 
     events:
         "click button.add_method": "addMethod"
+        "change select.type": "typeChanged"
         "keypress .edit": "updateOnEnter"
+
+    typeChanged: =>
+        type = @$('select.type').val()
+        if type == "d"
+            name = @$('div.name').hide()
+        else
+            name = @$('div.name').show()
 
     close: =>
         @model.methods.each((method) ->
@@ -85,21 +93,26 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
             @$el.find('fieldset.methods').append(editView.render().el)
         )
 
+        contactType = @model.get('type')
+
         select = @$('select.type')
         App.SOSBeacon.contactTypes.each((type, i) =>
             option = $('<option></option>')
                 .attr('value', type.get('type'))
                 .html(type.get('label'))
 
-            if @model.get('type') == type.get('type')
+            if contactType == type.get('type')
                 option.attr('selected', 'selected')
 
             select.append(option)
         )
+        if contactType == "d"
+            name = @$('div.name').hide()
 
         return this
 
     addMethod: =>
+
         method = new @model.methods.model()
         @model.methods.add(method)
 
@@ -107,7 +120,7 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
         rendered = editView.render()
         @$el.find('fieldset.methods').append(rendered.el)
 
-        rendered.$el.find('input.type').focus()
+        rendered.$el.find('input.method').focus()
 
         return false
 

@@ -138,7 +138,7 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         rendered = editView.render()
         @$('ul.contacts').append(rendered.el)
 
-        rendered.$el.find('input.name').focus()
+        rendered.$el.find('select.type').focus()
 
         return false
 

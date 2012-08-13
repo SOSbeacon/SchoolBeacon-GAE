@@ -163,9 +163,27 @@ class App.SOSBeacon.View.StudentApp extends App.Skel.View.ModelApp
     modelType: App.SOSBeacon.Model.Student
     form: App.SOSBeacon.View.StudentEdit
 
+    events:
+        "click .add-button": "add"
+        "click .import-button": "import"
+
     initialize: =>
         @collection = new App.SOSBeacon.Collection.StudentList()
         @listView = new App.SOSBeacon.View.StudentList(@collection)
+
+    import: =>
+        #todo prompt for doc to import
+        importView = new App.SOSBeacon.View.ImportStudentsView()
+        @$el.append($(importView.render().el))
+
+
+class App.SOSBeacon.View.ImportStudentsView extends Backbone.View
+    tagName: "div"
+    template: JST['student/import']
+
+    render: =>
+        @$el.html(@template())
+        return this
 
 
 class App.SOSBeacon.View.StudentListItem extends App.Skel.View.ListItemView

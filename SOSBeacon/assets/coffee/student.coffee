@@ -121,7 +121,7 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         groupInputs = @$el.find('fieldset.groups').find('input.name')
         for input in groupInputs
             $input = $(input)
-            if _.isEmpty($input.val())
+            if _.isEmpty($.trim($input.val()))
                 $input.focus()
                 return false
 

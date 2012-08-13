@@ -113,7 +113,7 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
 
     addMethod: =>
         for method in @model.methods.models
-            if _.isEmpty(method.editView.$el.find('input.method').val())
+            if _.isEmpty($.trim(method.editView.$el.find('input.method').val()))
                 return false
 
         method = new @model.methods.model()

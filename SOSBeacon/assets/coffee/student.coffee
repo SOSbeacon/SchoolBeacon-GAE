@@ -27,7 +27,7 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
         hasError = false
         errors = {}
 
-        if _.isEmpty(attrs.name)
+        if attrs.type != 'd' and _.isEmpty(attrs.name)
             hasError = true
             errors.name = "Missing name."
 
@@ -138,7 +138,7 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         rendered = editView.render()
         @$('ul.contacts').append(rendered.el)
 
-        rendered.$el.find('input.name').focus()
+        rendered.$el.find('select.type').focus()
 
         return false
 

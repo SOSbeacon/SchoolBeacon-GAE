@@ -19,7 +19,7 @@ class App.SOSBeacon.Model.Contact extends Backbone.Model
         hasError = false
         errors = {}
 
-        if _.isEmpty(attrs.name)
+        if attrs.type != 'd' and _.isEmpty(attrs.name)
             hasError = true
             errors.name = "Missing name."
 
@@ -64,7 +64,15 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
 
     events:
         "click button.add_method": "addMethod"
+        "change select.type": "typeChanged"
         "keypress .edit": "updateOnEnter"
+
+    typeChanged: =>
+        type = @$('select.type').val()
+        if type == "d"
+            name = @$('div.name').hide()
+        else
+            name = @$('div.name').show()
 
     close: =>
         @model.methods.each((method) ->
@@ -85,29 +93,38 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
             @$el.find('fieldset.methods').append(editView.render().el)
         )
 
+        contactType = @model.get('type')
+
         select = @$('select.type')
         App.SOSBeacon.contactTypes.each((type, i) =>
             option = $('<option></option>')
                 .attr('value', type.get('type'))
                 .html(type.get('label'))
 
-            if @model.get('type') == type.get('type')
+            if contactType == type.get('type')
                 option.attr('selected', 'selected')
 
             select.append(option)
         )
+        if contactType == "d"
+            name = @$('div.name').hide()
 
         return this
 
     addMethod: =>
+        for method in @model.methods.models
+            if _.isEmpty(method.get('value'))
+                return false
+
         method = new @model.methods.model()
         @model.methods.add(method)
 
         editView = new App.SOSBeacon.View.ContactMethodEdit({model: method})
         rendered = editView.render()
         @$el.find('fieldset.methods').append(rendered.el)
+        method.editView = editView
 
-        rendered.$el.find('input.type').focus()
+        rendered.$el.find('input.method').focus()
 
         return false
 

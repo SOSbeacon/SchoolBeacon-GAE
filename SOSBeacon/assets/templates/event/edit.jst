@@ -29,14 +29,15 @@
                     <label for="active" class="control-label">Active:</label>
                     <div class="controls">
                         <input id="active" name="active" type="checkbox"
-                               <%= active ? "checked": "" %> class="active" />
+                               <%= active ? "checked": "" %>
+                               autocomplete="off" class="active" />
                     </div>
                 </div>
                 <div class="control-group">
                     <label for="title" class="control-label">Title:</label>
                     <div class="controls">
                         <input id="title" name="title" type="text" value="<%= title %>" 
-                            class="title" placeholder="Title..." />
+                               autocomplete="off" class="title" placeholder="Title..." />
                     </div>
                 </div>
                 <div class="control-group">

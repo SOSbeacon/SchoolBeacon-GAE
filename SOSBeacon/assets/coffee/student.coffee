@@ -118,6 +118,13 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         return super(asModal)
 
     addGroup: () =>
+        groupInputs = @$el.find('fieldset.groups').find('input.name')
+        for input in groupInputs
+            $input = $(input)
+            if _.isEmpty($input.val())
+                $input.focus()
+                return false
+
         editView = new App.SOSBeacon.View.GroupSelect(
             model: new @model.groups.model()
             groupCollection: @model.groups

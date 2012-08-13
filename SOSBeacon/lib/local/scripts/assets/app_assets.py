@@ -43,7 +43,7 @@ from . import _bundle_images
 
 
 def _bundle_app_coffee(app, env, debug=False):
-    """Compile the apps coffeescript and bundle it into demo.js"""
+    """Compile the apps coffeescript and bundle it into sosbeacon.js"""
     COFFEE_PATH = 'coffee'
     scripts = (
         path.join(COFFEE_PATH, 'request_paginator.coffee'),
@@ -65,7 +65,33 @@ def _bundle_app_coffee(app, env, debug=False):
     all_js = Bundle(
         *scripts,
         filters='coffeescript',
-        output=path.join('..', '..', app, 'static', 'script', '%s.js' % (app.lower(),))
+        output=path.join('..', '..', app, 'static', 'script', '%s.js' % (
+            app.lower(),))
+    )
+    env.add(all_js)
+
+    if not debug:
+        all_js.filters = 'closure_js'
+
+
+def _bundle_admin_coffee(app, env, debug=False):
+    """Compile the admin coffeescript and bundle it into sosadmin.js"""
+    COFFEE_PATH = 'coffee'
+    ADMIN_PATH = path.join(COFFEE_PATH, 'admin')
+    scripts = (
+        path.join(COFFEE_PATH, 'request_paginator.coffee'),
+        path.join(ADMIN_PATH, 'app.coffee'),
+        path.join(ADMIN_PATH, 'menu.coffee'),
+        path.join(ADMIN_PATH, 'router.coffee'),
+    )
+
+    if not scripts:
+        return
+
+    all_js = Bundle(
+        *scripts,
+        filters='coffeescript',
+        output=path.join('..', '..', app, 'static', 'script', 'sosadmin.js')
     )
     env.add(all_js)
 
@@ -177,6 +203,7 @@ def _setup_env(app, debug=True, cache=True):
     #javascript
     _bundle_app_jsts(app, env, debug)
     _bundle_app_coffee(app, env, debug)
+    _bundle_admin_coffee(app, env, debug)
     _bundle_3rd_party_js(app, env, debug)
 
     #css

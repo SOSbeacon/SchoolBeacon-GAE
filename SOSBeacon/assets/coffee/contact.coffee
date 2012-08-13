@@ -19,7 +19,7 @@ class App.SOSBeacon.Model.Contact extends Backbone.Model
         hasError = false
         errors = {}
 
-        if _.isEmpty(attrs.name)
+        if attrs.type != 'd' and _.isEmpty(attrs.name)
             hasError = true
             errors.name = "Missing name."
 
@@ -122,6 +122,7 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
         editView = new App.SOSBeacon.View.ContactMethodEdit({model: method})
         rendered = editView.render()
         @$el.find('fieldset.methods').append(rendered.el)
+        method.editView = editView
 
         rendered.$el.find('input.method').focus()
 

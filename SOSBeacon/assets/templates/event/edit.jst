@@ -29,14 +29,14 @@
           <label for="active" class="control-label">Active:</label>
           <div class="controls">
             <input id="active" name="active" type="checkbox"
-                   <%= active ? "checked": "" %>
+                   <%- active ? "checked": "" %>
                    autocomplete="off" class="active" />
           </div>
         </div>
         <div class="control-group">
           <label for="title" class="control-label">Title:</label>
           <div class="controls">
-            <input id="title" name="title" type="text" value="<%= title %>" 
+            <input id="title" name="title" type="text" value="<%- title %>" 
                    autocomplete="off" class="title" placeholder="Title..." />
           </div>
         </div>
@@ -45,7 +45,7 @@
           <div class="controls">
             <textarea id="summary" name="summary"
                       class="sms summary input-xlarge"
-                      placeholder="Brief broadcast summary...."><%= summary %></textarea>
+                      placeholder="Brief broadcast summary...."><%- summary %></textarea>
             <p class="sms-remain help-block">100 remain</p>
           </div>
         </div>
@@ -53,7 +53,7 @@
           <label for="detail" class="control-label">Email Message:</label>
           <div class="controls">
             <textarea id="detail" name="detail" class="detail input-xlarge"
-                      placeholder="Full broadcast detail...."><%= detail %></textarea>
+                      placeholder="Full broadcast detail...."><%- detail %></textarea>
           </div>
         </div>
         <div class="control-group">

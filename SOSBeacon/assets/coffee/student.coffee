@@ -184,7 +184,7 @@ class App.SOSBeacon.View.StudentListItem extends App.Skel.View.ListItemView
         _.each(@model.groups.models, (acs) =>
             #TODO: convert to links
             #group_links.push("&nbsp;<a href=''>#{acs.get('name')}</a>")
-            group_links.push("&nbsp;#{acs.get('name')}")
+            group_links.push(" #{acs.get('name')}")
         )
         model_props['group_list'] = group_links
         @$el.html(@template(model_props))

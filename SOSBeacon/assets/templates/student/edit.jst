@@ -8,14 +8,14 @@
         <div class="control-group">
           <label for="identifier" class="control-label">Identifier:</label>
           <div class="controls">
-            <input id="identifier" name="identifier" type="text" value="<%= identifier %>" 
+            <input id="identifier" name="identifier" type="text" value="<%- identifier %>" 
                    autocomplete="off" class="identifier" placeholder="Student ID..." />
           </div>
         </div>
         <div class="control-group">
           <label for="name" class="control-label">Name:</label>
           <div class="controls">
-            <input id="name" name="name" type="text" value="<%= name %>" 
+            <input id="name" name="name" type="text" value="<%- name %>" 
                    autocomplete="off" class="name" placeholder="Name..." />
           </div>
         </div>
@@ -43,7 +43,7 @@
           <label for="notes" class="control-label">Notes:</label>
           <div class="controls">
             <textarea id="notes" name="notes" class="notes input-xlarge"
-              placeholder="Notes..."><%= notes %></textarea>
+                      placeholder="Notes..."><%- notes %></textarea>
           </div>
         </div>
       </fieldset>

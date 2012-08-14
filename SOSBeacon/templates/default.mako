@@ -10,6 +10,21 @@
       <a class="brand" href="/">SOSBeacon</a>
       <div id="sosbeaconheader" class="nav-collapse">
         <ul id="sosbeacon-menu" class="nav"></ul>
+        <ul class="nav pull-right">
+          <li id="prefs" class="dropdown">
+            <a class="dropdown-toggle"  href="#prefs" data-toggle="dropdown"
+               data-target="prefs">
+              ${school_name | h}
+              <b class="caret"></b>
+            </a>
+            <ul class="dropdown-menu">
+              <li><a href="#">School Preferences</a></li>
+              <li class="divider"></li>
+              <li><a href="#">Account Preferences</a></li>
+            </ul>
+          </li>
+          <li class="divider-vertical"></li>
+        </ul>
       </div>
     </div>
   </div>
@@ -20,7 +35,6 @@
 </div>
 
 <%block name="body_script">
-  <script type="application/javascript" src="/static/script/libs.js"></script>
   <script type="application/javascript" src="/static/script/skel.js"></script>
   <script type="application/javascript" src="/static/script/template.js"></script>
   <script type="application/javascript" src="/static/script/sosbeacon.js"></script>

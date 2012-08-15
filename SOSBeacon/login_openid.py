@@ -104,7 +104,7 @@ class UserConfigHandler(webapp2.RequestHandler):
         session = session_store.get_session()
         session['u'] = self.user.user_id()
         session['n'] = str(school_key.id())
-        session['c'] = school_key.urlsafe()
+        session['s'] = school_key.urlsafe()
         session_store.save_sessions(self.response)
 
     def handle_existing_user(self):

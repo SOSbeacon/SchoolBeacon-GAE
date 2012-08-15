@@ -1,4 +1,8 @@
 
+OPENID_ENDPOINT_GOOGLE = 'www.google.com/accounts/o8/id'
+
+BAD_LOGIN_REDIRECT = 'http://google.com'
+
 webapp_config = {}
 
 # TODO: Put this somewhere smarter.

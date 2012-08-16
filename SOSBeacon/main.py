@@ -30,6 +30,7 @@ if libs_dir not in sys.path:
 import webapp2
 
 from google.appengine.api import memcache
+from google.appengine.ext import ndb
 
 from mako import exceptions
 from mako.lookup import TemplateLookup
@@ -114,10 +115,52 @@ class EventHandler(TemplateHandler):
             logging.exception('Ack failed')
             pass
 
+class StudentImportHandler(TemplateHandler):
+
+    def post(self):
+        logging.info("############################")
+        logging.info("IMPORTING STUDENTS")
+        logging.info("############################")
+        file_ = self.request.get('students_file')
+        if not file_:
+            #TODO: flag as error and report to user somehow
+            return webapp2.redirect("/#/student")
+
+        import csv
+        import StringIO
+
+        students = csv.reader(StringIO.StringIO(file_), delimiter=',')
+        #TODO: check size and move to tasks
+
+        #expected CSV format
+        #Group, Student name, contact name parent 1, contact email,
+        #voice phone, text phone, space, contact name parent 2
+        #contact email, voice phone, text phone
+
+        groups = {}
+        futures = []
+        from sosbeacon.student import import_student
+        for student_array in students:
+            if student_array[0] and student_array[0].lower() == 'group':
+                #assume it has a header
+                continue
+
+            logging.info(student_array)
+            student, future = import_student(student_array, groups)
+            if not student and future:
+                futures.append(future)
+
+            self.response.out.write(student)
+            self.response.out.write("<br />")
+
+        ndb.Future.wait_all(futures)
+        #return webapp2.redirect("/#/student")
+
 url_map = [
     ('/', MainHandler),
     ('/admin/', AdminHandler),
     ('/e/(.*)/(.*)', EventHandler),
+    ('/student/import/upload/', StudentImportHandler),
 ]
 app = webapp2.WSGIApplication(url_map)
 

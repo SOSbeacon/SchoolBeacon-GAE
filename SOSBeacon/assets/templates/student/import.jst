@@ -1,13 +1,23 @@
-<form action="/" enctype="multipart/form-data" method="post"
-  class="import containter-fluid well form-horizontal modal">
-  <div class="row-fluid">
-    <div class="modal-header">
-      <button class="close" data-dismiss="modal">&times;</button>
+<div class="top_view row-fluid">
+  <form action="/student/import/upload/" enctype="multipart/form-data" method="post"
+    class="import containter-fluid well form-horizontal">
+    <div class="row-fluid">
+      <div class="modal-header">
+        <h3>Import Students</h3>
+      </div>
+      <div class="modal-body">
+        <fieldset>
+          <div class="control-group">
+            <label class="control-label" for="students_file">Students CSV</label>
+            <div class="controls">
+              <input type="file" name="students_file" id="students_file" />
+            </div>
+          </div>
+        </fieldset>
+      </div>
     </div>
-    <div class="modal-body">
-      <fieldset>
-        <input type="file" name="students_file" id="students_file" />
-      </fieldset>
+    <div class="modal-footer form-actions">
+      <button class="save btn btn-primary">Import</button>
     </div>
-  </div>
+  </form>
 </div>

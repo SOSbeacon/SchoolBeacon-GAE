@@ -173,12 +173,11 @@ class App.SOSBeacon.View.StudentApp extends App.Skel.View.ModelApp
 
     import: =>
         #todo prompt for doc to import
-        importView = new App.SOSBeacon.View.ImportStudentsView()
-        @$el.append($(importView.render().el))
+        App.SOSBeacon.router.navigate("/student/import", {trigger: true})
 
 
-class App.SOSBeacon.View.ImportStudentsView extends Backbone.View
-    tagName: "div"
+class App.SOSBeacon.View.ImportStudentsApp extends App.Skel.View.App
+    id: "sosbeaconapp"
     template: JST['student/import']
 
     render: =>

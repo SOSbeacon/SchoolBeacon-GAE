@@ -83,6 +83,30 @@ class Student(EntityBase):
 
         return student
 
+def import_students(file_):
+    import csv
+    import StringIO
+
+    students = csv.reader(StringIO.StringIO(file_), delimiter=',')
+    #TODO: check size and move to tasks
+
+    #expected CSV format
+    #Group, Student name, contact name parent 1, contact email,
+    #voice phone, text phone, space, contact name parent 2
+    #contact email, voice phone, text phone
+
+    groups = {}
+    futures = []
+    for student_array in students:
+        if student_array[0] and student_array[0].lower() == 'group':
+            #assume it has a header
+            continue
+
+        student, future = import_student(student_array, groups)
+        if not student and future:
+            futures.append(future)
+
+    ndb.Future.wait_all(futures)
 
 def import_student(student_array, group_lookup=None):
     if group_lookup is None:

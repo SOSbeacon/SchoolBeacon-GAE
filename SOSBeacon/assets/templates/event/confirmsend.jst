@@ -1,44 +1,44 @@
 <div class="edit containter-fluid well">
   <div class="row-fluid">
     <div id="editheadercontainer" class="modal-header">
-        <h3 id="editheader">Preview Broadcast</h3>
+      <h3 id="editheader">Preview Broadcast</h3>
     </div>
     <div class="modal-body">
       <dl class="dl-horizontal">
         <dt>Notify:</dt>
-        <dd><%= (who_to_notify == 'p' ? "Parents/Guardians Only": (who_to_notify == 'd' ? "Default Contact Only": "All Contacts")) %></dd>
+        <dd><%- (who_to_notify == 'p' ? "Parents/Guardians Only": (who_to_notify == 'd' ? "Default Contact Only": "All Contacts")) %></dd>
 
         <dt>Resend Delay:</dt>
-        <dd><%= response_wait_seconds %></dd>
+        <dd><%- response_wait_seconds %></dd>
 
         <dt>Active:</dt>
-        <dd><%= active ? "Yes": "No" %></dd>
+        <dd><%- active ? "Yes": "No" %></dd>
 
         <dt>Title:</dt>
-        <dd><%= title %></dd> 
+        <dd><%- title %></dd> 
 
         <dt>SMS Message:</dt>
-        <dd><%= summary %></dd>
+        <dd><%- summary %></dd>
 
         <dt>Groups:</dt>
         <dd class="groups">
-          <ul>
-            <% this.model.groups.each(function(group) { %>
-              <li><%= group.get('name') %></li>
-            <% }); %>
-          </ul>
+        <ul>
+          <% this.model.groups.each(function(group) { %>
+          <li><%- group.get('name') %></li>
+          <% }); %>
+        </ul>
         </dd>
 
         <dt>Email Message:</dt>
-        <dd><%= detail %></dd>
+        <dd><%- detail %></dd>
 
       </dl>
     </div>
     <div class="modal-footer form-actions">
-        <form>
-          <button class="save btn btn-primary">Send</button>
-          <button class="remove-button btn btn-danger">Cancel</button>
-        </form>
+      <form>
+        <button class="save btn btn-primary">Send</button>
+        <button class="remove-button btn btn-danger">Cancel</button>
+      </form>
     </div>
   </div>
 </div>

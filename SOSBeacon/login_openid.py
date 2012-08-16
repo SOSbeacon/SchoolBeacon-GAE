@@ -30,6 +30,8 @@ from google.appengine.ext import ndb
 import webapp2
 from webapp2_extras import sessions
 
+from config import BAD_LOGIN_REDIRECT
+from config import OPENID_ENDPOINT_GOOGLE
 from config import webapp_config
 
 from sosbeacon.school import School
@@ -46,7 +48,7 @@ class LoginHandler(webapp2.RequestHandler):
             for key in session.keys():
                 del session[key]
 
-        federated_identity = 'google.com/accounts/o8/id'
+        federated_identity = OPENID_ENDPOINT_GOOGLE
 
         token = self.request.get('tk')
         if token:
@@ -86,7 +88,7 @@ class UserConfigHandler(webapp2.RequestHandler):
         if not school_key:
             # TODO: Somewhere better here?
             logging.debug("Couldn't find school %s.", school_urlsafe)
-            self.redirect(users.create_logout_url('http://google.com'))
+            self.redirect(users.create_logout_url(BAD_LOGIN_REDIRECT))
             return
 
         self.setup_session(school_key)
@@ -104,7 +106,7 @@ class UserConfigHandler(webapp2.RequestHandler):
         session = session_store.get_session()
         session['u'] = self.user.user_id()
         session['n'] = str(school_key.id())
-        session['c'] = school_key.urlsafe()
+        session['s'] = school_key.urlsafe()
         session_store.save_sessions(self.response)
 
     def handle_existing_user(self):
@@ -113,7 +115,7 @@ class UserConfigHandler(webapp2.RequestHandler):
         if not user:
             # TODO: Redirect to some help page or something?
             logging.debug("Couldn't find user: %s.", self.user_key)
-            self.redirect(users.create_logout_url('http://google.com'))
+            self.redirect(users.create_logout_url(BAD_LOGIN_REDIRECT))
             return
 
         self.needs_tos_accept = True if not user.tos_accepted else False
@@ -129,7 +131,7 @@ class UserConfigHandler(webapp2.RequestHandler):
         if not school_entity:
             # School doesn't exist... log them out and redirect them away.
             logging.warning('Missing school: %s.', school_urlsafe)
-            self.redirect(users.create_logout_url('http://google.com'))
+            self.redirect(users.create_logout_url(BAD_LOGIN_REDIRECT))
             return
 
         if self.user_key not in school_entity.users:
@@ -141,7 +143,7 @@ class UserConfigHandler(webapp2.RequestHandler):
             if not reg_token or reg_token not in school_entity.invited:
                 logging.warning("Invalid token '%s'", reg_token)
                 # User isn't allowed or bad invite token.
-                self.redirect(users.create_logout_url('http://google.com'))
+                self.redirect(users.create_logout_url(BAD_LOGIN_REDIRECT))
                 return
 
             @ndb.transactional
@@ -206,14 +208,14 @@ class ToSAcceptHandler(webapp2.RequestHandler):
         accept = self.request.get('accept')
         if accept != "I Accept the Terms":
             logging.info("Didn't accept the terms")
-            self.redirect(users.create_logout_url('http://google.com'))
+            self.redirect(users.create_logout_url(BAD_LOGIN_REDIRECT))
             return
 
         user = user_future.get_result()
         if not user:
             logging.info("User not found.")
             logging.info(user_key)
-            self.redirect(users.create_logout_url('http://google.com'))
+            self.redirect(users.create_logout_url(BAD_LOGIN_REDIRECT))
             return
 
         if not user.tos_accepted:

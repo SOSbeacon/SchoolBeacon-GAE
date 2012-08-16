@@ -28,12 +28,15 @@ if libs_dir not in sys.path:
     sys.path.insert(0, libs_dir)
 
 import webapp2
+from webapp2_extras import sessions
 
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 
 from mako import exceptions
 from mako.lookup import TemplateLookup
+
+from config import webapp_config
 
 from sosbeacon.contact import Contact
 from sosbeacon.event import Event
@@ -58,7 +61,19 @@ class TemplateHandler(webapp2.RequestHandler):
 
 class MainHandler(TemplateHandler):
     def get(self):
-        out = self.render('default.mako')
+        from google.appengine.ext import ndb
+        from sosbeacon.school import School
+
+        school_name = 'Account'
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+        school_key = session.get('s')
+        if school_key:
+            school = ndb.Key(urlsafe=school_key).get()
+            school_name = school.name
+
+        out = self.render('default.mako', school_name=school_name)
         self.response.out.write(out)
 
 
@@ -139,5 +154,8 @@ url_map = [
     ('/e/(.*)/(.*)', EventHandler),
     ('/student/import/upload/', StudentImportHandler),
 ]
-app = webapp2.WSGIApplication(url_map)
+app = webapp2.WSGIApplication(
+    url_map,
+    config=webapp_config
+)
 

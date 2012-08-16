@@ -66,6 +66,10 @@ handlers:
   script: shell.shell.application
   login: admin
 
+- url: /e/.*
+  script: main.app
+
 - url: .*
   script: main.app
+  login: required
 

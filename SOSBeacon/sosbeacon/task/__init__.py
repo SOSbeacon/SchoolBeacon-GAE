@@ -476,8 +476,12 @@ def event_update(event_key, count_updates, marker_map):
     keys.append(event_key)
 
     marker_entities = ndb.get_multi(keys)
+
+    event_key = keys.pop() # Discard event key so for loop works...
     event = marker_entities.pop()
-    keys.pop() # Discard event key so for loop works...
+    if not event:
+        logging.warning('Event not found, %s', event_key)
+        return
 
     event.student_count += count_updates['students']
     event.contact_count += count_updates['contacts']

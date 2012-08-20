@@ -76,15 +76,20 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
             e.preventDefault()
 
         groupList = []
-        @model.groups.each((group) ->
-            groupList.push(group.id)
+        badGroups = @model.groups.filter((group) ->
+            groupValid = group.editView.checkGroup()
+            if group.id and groupValid
+                groupList.push(group.id)
+            return not groupValid
         )
+        if not _.isEmpty(badGroups)
+            return false
 
         @model.contacts.each((contact) ->
             contact.editView.close()
         )
+        saved = @model.save({
 
-        @model.save({
             name: @$('input.name').val()
             identifier: @$('input.identifier').val()
             groups: groupList
@@ -92,6 +97,8 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         }, {
             error: App.Util.Form.processErrors
         })
+        if saved == false
+            return false
 
         return super()
 

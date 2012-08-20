@@ -126,21 +126,25 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         return super(asModal)
 
     addGroup: () =>
-        groupInputs = @$el.find('fieldset.groups').find('input.name')
-        for input in groupInputs
-            $input = $(input)
-            if _.isEmpty($.trim($input.val()))
-                $input.focus()
+        badGroup = @model.groups.find((group) ->
+            if group.id
                 return false
+            return true
+        )
+        if badGroup
+            badGroup.editView.$('input.name').focus()
+            return false
 
         group = new @model.groups.model()
         @model.groups.add(group)
+
         editView = new App.SOSBeacon.View.GroupSelect(
             model: group,
             groupCollection: @model.groups,
             autoAdd: false
         )
         group.editView = editView
+
         rendered = editView.render()
         @$el.find('fieldset.groups').append(rendered.el)
 
@@ -277,3 +281,4 @@ class App.SOSBeacon.View.SelectableStudentList extends App.SOSBeacon.View.BaseSt
         _.extend(@collection.server_api, filters)
 
         App.Skel.Event.trigger("studentlist:filter:#{@.cid}", filters)
+

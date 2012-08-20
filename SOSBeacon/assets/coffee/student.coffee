@@ -99,8 +99,13 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         el = @$el
         el.html(@template(@model.toJSON()))
 
-        @model.groups.each((group, i) ->
-            editView = new App.SOSBeacon.View.GroupSelect({model: group})
+        @model.groups.each((group, i) =>
+            editView = new App.SOSBeacon.View.GroupSelect(
+                model: group,
+                groupCollection: @model.groups,
+                autoAdd: false
+            )
+            group.editView = editView
             el.find('fieldset.groups').append(editView.render().el)
         )
 
@@ -121,10 +126,14 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
                 $input.focus()
                 return false
 
+        group = new @model.groups.model()
+        @model.groups.add(group)
         editView = new App.SOSBeacon.View.GroupSelect(
-            model: new @model.groups.model()
-            groupCollection: @model.groups
+            model: group,
+            groupCollection: @model.groups,
+            autoAdd: false
         )
+        group.editView = editView
         rendered = editView.render()
         @$el.find('fieldset.groups').append(rendered.el)
 

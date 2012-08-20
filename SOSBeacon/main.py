@@ -60,20 +60,29 @@ class TemplateHandler(webapp2.RequestHandler):
 
 
 class MainHandler(TemplateHandler):
+
+    def __init__(self, *args, **kwargs):
+        super(MainHandler, self).__init__(*args, **kwargs)
+
+        self._school_name = None
+
+    @property
+    def school_name(self):
+        if not self._school_name:
+            self._school_name = 'Account'
+
+            session_store = sessions.get_store()
+            session = session_store.get_session()
+            school_key = session.get('s')
+            if school_key:
+                school = ndb.Key(urlsafe=school_key).get()
+                self._school_name = school.name
+
+        return self._school_name
+
     def get(self):
-        from google.appengine.ext import ndb
-        from sosbeacon.school import School
 
-        school_name = 'Account'
-
-        session_store = sessions.get_store()
-        session = session_store.get_session()
-        school_key = session.get('s')
-        if school_key:
-            school = ndb.Key(urlsafe=school_key).get()
-            school_name = school.name
-
-        out = self.render('default.mako', school_name=school_name)
+        out = self.render('default.mako', school_name=self.school_name)
         self.response.out.write(out)
 
 
@@ -130,7 +139,7 @@ class EventHandler(TemplateHandler):
             logging.exception('Ack failed')
             pass
 
-class StudentImportHandler(TemplateHandler):
+class StudentImportHandler(MainHandler):
 
     def post(self):
         file_ = self.request.get('students_file')
@@ -139,20 +148,23 @@ class StudentImportHandler(TemplateHandler):
             return webapp2.redirect("/#/student")
 
         from sosbeacon.student import import_students
+        results = {'success': [], 'failures': []}
         try:
-            import_students(file_)
-        except:
+            results = import_students(file_)
+        except Exception:
             #TODO: give a nice error page
             logging.exception("Unable to import students")
 
-        #TODO: do we want a results page?
-        return webapp2.redirect("/#/student")
+        out = self.render(
+            'import.mako', school_name=self.school_name, **results)
+        self.response.out.write(out)
+
 
 url_map = [
     ('/', MainHandler),
     ('/admin/', AdminHandler),
     ('/e/(.*)/(.*)', EventHandler),
-    ('/student/import/upload/', StudentImportHandler),
+    ('/import/student/upload/', StudentImportHandler),
 ]
 app = webapp2.WSGIApplication(
     url_map,

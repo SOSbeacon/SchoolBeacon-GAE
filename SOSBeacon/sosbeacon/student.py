@@ -1,13 +1,15 @@
 import logging
+import re
+import uuid
 
 from google.appengine.ext import ndb
 
-import uuid
 import voluptuous
 
 from skel.datastore import EntityBase
 from skel.rest_api.rules import RestQueryRule
 
+EMAIL_REGEX = re.compile("^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
 
 student_schema = {
     'key': basestring,
@@ -83,9 +85,16 @@ class Student(EntityBase):
 
         return student
 
+
+#TODO: keep list of exceptions to display
+#TODO: Display "results" of import
 def import_students(file_):
     import csv
     import StringIO
+    from collections import namedtuple
+
+    results = {'success': [], 'failures': []}
+    ResultItem = namedtuple('ResultItem', ['name', 'messages'])
 
     students = csv.reader(StringIO.StringIO(file_), delimiter=',')
     #TODO: check size and move to tasks
@@ -94,7 +103,6 @@ def import_students(file_):
     #Group, Student name, contact name parent 1, contact email,
     #voice phone, text phone, space, contact name parent 2
     #contact email, voice phone, text phone
-
     groups = {}
     futures = []
     for student_array in students:
@@ -102,13 +110,26 @@ def import_students(file_):
             #assume it has a header
             continue
 
-        student, future = import_student(student_array, groups)
+        name = unicode(student_array[1], 'utf8').strip()
+        try:
+            student, future, messages = import_student(student_array, groups)
+            result = ResultItem(name=name, messages=messages)
+            results['success'].append(result)
+        except Exception, e:
+            logging.exception("Unable to import student")
+            result = ResultItem(name=name, messages=[e.message])
+            results['failures'].append(result)
+
         if not student and future:
             futures.append(future)
 
     ndb.Future.wait_all(futures)
 
+    return results
+
 def import_student(student_array, group_lookup=None):
+    messages = []
+
     if group_lookup is None:
         group_lookup = {}
 
@@ -121,13 +142,15 @@ def import_student(student_array, group_lookup=None):
 
     #TODO: look for existing student by name?
     student_name = unicode(student_array[1], 'utf8')
+    if not student_name:
+        #TODO: add bad message
+        logging.error("Invalid student name %s", student_name)
+        return None, None, messages
 
-    student = Student.query(Student.name_ == student_name.lower()).get()
-    if not student:
-        #TODO: generic identifier for now? something better?
-        student = Student(identifier=uuid.uuid4().hex, name=student_name)
+    #Ideally they have an ID in the sheet to import in
+    student = Student(identifier=uuid.uuid4().hex[:6], name=student_name)
 
-    student.contacts = _get_contacts(student_array)
+    student.contacts = _build_contacts(student_array)
 
     if group_future:
         group_key = group_future.get_result()
@@ -138,72 +161,75 @@ def import_student(student_array, group_lookup=None):
     if group_key not in student.groups:
         student.groups.append(group_key)
 
+    logging.info("Saving student %s", student)
     future = student.put_async()
-    return student, future
+    return student, future, messages
 
-def _get_contacts(student_array):
+def _build_contacts(student_array):
     contacts = []
-    type_map = {
-        1: "email",
-        2: "phone",
-        3: "text"
-    }
-
-    def _get_init_contact(name):
-        return {
-            "notes": "",
-            "type": "p",
-            "name": name,
-            "methods": []
-        }
-
-    def _get_contact(start_index):
-        if not len(student_array) > start_index:
-            logging.debug("No contacts in array")
-            return
-
-        name  = student_array[start_index]
-        if not name:
-            logging.debug("Contact name not found in array")
-            return
-
-        contact = _get_init_contact(name)
-        for index, type_ in type_map.iteritems():
-            if len(student_array) > start_index + index:
-                value = student_array[start_index + index].strip()
-                if not value:
-                    continue
-
-                #validate and convert phone numbers
-                if index in [2, 3]:
-                    value = ''.join(filter(lambda x: x.isdigit(), value))
-                    if len(value) == 10:
-                        value = "1" + value
-
-                    if len(value) != 11:
-                        logging.error("Invalid phone number %s", value)
-                        continue
-
-                    logging.debug(value)
-                    value = "%s (%s) %s-%s" % (
-                        value[0], value[1:4], value[4:7], value[7:11])
-                    logging.debug(value)
-
-                contact['methods'].append(
-                    {
-                        "type": type_,
-                        "value": value
-                    }
-                )
-
-        return contact
-
-    for index in [3, 8]:
-        contact = _get_contact(index)
-        if contact:
-            contacts.append(contact)
+    contact_info = student_array[3:]
+    while contact_info:
+        contact, messages = _contact_from_args(*contact_info[0:4])
+        logging.info("Adding contact %s", contact)
+        contacts.append(contact)
+        contact_info = contact_info[5:]
 
     return contacts
+
+def _contact_from_args(name, email, voice=None, text=None):
+    messages = []
+    info = {'name': name, 'methods': [], "type": "p", "notes": ""}
+
+    def _add_phone_number(number, type_):
+        phone, messages = validate_and_standardize_phone(number)
+        if phone:
+            info['methods'].append({'type': type_, 'value': phone})
+        else:
+            messages.extend(messages)
+
+    if email and valid_email(email):
+        info['methods'].append({'type': 'email', 'value': email})
+    else:
+        messages.append("Invalid email address %s" % (email,))
+
+    if voice:
+        _add_phone_number(voice, 'phone')
+    if text:
+        _add_phone_number(text, 'text')
+
+    return info, messages
+
+def valid_email(email):
+    if EMAIL_REGEX.match(email):
+        return True
+
+    return False
+
+def validate_and_standardize_phone(number):
+    import string
+    messages = []
+
+    try:
+        stuff = string.maketrans('','')
+        non_digits = stuff.translate(None, string.digits)
+        number = number.translate(None, non_digits)
+    except Exception, e:
+        logging.exception("Invalid phone number %s", number)
+        messages.append("Invalid phone number %s, %s", number, e.message)
+        return None, messages
+
+    if not number.startswith('1'):
+        number = '1' + number
+
+    if not len(number) == 11:
+        logging.error("Invalid phone number %s", number)
+        messages.append("Invalide number %s, not 11 characters" % (number,))
+        return None, messages
+
+    number = "%s (%s) %s-%s" % (
+        number[0], number[1:4], number[4:7], number[7:11])
+
+    return number, messages
 
 def _get_group(group_name, group_lookup):
     """ Return a group for the group name passed in. Checks the group cache first

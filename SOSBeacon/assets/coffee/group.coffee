@@ -5,7 +5,7 @@ class App.SOSBeacon.Model.Group extends Backbone.Model
 
     defaults: ->
         return {
-            key: "",
+            key: null,
             name: "",
             active: true,
             notes: "",

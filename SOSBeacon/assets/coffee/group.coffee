@@ -52,6 +52,35 @@ class App.SOSBeacon.Collection.GroupList extends Backbone.Paginator.requestPager
 
     server_api: {}
 
+    fetch: (options) =>
+        #handle caching when looking for specific groups
+        if options and 'url' of options
+            urls = options.url.split('/')
+            ids = _.last(urls).split(',')
+
+            idsToFetch = []
+            _.each(ids, (id) =>
+                group = App.SOSBeacon.Cache.Groups.get(id)
+                if group
+                    @.add(group, {silent: true})
+                else
+                    idsToFetch.push(id)
+            )
+
+            if _.isEmpty(idsToFetch)
+                return
+
+            options.url = @url + '/' + idsToFetch.join()
+
+        super(options)
+        @addToCache()
+
+
+    addToCache: =>
+        @.each((group) ->
+            App.SOSBeacon.Cache.Groups.add(group, {silent: true})
+        )
+
 
 class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
     template: JST['group/edit']

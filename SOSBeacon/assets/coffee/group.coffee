@@ -5,7 +5,7 @@ class App.SOSBeacon.Model.Group extends Backbone.Model
 
     defaults: ->
         return {
-            key: "",
+            key: null,
             name: "",
             active: true,
             notes: "",
@@ -163,19 +163,21 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
         "blur input.name": "checkGroup"
 
     initialize: =>
+        @options.autoAdd ?= true
         @validator = new App.Util.Form(@el, propertyMap: @propertyMap)
 
     checkGroup: =>
         if @typeahead?.shown
-            return
+            return true
 
         candidateName = $.trim(@$('input.name').val())
 
         if @model.id or not candidateName
             @validator.clearMessage('name')
-            return
+            return true
 
         @validator.displayMessage('name', 'error', 'Group does not exist')
+        return false
 
     render: =>
         @$el.html(@template(@model.toJSON()))
@@ -183,7 +185,7 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
             value_property: 'name'
             updater: (item) =>
                 @model.set(item, {silent: true})
-                if @options.groupCollection
+                if @options.groupCollection and @options.autoAdd
                     @options.groupCollection.add(@model)
                 return item.name
             matcher: (item) ->
@@ -213,6 +215,8 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
 
     onClose: =>
         @$('input.name').trigger('cleanup')
+        if @options.groupCollection
+            @options.groupCollection.remove(@model)
 
 
 class App.SOSBeacon.View.GroupTypeahaedFilter extends App.Ui.Datagrid.TypeaheadFilter

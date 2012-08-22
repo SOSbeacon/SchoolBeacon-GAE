@@ -23,6 +23,7 @@ class App.SOSBeacon.Router extends Backbone.Router
         "": "showStudent"
         "groupstudents/:id": "showGroupStudents"
         "student": "showStudent"
+        "student/import": "showImportStudents"
         "group": "showGroup"
         "broadcast": "showBroadcast"
         "broadcast/send": "showSendBroadcast"
@@ -31,6 +32,11 @@ class App.SOSBeacon.Router extends Backbone.Router
     initialize: (data) ->
         @menu = new App.SOSBeacon.View.Menu()
         @menu.render()
+
+        @setCache()
+
+    setCache: ->
+        App.SOSBeacon.Cache.Groups = new App.SOSBeacon.Collection.GroupList()
 
     swap: (newView, args) =>
         if @currentView
@@ -56,3 +62,6 @@ class App.SOSBeacon.Router extends Backbone.Router
 
     showGroupStudents: (id) =>
         @swap(App.SOSBeacon.View.GroupStudentsApp, id)
+
+    showImportStudents: () =>
+        @swap(App.SOSBeacon.View.ImportStudentsApp)

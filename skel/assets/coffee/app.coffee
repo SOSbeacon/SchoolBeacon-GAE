@@ -41,6 +41,7 @@ window.App = (() ->
                 Collection: {}
                 View: {}
                 Util: {}
+                Cache: {}
                 Event: _.extend({}, Backbone.Events)
             }
     )()

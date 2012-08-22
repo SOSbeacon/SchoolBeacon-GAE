@@ -33,6 +33,11 @@ class App.SOSBeacon.Router extends Backbone.Router
         @menu = new App.SOSBeacon.View.Menu()
         @menu.render()
 
+        @setCache()
+
+    setCache: ->
+        App.SOSBeacon.Cache.Groups = new App.SOSBeacon.Collection.GroupList()
+
     swap: (newView, args) =>
         if @currentView
             @currentView.close()

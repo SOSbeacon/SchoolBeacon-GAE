@@ -224,7 +224,7 @@ class App.Skel.View.ListView extends Backbone.View
 
     run: (filters) =>
         @collection.server_api = {
-            limit: @$("div.gridFooter > .size-select").val() ? 25
+            limit: @$("div.gridFooter > .filter-controls > .controls > .size-select").val() ? 25
         }
         if @collection.query_defaults
             _.extend(@collection.server_api, @collection.query_defaults)

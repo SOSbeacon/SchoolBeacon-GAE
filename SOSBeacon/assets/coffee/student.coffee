@@ -71,15 +71,31 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         "keypress .edit": "updateOnEnter"
         "hidden": "close"
 
+    initialize: =>
+        @groupSelects = []
+
+        return super()
+
+    removeGroupSelect: (select) =>
+        # Remove group from model.
+        @model.groups.remove(select.model)
+
+        # Remove group list of group selects.
+        index = _.indexOf(@groupSelects, select)
+        delete @groupSelects[index]
+
+        return true
+
     save: (e) =>
         if e
             e.preventDefault()
 
         groupList = []
-        badGroups = @model.groups.filter((group) ->
-            groupValid = group.editView.checkGroup()
-            if group.id and groupValid
-                groupList.push(group.id)
+        badGroups = _.filter(@groupSelects, (groupSelect) ->
+            groupValid = groupSelect.checkGroup()
+            groupId = groupSelect.model.id
+            if groupId and groupValid
+                groupList.push(groupId)
             return not groupValid
         )
         if not _.isEmpty(badGroups)
@@ -89,7 +105,6 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
             contact.editView.close()
         )
         saved = @model.save({
-
             name: @$('input.name').val()
             identifier: @$('input.identifier').val()
             groups: groupList
@@ -107,12 +122,9 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         el.html(@template(@model.toJSON()))
 
         @model.groups.each((group, i) =>
-            editView = new App.SOSBeacon.View.GroupSelect(
-                model: group,
-                groupCollection: @model.groups,
-                autoAdd: false
-            )
-            group.editView = editView
+            editView = new App.SOSBeacon.View.GroupSelect(model: group)
+            editView.on('removed', @removeGroupSelect)
+            @groupSelects.push(editView)
             el.find('fieldset.groups').append(editView.render().el)
         )
 
@@ -126,24 +138,21 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         return super(asModal)
 
     addGroup: () =>
-        badGroup = @model.groups.find((group) ->
-            if group.id
+        badGroup = _.find(@groupSelects, (groupSelect) ->
+            if groupSelect.model.id
                 return false
             return true
         )
         if badGroup
-            badGroup.editView.$('input.name').focus()
+            badGroup.$('input.name').focus()
             return false
 
         group = new @model.groups.model()
         @model.groups.add(group)
 
-        editView = new App.SOSBeacon.View.GroupSelect(
-            model: group,
-            groupCollection: @model.groups,
-            autoAdd: false
-        )
-        group.editView = editView
+        editView = new App.SOSBeacon.View.GroupSelect(model: group)
+        editView.on('removed', @removeGroupSelect)
+        @groupSelects.push(editView)
 
         rendered = editView.render()
         @$el.find('fieldset.groups').append(rendered.el)

@@ -154,6 +154,21 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         "hidden": "close"
         "keyup textarea.sms": "smsUpdated"
 
+    initialize: =>
+        @groupSelects = []
+
+        return super()
+
+    removeGroupSelect: (select) =>
+        # Remove group from model.
+        @model.groups.remove(select.model)
+
+        # Remove group list of group selects.
+        index = _.indexOf(@groupSelects, select)
+        delete @groupSelects[index]
+
+        return true
+
     smsUpdated: =>
         smsMessage = @$('textarea.summary').val()
         remaining = 100 - smsMessage.length
@@ -164,10 +179,15 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
             e.preventDefault()
 
         groupList = []
-        @model.groups.each((group) ->
-            if not _.isEmpty(group.id)
-                groupList.push(group.id)
+        badGroups = _.filter(@groupSelects, (groupSelect) ->
+            groupValid = groupSelect.checkGroup()
+            groupId = groupSelect.model.id
+            if groupId and groupValid
+                groupList.push(groupId)
+            return not groupValid
         )
+        if not _.isEmpty(badGroups)
+            return false
 
         @model.save(
             active: @$('input.active').prop('checked')
@@ -186,8 +206,10 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         el = @$el
         el.html(@template(@model.toJSON()))
 
-        @model.groups.each((group, i) ->
-            editView = new App.SOSBeacon.View.GroupSelect({model: group})
+        @model.groups.each((group, i) =>
+            editView = new App.SOSBeacon.View.GroupSelect(model: group)
+            editView.on('removed', @removeGroupSelect)
+            @groupSelects.push(editView)
             el.find('fieldset.groups').append(editView.render().el)
         )
 
@@ -230,17 +252,22 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         return super(asModal)
 
     addGroup: () =>
-        groupInputs = @$el.find('fieldset.groups').find('input.name')
-        for input in groupInputs
-            $input = $(input)
-            if _.isEmpty($.trim($input.val()))
-                $input.focus()
+        badGroup = _.find(@groupSelects, (groupSelect) ->
+            if groupSelect.model.id
                 return false
-
-        editView = new App.SOSBeacon.View.GroupSelect(
-            model: new @model.groups.model()
-            groupCollection: @model.groups
+            return true
         )
+        if badGroup
+            badGroup.$('input.name').focus()
+            return false
+
+        group = new @model.groups.model()
+        @model.groups.add(group)
+
+        editView = new App.SOSBeacon.View.GroupSelect(model: group)
+        editView.on('removed', @removeGroupSelect)
+        @groupSelects.push(editView)
+
         rendered = editView.render()
         @$el.find('fieldset.groups').append(rendered.el)
 

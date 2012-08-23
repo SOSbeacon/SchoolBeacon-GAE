@@ -197,7 +197,7 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
         "name": "input.name"
 
     events:
-        "click a.remove": "close"
+        "click a.remove": "removeSelect"
         "blur input.name": "checkGroup"
 
     initialize: =>
@@ -250,6 +250,10 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
 
         @model.reset()
         @$('input.name').val(candidateName)
+
+    removeSelect: =>
+        @trigger('removed', @)
+        return @close()
 
     onClose: =>
         @$('input.name').trigger('cleanup')

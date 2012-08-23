@@ -19,13 +19,13 @@ class App.SOSBeacon.Model.Contact extends Backbone.Model
         hasError = false
         errors = {}
 
-        if attrs.type != 'd' and _.isEmpty(attrs.name)
+        if attrs.type != 'd' and _.isEmpty($.trim(attrs.name))
             hasError = true
             errors.name = "Missing name."
 
-        if _.isEmpty(attrs.methods)
-            hasError = true
-            errors.methods = "Supply at least one contact method."
+            #if _.isEmpty(attrs.methods)
+            #    hasError = true
+            #    errors.methods = "Supply at least one contact method."
 
         if hasError
             return errors
@@ -63,9 +63,45 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
     modelType: App.SOSBeacon.Model.Contact
 
     events:
+        "click a.remove": "destroy"
         "click button.add_method": "addMethod"
         "change select.type": "typeChanged"
+        "blur select.type": "typeChanged"
+        "change input.name": "validate"
+        "blur input.name": "validate"
+        "change textarea.notes": "validate"
+        "blur textarea.notes": "validate"
         "keypress .edit": "updateOnEnter"
+
+    initialize: =>
+        @contactMethodViews = []
+        return super()
+
+    validate: =>
+        type = @$('select.type').val()
+
+        name_input = @$('input.name')
+        name = $.trim(name_input.val())
+
+        if type != "d" and _.isEmpty(name)
+            console.log(type, name)
+            App.Util.Form._displayMessage(
+                name_input,
+                'error',
+                'Name is required for non-direct contacts.')
+            return false
+
+        saved = @model.set({
+            name: if type != 'd' then name else '',
+            type: type,
+            notes: $.trim(@$('textarea.notes').val())
+        })
+        if saved == false
+            return false
+
+        App.Util.Form._clearMessage(name_input)
+        return true
+
 
     typeChanged: =>
         type = @$('select.type').val()
@@ -74,21 +110,17 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
         else
             name = @$('div.name').show()
 
-    close: =>
-        )
-
-        @model.set(
-            name: @$('input.name').val(),
-            type: @$('select.type').val(),
-            notes: $.trim(@$('textarea.notes').val())
-        )
+        @validate()
 
     render: =>
         @$el.html(@template(@model.toJSON()))
 
         @model.methods.each((info, i) =>
             editView = new App.SOSBeacon.View.ContactMethodEdit({model: info})
+            editView.on('removed', @removeContactMethod)
+            @contactMethodViews.push(editView)
             @$el.find('fieldset.methods').append(editView.render().el)
+        )
 
         contactType = @model.get('type')
 
@@ -102,6 +134,7 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
                 option.attr('selected', 'selected')
 
             select.append(option)
+        )
         if contactType == "d"
             name = @$('div.name').hide()
 
@@ -133,6 +166,10 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
                 return false
 
         return false
+
+    destroy: =>
+        @trigger('removed', @)
+        @model.destroy()
 
 
 class App.SOSBeacon.View.ContactListItem extends App.Skel.View.ListItemView

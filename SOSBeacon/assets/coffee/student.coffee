@@ -73,6 +73,7 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
 
     initialize: =>
         @groupSelects = []
+        @contactEdits = []
 
         return super()
 
@@ -83,6 +84,16 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         # Remove group list of group selects.
         index = _.indexOf(@groupSelects, select)
         delete @groupSelects[index]
+
+        return true
+
+    removeContact: (contactEdit) =>
+        # Remove group from model.
+        @model.contacts.remove(contactEdit.model)
+
+        # Remove group list of group selects.
+        index = _.indexOf(@contactEdits, contactEdit)
+        delete @contactEdits[index]
 
         return true
 
@@ -98,12 +109,14 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
                 groupList.push(groupId)
             return not groupValid
         )
-        if not _.isEmpty(badGroups)
+
+        badContacts = _.filter(@contactEdits, (contactEdit) ->
+            contactValid = contactEdit.validate()
+            return not contactValid
+        )
+        if not _.isEmpty(badContacts) or not _.isEmpty(badGroups)
             return false
 
-        @model.contacts.each((contact) ->
-            contact.editView.close()
-        )
         saved = @model.save({
             name: @$('input.name').val()
             identifier: @$('input.identifier').val()
@@ -129,9 +142,10 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         )
 
         contactList = @$('ul.contacts')
-        @model.contacts.each((contact, i) ->
+        @model.contacts.each((contact, i) =>
             editView = new App.SOSBeacon.View.ContactEdit({model: contact})
-            contact.editView = editView
+            editView.on('removed', @removeContact)
+            @contactEdits.push(editView)
             contactList.append(editView.render().el)
         )
 
@@ -166,7 +180,9 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         @model.contacts.add(contact)
 
         editView = new App.SOSBeacon.View.ContactEdit(model: contact)
-        contact.editView = editView
+        editView.on('removed', @removeContact)
+        @contactEdits.push(editView)
+
         rendered = editView.render()
         @$('ul.contacts').append(rendered.el)
 

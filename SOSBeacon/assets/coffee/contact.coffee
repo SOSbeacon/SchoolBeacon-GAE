@@ -75,8 +75,6 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
             name = @$('div.name').show()
 
     close: =>
-        @model.methods.each((method) ->
-            method.editView.close()
         )
 
         @model.set(
@@ -91,7 +89,6 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
         @model.methods.each((info, i) =>
             editView = new App.SOSBeacon.View.ContactMethodEdit({model: info})
             @$el.find('fieldset.methods').append(editView.render().el)
-        )
 
         contactType = @model.get('type')
 
@@ -105,7 +102,6 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
                 option.attr('selected', 'selected')
 
             select.append(option)
-        )
         if contactType == "d"
             name = @$('div.name').hide()
 

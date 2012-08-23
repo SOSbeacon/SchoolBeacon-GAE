@@ -82,13 +82,8 @@ class App.SOSBeacon.View.ContactMethodEdit extends Backbone.View
         changes[property] = value
         @model.set(changes)
 
-    close: =>
-        @model.set(
-            #type: @$('input.type').val()
-            value: @$('input.value').val()
-        )
-        return this
-
     destroy: =>
+        @trigger('removed', @)
         @model.destroy()
+        @close()
 

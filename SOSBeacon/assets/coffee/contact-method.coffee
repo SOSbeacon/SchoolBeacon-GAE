@@ -9,8 +9,9 @@ class App.SOSBeacon.Model.ContactMethod extends Backbone.Model
     @methodValidator: (value) =>
         value = $.trim(value) # Drop leading and trailing whitespace
 
-        # Do we have a valid email?
-        if value.indexOf('@') != -1
+        # Do we have an email?
+        if /^[^\d].+$/.test(value) or value.indexOf('@') != -1
+            # Is it possibly a valid email?
             if not /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
                 return new App.Util.Validate.Error(value, 'Invalid email.')
             return value

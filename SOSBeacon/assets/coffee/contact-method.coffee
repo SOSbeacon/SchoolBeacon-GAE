@@ -60,7 +60,7 @@ class App.SOSBeacon.View.ContactMethodEdit extends Backbone.View
         value: "input.value"
 
     events:
-        "click a.remove": "destroy"
+        "click a.remove-method": "destroy"
 
     initialize: ->
         @validator = new App.Util.FormValidator(this,

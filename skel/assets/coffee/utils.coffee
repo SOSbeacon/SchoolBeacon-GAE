@@ -121,6 +121,65 @@ class App.Util.Form
 
 
 class App.Util.Validate
+    @bool: (options) =>
+        options ?= {}
+        return (value) =>
+            if _.isBoolean(value)
+                return value
+
+            if _.isNumber(value)
+                if value == 1
+                    return true
+                if value == 0
+                    return false
+
+                return new App.Util.Validate.Error(value, 'Must be 0 or 1.')
+
+            if not _.isString(value)
+                return new App.Util.Validate.Error(value, 'Unable to parse boolean value.')
+
+            value = value.toLowerCase()
+            switch value
+                when "true" then return true
+                when "t" then return true
+                when "yes" then return true
+                when "y" then return true
+                when "on" then return true
+                when "1" then return true
+
+                when "false" then return false
+                when "f" then return false
+                when "no" then return false
+                when "n" then return false
+                when "off" then return false
+                when "0" then return false
+
+            return new App.Util.Validate.Error(value, 'Not a boolean value.')
+
+    @string: (options) =>
+        options ?= {}
+        return (value) =>
+            if not options.no_trim
+                value = $.trim(value)
+
+            if options.choices
+                if _.indexOf(options.choices, value) == -1
+                    return new App.Util.Validate.Error(
+                        value, "Must be one of #{options.choices}.")
+
+            if options.len
+                min_len = options.len.min
+                if min_len and value.length < min_len
+                    return new App.Util.Validate.Error(
+                        value, "Must be at least #{min_len} characters long.")
+
+                max_len = options.len.max
+                if max_len and value.length > max_len
+                    return new App.Util.Validate.Error(
+                        value, "Must be at most #{max_len} characters long.")
+
+            return value
+
     @integer: (options) =>
         options ?= {}
         return (value) =>
@@ -218,6 +277,7 @@ class App.Util.FormValidator extends App.Util.Form
         for property, validator of @validatorMap
             target = @_targetSelector(property)
             @view.events["change #{target}"] = @_runValidator(property)
+            @view.events["blur #{target}"] = @_runValidator(property)
 
         @view.delegateEvents()
         return this

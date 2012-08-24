@@ -19,6 +19,15 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
             modified: null
         }
 
+    validators:
+        active: new App.Util.Validate.bool(),
+        type: new App.Util.Validate.string(choices: ['e', 'n']),
+        who_to_notify: new App.Util.Validate.string(choices: ['a', 'p']),
+        response_wait_seconds: new App.Util.Validate.integer(min: -1, max: 86400),
+        title: new App.Util.Validate.string(len: {min: 1, max: 100}),
+        summary: new App.Util.Validate.string(len: {min: 1, max: 100}),
+        detail: new App.Util.Validate.string(len: {min: 1, max: 1048576}),
+
     initialize: () ->
         @groups = new App.SOSBeacon.Collection.GroupList()
         groups = @get('groups')
@@ -145,6 +154,15 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
     modelType: App.SOSBeacon.Model.Event
     focusButton: 'input#title'
 
+    propertyMap:
+        active: "input.active",
+        type: "select.type",
+        who_to_notify: "select.who_to_notify",
+        response_wait_seconds: "select.response_wait_seconds",
+        title: "input.title",
+        summary: "textarea.summary",
+        detail: "textarea.detail"
+
     events:
         "change": "change"
         "click button.add_group": "addGroup"
@@ -154,6 +172,11 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         "keyup textarea.sms": "smsUpdated"
 
     initialize: =>
+        @validator = new App.Util.FormValidator(this,
+            propertyMap: @propertyMap
+            validatorMap: @model.validators
+        )
+
         @groupSelects = []
 
         return super()
@@ -187,6 +210,13 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         )
         if not _.isEmpty(badGroups)
             return false
+
+        if _.isEmpty(groupList)
+            App.Util.FormValidator._displayMessage(
+                @$('fieldset.groups'), 'error', "At least one group is required.")
+            return false
+
+        App.Util.FormValidator._clearMessage(@$('fieldset.groups'))
 
         @model.save(
             active: @$('input.active').prop('checked')
@@ -271,6 +301,8 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         @$el.find('fieldset.groups').append(rendered.el)
 
         rendered.$el.find('input.group').focus()
+
+        App.Util.FormValidator._clearMessage(@$('fieldset.groups'))
 
         return false
 

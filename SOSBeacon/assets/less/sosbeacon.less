@@ -1,5 +1,5 @@
-@default_control_label_width: 100px;
-@default_control_label_padding: 120px;
+@default_control_label_width: 70px;
+@default_control_label_padding: 75px;
 
 body {
   /*background: #CDDBE9;*/
@@ -133,6 +133,7 @@ body {
 }
 .control-label {
   padding: 0px;
+  font-weight: bold;
 }
 .form-horizontal {
   .control-label {
@@ -147,6 +148,21 @@ body {
   .control-group {
     padding: 2px;
     margin: 2px;
+  }
+}
+.contact-area, .broadcast-area {
+  .control-label {
+    width: 120px;
+  }
+  .controls {
+    margin-left: 125px;
+  }
+  .controls:first-child {
+    *padding-left: 125px;
+  }
+  ul {
+    padding: 0px;
+    margin: 0px;
   }
 }
 .call {
@@ -327,7 +343,7 @@ body {
     }
   }
 }
-.modal {width:840px;left:41%;}
+.modal {width:900px;left:39%;}
 
 ul.contacts {
   li.contact {

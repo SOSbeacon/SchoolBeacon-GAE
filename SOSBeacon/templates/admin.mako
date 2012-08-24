@@ -8,7 +8,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="brand" href="/">SOSBeacon Administration</a>
+      <a class="brand" href="/">SBeacon Administration</a>
       <div id="sosbeaconheader" class="nav-collapse">
         <ul id="sosbeacon-menu" class="nav"></ul>
       </div>

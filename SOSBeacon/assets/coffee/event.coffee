@@ -94,7 +94,6 @@ class App.SOSBeacon.Collection.NotifyLevel extends Backbone.Collection
 
 App.SOSBeacon.notifyLevels = new App.SOSBeacon.Collection.NotifyLevel([
     {level: 'a', label: "All Contacts"},
-    {level: 'd', label: "Default Contact Only"},
     {level: 'p', label: "Parents/Guardians Only"},
 ])
 

@@ -72,12 +72,14 @@ class App.Util.Form
 
     @_displayMessage: (el, messageType, message) =>
         parentField = el.parent()
-        controlGroup = parentField.parents('div.control-group')
-        if not _.isElement(controlGroup[0])
+        controlGroup = el.parents('div.control-group')[0]
+
+        if not _.isElement(controlGroup)
             return
 
-        if not controlGroup.hasClass(messageType)
-            controlGroup.addClass(messageType)
+        $controlGroup = $(controlGroup)
+        if not $controlGroup.hasClass(messageType)
+            $controlGroup.addClass(messageType)
 
         messageSpan = parentField.find('span.help-inline')
         if not _.isElement(messageSpan[0])
@@ -88,10 +90,10 @@ class App.Util.Form
 
 
     @_clearMessage: (el) =>
-        controlGroup = el.parents('div.control-group')
-        if not _.isElement(controlGroup[0])
+        controlGroup = el.parents('div.control-group')[0]
+        if not _.isElement(controlGroup)
             return
-        controlGroup.removeClass('success warning error')
+        $(controlGroup).removeClass('success warning error')
         el.siblings('span.help-inline').remove()
 
     @_showAlert: (parentEl, title, message, className) =>

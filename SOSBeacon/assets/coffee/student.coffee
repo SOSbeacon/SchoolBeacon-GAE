@@ -31,10 +31,6 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
             hasError = true
             errors.name = "Missing name."
 
-        if _.isEmpty(attrs.identifier)
-            hasError = true
-            errors.identifier = "Missing identifier."
-
         if hasError
             return errors
 
@@ -75,20 +71,53 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         "keypress .edit": "updateOnEnter"
         "hidden": "close"
 
+    initialize: =>
+        @groupSelects = []
+        @contactEdits = []
+
+        return super()
+
+    removeGroupSelect: (select) =>
+        # Remove group from model.
+        @model.groups.remove(select.model)
+
+        # Remove group list of group selects.
+        index = _.indexOf(@groupSelects, select)
+        delete @groupSelects[index]
+
+        return true
+
+    removeContact: (contactEdit) =>
+        # Remove group from model.
+        @model.contacts.remove(contactEdit.model)
+
+        # Remove group list of group selects.
+        index = _.indexOf(@contactEdits, contactEdit)
+        delete @contactEdits[index]
+
+        return true
+
     save: (e) =>
         if e
             e.preventDefault()
 
         groupList = []
-        @model.groups.each((group) ->
-            groupList.push(group.id)
+        badGroups = _.filter(@groupSelects, (groupSelect) ->
+            groupValid = groupSelect.checkGroup()
+            groupId = groupSelect.model.id
+            if groupId and groupValid
+                groupList.push(groupId)
+            return not groupValid
         )
 
-        @model.contacts.each((contact) ->
-            contact.editView.close()
+        badContacts = _.filter(@contactEdits, (contactEdit) ->
+            contactValid = contactEdit.validate()
+            return not contactValid
         )
+        if not _.isEmpty(badContacts) or not _.isEmpty(badGroups)
+            return false
 
-        @model.save({
+        saved = @model.save({
             name: @$('input.name').val()
             identifier: @$('input.identifier').val()
             groups: groupList
@@ -96,6 +125,8 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         }, {
             error: App.Util.Form.processErrors
         })
+        if saved == false
+            return false
 
         return super()
 
@@ -103,32 +134,40 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         el = @$el
         el.html(@template(@model.toJSON()))
 
-        @model.groups.each((group, i) ->
-            editView = new App.SOSBeacon.View.GroupSelect({model: group})
+        @model.groups.each((group, i) =>
+            editView = new App.SOSBeacon.View.GroupSelect(model: group)
+            editView.on('removed', @removeGroupSelect)
+            @groupSelects.push(editView)
             el.find('fieldset.groups').append(editView.render().el)
         )
 
         contactList = @$('ul.contacts')
-        @model.contacts.each((contact, i) ->
+        @model.contacts.each((contact, i) =>
             editView = new App.SOSBeacon.View.ContactEdit({model: contact})
-            contact.editView = editView
+            editView.on('removed', @removeContact)
+            @contactEdits.push(editView)
             contactList.append(editView.render().el)
         )
 
         return super(asModal)
 
     addGroup: () =>
-        groupInputs = @$el.find('fieldset.groups').find('input.name')
-        for input in groupInputs
-            $input = $(input)
-            if _.isEmpty($.trim($input.val()))
-                $input.focus()
+        badGroup = _.find(@groupSelects, (groupSelect) ->
+            if groupSelect.model.id
                 return false
-
-        editView = new App.SOSBeacon.View.GroupSelect(
-            model: new @model.groups.model()
-            groupCollection: @model.groups
+            return true
         )
+        if badGroup
+            badGroup.$('input.name').focus()
+            return false
+
+        group = new @model.groups.model()
+        @model.groups.add(group)
+
+        editView = new App.SOSBeacon.View.GroupSelect(model: group)
+        editView.on('removed', @removeGroupSelect)
+        @groupSelects.push(editView)
+
         rendered = editView.render()
         @$el.find('fieldset.groups').append(rendered.el)
 
@@ -141,7 +180,9 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         @model.contacts.add(contact)
 
         editView = new App.SOSBeacon.View.ContactEdit(model: contact)
-        contact.editView = editView
+        editView.on('removed', @removeContact)
+        @contactEdits.push(editView)
+
         rendered = editView.render()
         @$('ul.contacts').append(rendered.el)
 
@@ -170,9 +211,26 @@ class App.SOSBeacon.View.StudentApp extends App.Skel.View.ModelApp
     modelType: App.SOSBeacon.Model.Student
     form: App.SOSBeacon.View.StudentEdit
 
+    events:
+        "click .add-button": "add"
+        "click .import-button": "import"
+
     initialize: =>
         @collection = new App.SOSBeacon.Collection.StudentList()
         @listView = new App.SOSBeacon.View.StudentList(@collection)
+
+    import: =>
+        #todo prompt for doc to import
+        App.SOSBeacon.router.navigate("/student/import", {trigger: true})
+
+
+class App.SOSBeacon.View.ImportStudentsApp extends App.Skel.View.App
+    id: "sosbeaconapp"
+    template: JST['student/import']
+
+    render: =>
+        @$el.html(@template())
+        return this
 
 
 class App.SOSBeacon.View.StudentListItem extends App.Skel.View.ListItemView
@@ -265,3 +323,4 @@ class App.SOSBeacon.View.SelectableStudentList extends App.SOSBeacon.View.BaseSt
         _.extend(@collection.server_api, filters)
 
         App.Skel.Event.trigger("studentlist:filter:#{@.cid}", filters)
+

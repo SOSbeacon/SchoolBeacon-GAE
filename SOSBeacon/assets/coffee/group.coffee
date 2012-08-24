@@ -3,15 +3,27 @@ class App.SOSBeacon.Model.Group extends Backbone.Model
     idAttribute: 'key'
     urlRoot: '/service/group'
 
+    initialize: =>
+        @on('sync', @groupSynced)
+
+    groupSynced:  =>
+        #check if in cache
+        group = App.SOSBeacon.Cache.Groups.get(@id)
+        if group
+            App.SOSBeacon.Cache.Groups.remove(group, {silent: true})
+
     defaults: ->
         return {
-            key: "",
+            key: null,
             name: "",
             active: true,
             notes: "",
         }
 
-    validate: (attrs) =>
+    validate: (attrs, options) =>
+        if options?.unset or options?.loading
+            return
+
         hasError = false
         errors = {}
 
@@ -21,6 +33,9 @@ class App.SOSBeacon.Model.Group extends Backbone.Model
 
         if hasError
             return errors
+
+    reset: =>
+        @set(@defaults(), loading: true)
 
 
 class App.SOSBeacon.Collection.GroupList extends Backbone.Paginator.requestPager
@@ -46,6 +61,35 @@ class App.SOSBeacon.Collection.GroupList extends Backbone.Paginator.requestPager
 
     server_api: {}
 
+    fetch: (options) =>
+        #handle caching when looking for specific groups
+        #if options and 'url' of options
+        if options and options.url?
+            urls = options.url.split('/')
+            ids = _.last(urls).split(',')
+
+            idsToFetch = []
+            _.each(ids, (id) =>
+                group = App.SOSBeacon.Cache.Groups.get(id)
+                if group
+                    @add(group, {silent: true})
+                else
+                    idsToFetch.push(id)
+            )
+
+            if _.isEmpty(idsToFetch)
+                return
+
+            options.url = @url + '/' + idsToFetch.join()
+
+        super(options)
+        @addToCache()
+
+
+    addToCache: =>
+        @each((group) ->
+            App.SOSBeacon.Cache.Groups.add(group, {silent: true})
+        )
 
 class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
     template: JST['group/edit']
@@ -147,23 +191,45 @@ class App.SOSBeacon.View.GroupList extends App.Skel.View.ListView
 
 class App.SOSBeacon.View.GroupSelect extends Backbone.View
     template: JST['group/select']
-    className: "control"
+    className: "control-group"
+
+    propertyMap:
+        "name": "input.name"
 
     events:
-        "click a.remove": "close"
+        "click a.remove": "removeSelect"
+        "blur input.name": "checkGroup"
 
-    render: () =>
+    initialize: =>
+        @options.autoAdd ?= true
+        @validator = new App.Util.Form(@el, propertyMap: @propertyMap)
+
+    checkGroup: =>
+        if @typeahead?.shown
+            return true
+
+        candidateName = $.trim(@$('input.name').val())
+
+        if @model.id or not candidateName
+            @validator.clearMessage('name')
+            return true
+
+        @validator.displayMessage('name', 'error', 'Group does not exist')
+        return false
+
+    render: =>
         @$el.html(@template(@model.toJSON()))
-        @$el.find('input.name').typeahead({
+        @$('input.name').typeahead({
             value_property: 'name'
             updater: (item) =>
                 @model.set(item, {silent: true})
-                if @options.groupCollection
+                if @options.groupCollection and @options.autoAdd
                     @options.groupCollection.add(@model)
                 return item.name
             matcher: (item) ->
                 return true
-            source: (typeahead, query) ->
+            source: (typeahead, query) =>
+                @maybeClear(typeahead)
                 $.ajax({
                     type: 'GET'
                     dataType: 'json'
@@ -175,8 +241,24 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
         })
         return this
 
+    maybeClear: (typeahead) =>
+        @typeahead = typeahead
+
+        candidateName = @$('input.name').val()
+        if not @model.id or @model.get('name') == candidateName
+            return
+
+        @model.reset()
+        @$('input.name').val(candidateName)
+
+    removeSelect: =>
+        @trigger('removed', @)
+        return @close()
+
     onClose: =>
         @$('input.name').trigger('cleanup')
+        if @options.groupCollection
+            @options.groupCollection.remove(@model)
 
 
 class App.SOSBeacon.View.GroupTypeahaedFilter extends App.Ui.Datagrid.TypeaheadFilter

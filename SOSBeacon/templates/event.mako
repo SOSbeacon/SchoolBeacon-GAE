@@ -4,7 +4,7 @@
   <div class="row-fluid header">
     <div class="span2"><a href="http://sosbeacon.com" id="logo"></a></div>
     <div class="span10">
-      <h3>SOSBeacon</h3> A non-profit corporation dedicated to safety and security.
+      <h3>SBeacon</h3> A non-profit corporation dedicated to safety and security.
     </div>
   </div>
   <div class="container-fluid">

@@ -84,7 +84,6 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
         name = $.trim(name_input.val())
 
         if type != "d" and _.isEmpty(name)
-            console.log(type, name)
             App.Util.Form._displayMessage(
                 name_input,
                 'error',

@@ -102,12 +102,12 @@ class EventHandler(TemplateHandler):
         event_id = utils.number_decode(event_id)
         method_id = str(utils.number_decode(method_id))
 
-        event_key = ndb.Key(Event, event_id)
+        event_key = ndb.Key(Event, event_id, namespace='_x_')
 
         event_mc_key = 'Event:%s' % (int(event_id),)
         event_html = memcache.get(event_mc_key)
         if not event_html:
-            event = Event.get_by_id(int(event_id), namespace='_x_')
+            event = event_key.get()
             if not event:
                 memcache.set(event_mc_key, EVENT_DOES_NOT_EXIST)
                 self.error(404)
@@ -121,7 +121,7 @@ class EventHandler(TemplateHandler):
             self.error(404)
             return
 
-        event = Event.get_by_id(int(event_id))
+        #event = Event.get_by_id(int(event_id))
         #contact = Contact.get_by_id(int(contact_id))
         #contact_groups = set(contact.groups)
         #event_groups = set(event.groups)

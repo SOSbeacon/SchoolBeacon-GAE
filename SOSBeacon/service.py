@@ -29,6 +29,8 @@ if libs_dir not in sys.path:
 
 import webapp2
 
+from config import webapp_config
+
 url_map = [
     # Contact
     webapp2.Route(r'/service/contact/<resource_id:.+>',
@@ -61,5 +63,9 @@ url_map = [
 
 ]
 
-app = webapp2.WSGIApplication(url_map)
+app = webapp2.WSGIApplication(
+    url_map,
+    config=webapp_config
+)
+
 

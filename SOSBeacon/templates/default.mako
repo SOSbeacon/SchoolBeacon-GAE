@@ -7,7 +7,7 @@
         <span class="icon-bar"></span>
         <span class="icon-bar"></span>
       </button>
-      <a class="brand" href="/">SOSBeacon</a>
+      <a class="brand" href="/">SBeacon</a>
       <div id="sosbeaconheader" class="nav-collapse">
         <ul id="sosbeacon-menu" class="nav"></ul>
         <ul class="nav pull-right">

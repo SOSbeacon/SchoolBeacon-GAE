@@ -20,6 +20,10 @@ class App.SOSBeacon.Model.Group extends Backbone.Model
             notes: "",
         }
 
+    validators:
+        name: new App.Util.Validate.string(len: {min: 1, max: 50}),
+        active: new App.Util.Validate.bool()
+
     validate: (attrs, options) =>
         if options?.unset or options?.loading
             return
@@ -96,21 +100,35 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
     modelType: App.SOSBeacon.Model.Group
     focusButton: 'input#name'
 
+    propertyMap:
+        active: "input.active",
+        name: "input.name",
+
     events:
         "change": "change"
         "submit form" : "save"
         "keypress .edit": "updateOnEnter"
         "hidden": "close"
 
+    initialize: =>
+        @validator = new App.Util.FormValidator(this,
+            propertyMap: @propertyMap
+            validatorMap: @model.validators
+        )
+
+        return super()
+
     save: (e) =>
         if e
             e.preventDefault()
 
-        @model.save(
+        valid = @model.save(
             name: @$('input.name').val()
             active: @$('input.active').prop('checked')
             notes: $.trim(@$('textarea.notes').val())
         )
+        if valid == false
+            return false
 
         return super()
 

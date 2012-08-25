@@ -81,6 +81,12 @@ indexes:
   - name: m_
     direction: desc
 
+- kind: Event
+  properties:
+  - name: sch
+  - name: m_
+    direction: desc
+
 - kind: Group
   properties:
   - name: a

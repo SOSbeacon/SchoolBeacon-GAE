@@ -7,7 +7,7 @@ from skel.rest_api.rules import RestQueryRule
 
 
 person_schema = {
-    'key': basestring,
+    'key': voluptuous.any('', voluptuous.ndbkey()),
     'name': basestring,
     'groups': list,
     'contacts': list
@@ -40,7 +40,6 @@ class Person(EntityBase):
         key = data.get("key")
         person = None
         if key:
-            key = ndb.Key(urlsafe=key)
             person = key.get()
 
         if not person:

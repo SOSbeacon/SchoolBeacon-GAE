@@ -4,7 +4,7 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
     urlRoot: '/service/student'
     defaults: ->
         return {
-            key: "",
+            key: null,
             name: "",
             identifier: "",
             groups: [],

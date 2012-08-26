@@ -12,7 +12,7 @@ from skel.rest_api.rules import RestQueryRule
 EMAIL_REGEX = re.compile("^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
 
 student_schema = {
-    'key': basestring,
+    'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'name': basestring,
     'identifier': basestring,
     'groups': [voluptuous.ndbkey()],
@@ -57,7 +57,6 @@ class Student(EntityBase):
         key = data.get("key")
         student = None
         if key:
-            key = ndb.Key(urlsafe=key)
             student = key.get()
 
         if not student:

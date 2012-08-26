@@ -7,7 +7,7 @@ from skel.rest_api.rules import RestQueryRule
 
 
 person_schema = {
-    'key': voluptuous.any('', voluptuous.ndbkey()),
+    'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'name': basestring,
     'groups': list,
     'contacts': list

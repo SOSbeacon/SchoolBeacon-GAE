@@ -38,7 +38,6 @@ from mako.lookup import TemplateLookup
 
 from config import webapp_config
 
-from sosbeacon.contact import Contact
 from sosbeacon.event import Event
 from sosbeacon.event import acknowledge_event
 

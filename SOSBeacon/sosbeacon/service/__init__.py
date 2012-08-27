@@ -49,28 +49,6 @@ class PersonListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             query_schema=person_query_schema)
 
 
-class ContactHandler(rest_handler.RestApiHandler, ProcessMixin):
-
-    def __init__(self, request, response):
-        from sosbeacon.contact import Contact
-        from sosbeacon.contact import contact_schema
-
-        super(ContactHandler, self).__init__(
-            Contact, contact_schema, request, response)
-
-
-class ContactListHandler(rest_handler.RestApiListHandler, ProcessMixin):
-
-    def __init__(self, request, response):
-        from sosbeacon.contact import Contact
-        from sosbeacon.contact import contact_schema
-        from sosbeacon.contact import contact_query_schema
-
-        super(ContactListHandler, self).__init__(
-            Contact, contact_schema, request, response,
-            query_schema=contact_query_schema)
-
-
 class StudentHandler(rest_handler.RestApiHandler, ProcessMixin):
 
     def __init__(self, request, response):

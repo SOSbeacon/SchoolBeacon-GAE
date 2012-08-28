@@ -29,7 +29,7 @@ def format_datetime(datetime):
 
 
 event_schema = {
-    'key': basestring,
+    'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'active': voluptuous.boolean(),
     'title': basestring,
     'summary': basestring,
@@ -89,7 +89,6 @@ class Event(EntityBase):
         key = data.get("key")
         event = None
         if key:
-            key = ndb.Key(urlsafe=key)
             event = key.get()
 
         if not event:
@@ -137,7 +136,7 @@ class Event(EntityBase):
 
 
 marker_schema = {
-    'key': basestring,
+    'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'acknowledged': voluptuous.boolean(),
     'name': basestring,
     'responded': [basestring],

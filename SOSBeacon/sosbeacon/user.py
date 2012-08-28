@@ -4,7 +4,7 @@ from google.appengine.ext import ndb
 import voluptuous
 
 user_schema = {
-    'key': voluptuous.ndbkey(),
+    'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'name': basestring,
     'default': voluptuous.ndbkey(),
     'schools': [voluptuous.ndbkey()],
@@ -50,7 +50,6 @@ class User(ndb.Model):
         key = data.get('key')
         user = None
         if key:
-            key = ndb.Key(urlsafe=key)
             user = key.get()
 
         if not user:

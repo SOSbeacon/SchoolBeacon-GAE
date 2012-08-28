@@ -4,7 +4,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
     urlRoot: '/service/event'
     defaults: ->
         return {
-            key: "",
+            key: null,
             active: true,
             type: 'e',
             who_to_notify: 'a',

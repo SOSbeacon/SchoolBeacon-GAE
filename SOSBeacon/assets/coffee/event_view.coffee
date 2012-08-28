@@ -3,7 +3,7 @@ class App.SOSBeacon.Model.StudentMarker extends Backbone.Model
     urlRoot: '/service/event/student'
     defaults: ->
         return {
-            key: "",
+            key: null,
             acknowledged: false,
             name: "",
             method: "",

@@ -4,7 +4,7 @@ class App.SOSAdmin.Model.School extends Backbone.Model
     urlRoot: '/service/school'
     defaults: ->
         return {
-            key: "",
+            key: null,
             name: "",
             owner: "",
             invited: [],

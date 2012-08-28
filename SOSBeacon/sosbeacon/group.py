@@ -7,7 +7,7 @@ from skel.rest_api.rules import RestQueryRule
 
 
 group_schema = {
-    'key': basestring,
+    'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'name': basestring,
     'active': voluptuous.boolean(),
     'notes': basestring
@@ -41,7 +41,6 @@ class Group(EntityBase):
         key = data.get("key")
         group = None
         if key:
-            key = ndb.Key(urlsafe=key)
             group = key.get()
 
         if not group:

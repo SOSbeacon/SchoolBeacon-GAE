@@ -11,16 +11,12 @@ class App.SOSAdmin.Model.School extends Backbone.Model
             users: [],
         }
 
-    #initialize: =>
-        #@groups = new App.SOSAdmin.Collection.GroupList()
-        #groups = @get('groups')
-        #if groups and not _.isEmpty(groups)
-            #url = @groups.url + '/' + groups.join()
-            #@groups.fetch({url: url, async: false})
-
-        #@contacts = @nestCollection(
-            #'contacts',
-            #new App.SOSAdmin.Collection.ContactList(@get('contacts')))
+    initialize: =>
+        @users = new App.SOSAdmin.Collection.UserList()
+        users = @get('users')
+        if not _.isEmpty(users)
+            url = @users.url + '/' + users.join()
+            @users.fetch({url: url, async: false})
 
     validate: (attrs) =>
         hasError = false

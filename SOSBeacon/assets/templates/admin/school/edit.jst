@@ -1,0 +1,36 @@
+<div class="row-fluid status-bar" >
+  <div class="alert alert-success" style="display: none">
+    <button class="close" data-dismiss="alert">&times;</button>
+    <strong> Success! </strong> School saved successfully.
+  </div>
+</div>
+<form class="edit containter-fluid well form-horizontal">
+  <div class="row-fluid">
+    <div id="editheadercontainer" class="modal-header">
+      <h3 id="editheader">School</h3>
+    </div>
+    <div class="modal-body">
+      <fieldset>
+        <div class="control-group">
+          <label for="name" class="control-label">Name:</label>
+          <div class="controls">
+            <input id="name" name="name" type="text" value="<%- name %>" 
+            autocomplete="off" class="name" placeholder="Name..." />
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label">Invitations:</label>
+          <div class="controls">
+            <div class="control">
+              <fieldset class="invitations"></fieldset>
+              <button class="add_invitation btn btn-primary">new invitation</button>
+            </div>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div class="modal-footer form-actions">
+      <button class="save btn btn-primary">Save</button>
+    </div>
+  </div>
+</form>

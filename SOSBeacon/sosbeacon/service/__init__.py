@@ -93,6 +93,29 @@ class GroupListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             query_schema=group_query_schema)
 
 
+class SchoolHandler(rest_handler.RestApiHandler, ProcessMixin):
+
+    def __init__(self, request=None, response=None):
+        from sosbeacon.school import School
+        from sosbeacon.school import school_schema
+
+        super(SchoolHandler, self).__init__(
+            School, school_schema, request, response)
+
+
+class SchoolListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+
+    def __init__(self, request=None, response=None):
+        from sosbeacon.school import School
+        from sosbeacon.school import school_schema
+        from sosbeacon.school import school_query_schema
+
+        super(SchoolListHandler, self).__init__(
+              School, school_schema, request, response,
+              query_schema=school_query_schema,
+              query_options={'namespace': '_x_'})
+
+
 class EventHandler(rest_handler.RestApiHandler):
 
     def __init__(self, request, response):

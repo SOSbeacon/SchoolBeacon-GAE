@@ -24,9 +24,10 @@
   <script type="application/javascript" src="/static/script/libs.js"></script>
   <script type="application/javascript" src="/static/script/skel.js"></script>
   <script type="application/javascript" src="/static/script/template.js"></script>
+  <script type="application/javascript" src="/static/script/sosbeacon.js"></script>
   <script type="application/javascript" src="/static/script/sosadmin.js"></script>
   <script type="text/javascript">
-    $(function(){
+    $(function() {
         var sosadmin = new App.SOSAdmin.Router
         Backbone.history.start();
         App.SOSAdmin.router = sosadmin;

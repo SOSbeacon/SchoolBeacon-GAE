@@ -3,16 +3,34 @@ from google.appengine.ext import ndb
 
 import voluptuous
 
+from skel.datastore import EntityBase
+from skel.rest_api.rules import RestQueryRule
+
+
 school_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'name': basestring,
-    'owner': voluptuous.ndbkey(),
-    'invited': [basestring],
-    'users': [voluptuous.ndbkey()],
+    #'owner': voluptuous.ndbkey(),
+    'invitations': [{
+        'key': basestring,
+        'name': basestring,
+        'email': basestring
+        }],
+    #'users': [voluptuous.ndbkey()],
 }
 
-class School(ndb.Model):
+school_query_schema = {
+    'flike_name': basestring,
+}
+
+
+class School(EntityBase):
     """Represents a school."""
+
+    _query_properties = {
+        'name': RestQueryRule('name_', lambda x: x.lower() if x else ''),
+    }
+
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
@@ -25,13 +43,13 @@ class School(ndb.Model):
 
     # User nick name, key
     name = ndb.StringProperty('n', indexed=False)
-    n_ = ndb.ComputedProperty(lambda self: self.name.lower())
+    name_ = ndb.ComputedProperty(lambda self: self.name.lower(), name='n_')
 
     # Associated user info.
     owner = ndb.KeyProperty('o', kind='User')
     users = ndb.KeyProperty('ul', kind='User', repeated=True)
 
-    invited = ndb.StringProperty('rtl', repeated=True)
+    invitations = ndb.JsonProperty('ic')
 
     def _pre_put_hook(self):
         """Ran before the entity is written to the datastore."""
@@ -46,14 +64,32 @@ class School(ndb.Model):
             school = key.get()
 
         if not school:
-            school = cls()
+            school = cls(namespace='_x_')
 
         school.name = data.get('name')
 
-        school.owner = data.get('owner')
-        school.users = data.get('users')
+        #owner = data.get('owner')
+        #if owner:
+        #    school.owner = data.get('owner')
 
-        school.invited = data.get('invited')
+        #school.users = data.get('users')
+
+        # Process invitations.
+        raw_invitations = data.get('invitations')
+
+        invitations = {}
+        for invitation in raw_invitations:
+            invitations[invitation['key']] = {
+                'name': invitation.get('name'),
+                'email': invitation.get('email'),
+                'isnew': False
+            }
+            if invitation['isnew']:
+                # TODO: Send invite email.
+                # NOTE: Yes. I am a bad person for putting this here.
+                pass
+
+        school.invitations = invitations
 
         return school
 
@@ -61,6 +97,16 @@ class School(ndb.Model):
         """Return a School entity represented as a dict of values
         suitable for School.from_dict.
         """
+        invitations = []
+        if self.invitations:
+            for key, invitation in self.invitations.iteritems():
+                invitations.append({
+                    'key': key,
+                    'name': invitation.get('name'),
+                    'email': invitation.get('email'),
+                    'isnew': False
+                })
+
         school = {
             'version': self.version_,
             'key': self.key.urlsafe(),
@@ -72,11 +118,11 @@ class School(ndb.Model):
             'name': self.name,
 
             # user info
-            'owner': self.owner.urlsafe(),
+            'owner': self.owner.urlsafe() if self.owner else '',
             'users': [key.urlsafe() for key in self.users],
 
             # Invite tokens
-            'invited': self.invited,
+            'invitations': invitations
         }
         return school
 

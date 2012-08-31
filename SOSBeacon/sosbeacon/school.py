@@ -1,4 +1,6 @@
 
+import os
+
 from google.appengine.ext import ndb
 
 import voluptuous
@@ -64,7 +66,13 @@ class School(EntityBase):
             school = key.get()
 
         if not school:
-            school = cls(namespace='_x_')
+            # We need a key to send invites, so this must be pre-generated.
+            # Root key is only used to avoid namespace collisions.
+            root_key = ndb.Key(cls, 1, namespace='_x_')
+            new_id = cls.allocate_ids(size=1, parent=root_key)
+
+            school_key = ndb.Key(cls, new_id[0], namespace='_x_')
+            school = cls(key=school_key)
 
         school.name = data.get('name')
 
@@ -79,15 +87,24 @@ class School(EntityBase):
 
         invitations = {}
         for invitation in raw_invitations:
-            invitations[invitation['key']] = {
-                'name': invitation.get('name'),
-                'email': invitation.get('email'),
+            token = invitation['key']
+            name = invitation.get('name')
+            email = invitation.get('email')
+
+            invitations[token] = {
+                'name': name,
+                'email': email,
                 'isnew': False
             }
+
             if invitation['isnew']:
-                # TODO: Send invite email.
                 # NOTE: Yes. I am a bad person for putting this here.
-                pass
+                send_invitation_email(
+                    school=school,
+                    token=token,
+                    name=name,
+                    email=email,
+                )
 
         school.invitations = invitations
 
@@ -125,4 +142,35 @@ class School(EntityBase):
             'invitations': invitations
         }
         return school
+
+def send_invitation_email(school, token, name, email):
+    """Send user and inviation to join the School Admins."""
+    from google.appengine.api import mail
+
+    try:
+        name = name.strip().split()[0]
+    except IndexError:
+        pass
+
+    host = os.environ['HTTP_HOST']
+    url = "https://%s/_ah/login_required?sc=%s&tk=%s" % (
+        host, school.key.urlsafe(), token)
+
+    message = """
+    Hello %s,
+      You have been invited to join %s on SBeacon.  Please click the following
+    link to accept.
+
+    %s
+
+    Thanks and welcome to SBeacon,
+      The SBeacon Team
+    """ % (name, school.name, url)
+
+    email = mail.EmailMessage(sender="SBeacon <clifforloff@gmail.com>",
+                              subject='%s Invited You to SBeacon' % (school.name,),
+                              to=email,
+                              body=message)
+
+    email.send()
 

@@ -61,6 +61,11 @@ url_map = [
     webapp2.Route(r'/service/group<:/?>',
         handler='sosbeacon.service.GroupListHandler'),
 
+    # School
+    webapp2.Route(r'/service/school/<resource_id:.+>',
+        handler='sosbeacon.service.SchoolHandler'),
+    webapp2.Route(r'/service/school<:/?>',
+        handler='sosbeacon.service.SchoolListHandler'),
 ]
 
 app = webapp2.WSGIApplication(

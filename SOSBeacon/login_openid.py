@@ -140,7 +140,7 @@ class UserConfigHandler(webapp2.RequestHandler):
             reg_token = session.get('tk')
             if 'tk' in session:
                 del session['tk']
-            if not reg_token or reg_token not in school_entity.invited:
+            if not reg_token or reg_token not in school_entity.invitations:
                 logging.warning("Invalid token '%s'", reg_token)
                 # User isn't allowed or bad invite token.
                 self.redirect(users.create_logout_url(BAD_LOGIN_REDIRECT))
@@ -152,9 +152,10 @@ class UserConfigHandler(webapp2.RequestHandler):
                 if user_key in school_entity.users:
                     return
 
-                school_entity.invited.remove(reg_token)
+                del school_entity.invitations[reg_token]
                 school_entity.users.append(user_key)
                 return school_entity.put()
+
             update_school_txn(self.user_key, reg_token)
 
         user_entity = self.user_future.get_result()

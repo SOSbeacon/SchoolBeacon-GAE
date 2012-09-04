@@ -2,6 +2,7 @@
 
 import string
 
+
 #  Functions used to encode numeric entity IDs with a url friendly alphabet.
 
 ALPHABET = string.ascii_letters + string.digits + '-_$'
@@ -21,6 +22,22 @@ def number_decode(encoded):
     for c in encoded:
         number = number * BASE + ALPHABET_REVERSE[c]
     return number
+
+
+# Make a nice looking date.
+
+def format_datetime(datetime):
+    """If a datetime is really just a date, return a string representation
+    of the date.
+    """
+    if not datetime:
+        return ''
+
+    if datetime.hour == 0 and datetime.minute == 0:
+        return datetime.strftime('%m/%d/%y')
+
+    return datetime.strftime('%m/%d/%y %H:%M')
+
 
 # Helper to auto-retry inserting tasks, should one fail.
 

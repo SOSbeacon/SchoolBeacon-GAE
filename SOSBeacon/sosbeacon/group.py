@@ -5,6 +5,7 @@ import voluptuous
 from skel.datastore import EntityBase
 from skel.rest_api.rules import RestQueryRule
 
+ALL_GROUPS_ID = "__all__"
 
 group_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),

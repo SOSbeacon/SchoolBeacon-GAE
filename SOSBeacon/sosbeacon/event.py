@@ -5,214 +5,23 @@ from google.appengine.api import memcache
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
 
-import voluptuous
-
 from sosbeacon.utils import insert_tasks
-
-from skel.datastore import EntityBase
-from skel.rest_api.rules import RestQueryRule
 
 
 BATCH_SECONDS = 5
 EVENT_UPDATE_QUEUE = "event-up"
 EVENT_UPDATE_WORKER_QUEUE = "event-updator"
 
-
-def format_datetime(datetime):
-    if not datetime:
-        return ''
-
-    if datetime.hour == 0 and datetime.minute == 0:
-        return datetime.strftime('%m/%d/%y')
-
-    return datetime.strftime('%m/%d/%y %H:%M')
+EVENT_OPEN_STATUS = 'op'
 
 
-event_schema = {
-    'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
-    'active': voluptuous.boolean(),
-    'title': basestring,
-    'summary': basestring,
-    'detail': basestring,
-    'groups': [voluptuous.ndbkey()],
-    'type': voluptuous.any('e', 'n'),
-    'who_to_notify': voluptuous.any('a', 'd', 'p'),
-    'response_wait_seconds': int,
-}
-
-event_query_schema = {
-    'flike_title': basestring,
-    'feq_active': voluptuous.boolean(),
-    'feq_groups': voluptuous.any('', voluptuous.ndbkey())
-}
-
-class Event(EntityBase):
-    """Represents a event."""
-
-    _query_properties = {
-        'title': RestQueryRule('title_', lambda x: x.lower() if x else ''),
-        'groups': RestQueryRule('groups', lambda x: None if x == '' else x)
-    }
-
-    # Store the schema version, to aid in migrations.
-    version_ = ndb.IntegerProperty('v_', default=1)
-
-    school = ndb.StringProperty('sch')
-
-    student_count = ndb.IntegerProperty('sc', default=0, indexed=False)
-    contact_count = ndb.IntegerProperty('cc', default=0, indexed=False)
-    acknowledged_count = ndb.IntegerProperty('ac', default=0, indexed=False)
-
-    event_type = ndb.StringProperty('et')
-
-    who_to_notify = ndb.StringProperty('who', indexed=False, default='')
-
-    response_wait_seconds = ndb.IntegerProperty(default=3600, indexed=False)
-
-    notice_sent_by = ndb.UserProperty('nsb')
-    notice_sent_at = ndb.DateTimeProperty('nsa')
-    notice_sent = ndb.BooleanProperty('ns')
-
-    active = ndb.BooleanProperty('a')
-
-    title = ndb.StringProperty('t')
-    title_ = ndb.ComputedProperty(lambda self: self.title.lower(), name='t_')
-
-    summary = ndb.TextProperty('s')
-    detail = ndb.TextProperty('d')
-
-    groups = ndb.KeyProperty('g', repeated=True)
-
-    @classmethod
-    def from_dict(cls, data):
-        """Instantiate a Event entity from a dict of values."""
-        key = data.get("key")
-        event = None
-        if key:
-            event = key.get()
-
-        if not event:
-            from google.appengine.api import namespace_manager
-            school = namespace_manager.get_namespace()
-            event = cls(namespace='_x_', school=unicode(school))
-
-        event.who_to_notify = data.get('who_to_notify')
-        event.response_wait_seconds = data.get('response_wait_seconds')
-
-        event.event_type = data.get('type')
-        event.active = data.get('active')
-        event.title = data.get('title')
-        event.summary = data.get('summary')
-        event.detail = data.get('detail')
-        event.groups = data.get('groups')
-
-        return event
-
-    def to_dict(self):
-        """Return a Event entity represented as a dict of values
-        suitable for Event.from_dict.
-        """
-        event = self._default_dict()
-        event["version"] = self.version_
-        event['active'] = 'Yes' if self.active else ''
-        event['notice_sent'] = 'Yes' if self.notice_sent else ''
-        event['notice_sent_at'] = format_datetime(self.notice_sent_at)
-        #TODO: set notice sent by to user
-        #event['notice_sent_by'] = self.notice_sent_by
-        event['type'] = self.event_type
-        event['title'] = self.title
-        event['summary'] = self.summary
-        event['detail'] = self.detail
-        event['groups'] = [key.urlsafe() for key in self.groups]
-
-        event['who_to_notify'] = self.who_to_notify
-        event['response_wait_seconds'] = self.response_wait_seconds
-
-        event['student_count'] = self.student_count
-        event['contact_count'] = self.contact_count
-        event['acknowledged_count'] = self.acknowledged_count
-
-        return event
 
 
-marker_schema = {
-    'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
-    'acknowledged': voluptuous.boolean(),
-    'name': basestring,
-    'responded': [basestring],
-}
-
-marker_query_schema = {
-    'feq_acknowledged': voluptuous.boolean(),
-    'fan_key': voluptuous.ndbkey()
-}
-
-class MethodMarker(EntityBase):
-    """Used to store Contact-Events tx / view metadata."""
-    # Store the schema version, to aid in migrations.
-    version_ = ndb.IntegerProperty('v_', default=1)
-
-    # Used to query for short URLs
-    short_id = ndb.StringProperty('i')
-
-    # contact name, for display only
-    name = ndb.StringProperty('nm')
-
-    acknowledged = ndb.BooleanProperty('a', default=False)
-    acknowledged_at = ndb.IntegerProperty('at', indexed=False)
-
-    last_try = ndb.IntegerProperty('t', indexed=False, default=0)
-    students = ndb.JsonProperty('s', indexed=False)
-
-    # This method is considered failed, suggest trying next method.
-    try_next = ndb.BooleanProperty('n', default=False)
-
-    def merge(self, other):
-        """Merge this MethodMarker entity with another MethodMarker."""
-        self.acknowledged = max(self.acknowledged, other.acknowledged)
-        self.acknowledged_at = min(
-            self.acknowledged_at or other.acknowledged_at,
-            other.acknowledged_at or self.acknowledged_at)
-
-        self.short_id = self.short_id or other.short_id
-
-        self.name = self.name or other.name
-
-        self.last_try = max(self.last_try, other.last_try)
-
-        students = set()
-        if self.students:
-            for student, contact_name, methods in self.students:
-                students.add((student, contact_name, tuple(methods)))
-        if other.students:
-            for student, contact_name, methods in other.students:
-                students.add((student, contact_name, tuple(methods)))
-        self.students = list(students)
-        return self
-
-    def to_dict(self):
-        """Return a MethodMarker entity represented as a dict of values."""
-
-        marker = self._default_dict()
-        marker["version"] = self.version_
-        marker['acknowledged'] = self.acknowledged
-        marker['name'] = self.name
-        marker['method'] = self.key.id()
-        marker['responded'] = self.students
-
-        return marker
 
 
-class StudentMarker(EntityBase):
-    """Used to store Student-Events tx / ack metadata."""
-    # Store the schema version, to aid in migrations.
-    version_ = ndb.IntegerProperty('v_', default=1)
 
-    name = ndb.StringProperty('n', indexed=False)
-    contacts = ndb.JsonProperty('c')
 
-    all_acknowledged = ndb.BooleanProperty('a', default=False)
-    all_acknowledged_at = ndb.IntegerProperty('at', indexed=False)
+
 
 
 def update_event_counts(event_key, group_key, group_iter,

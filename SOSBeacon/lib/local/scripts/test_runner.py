@@ -31,7 +31,14 @@ paths = [
     os.path.join(CURRENT_PATH, 'lib', 'local'),
 ]
 
-from dev_appserver import fix_sys_path
+try:
+    from dev_appserver import fix_sys_path
+except ImportError:
+    import site
+    site.addsitedir('.')
+
+    from dev_appserver import fix_sys_path
+
 fix_sys_path()
 
 sys.path.extend(paths)

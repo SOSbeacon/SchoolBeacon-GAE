@@ -2,6 +2,7 @@
 import gaetest
 
 from mock import Mock
+from mock import patch
 
 
 class TestMessageModel(gaetest.TestCase):
@@ -143,15 +144,15 @@ class TestMessageModel(gaetest.TestCase):
 
 
 class TestScanGroups(gaetest.TestCase):
-    """Test the scan_groups method to ensure it inserts a batch of tasks per
-    ten groups.
+    """Test the broadcast_to_groups method to ensure it inserts a batch of
+    tasks per ten groups.
     """
 
     def test_one_group(self):
         """Ensure event key is required to create a message."""
         from sosbeacon import utils
 
-        from sosbeacon.event.message import scan_groups
+        from sosbeacon.event.message import broadcast_to_groups
 
         insert_tasks_mock = Mock()
 
@@ -166,7 +167,7 @@ class TestScanGroups(gaetest.TestCase):
         message = Mock()
         message.key.urlsafe.return_value = 'abc'
 
-        scan_groups(group_keys, message)
+        broadcast_to_groups(group_keys, message)
 
         self.assertEqual(insert_tasks_mock.call_count, 1)
 
@@ -174,7 +175,7 @@ class TestScanGroups(gaetest.TestCase):
         """Ensure event key is required to create a message."""
         from sosbeacon import utils
 
-        from sosbeacon.event.message import scan_groups
+        from sosbeacon.event.message import broadcast_to_groups
 
         insert_tasks_mock = Mock()
 
@@ -189,7 +190,7 @@ class TestScanGroups(gaetest.TestCase):
         message = Mock()
         message.key.urlsafe.return_value = 'abc'
 
-        scan_groups(group_keys, message)
+        broadcast_to_groups(group_keys, message)
 
         self.assertEqual(4, insert_tasks_mock.call_count)
 
@@ -201,8 +202,8 @@ class TestScanGroups(gaetest.TestCase):
         self.assertEqual(2, len(call_history[3][0][0]))
 
     def test_all_groups(self):
+        from sosbeacon.event.message import broadcast_to_groups
         """Ensure passing in the all groups group, results in a query."""
-        from sosbeacon.event.message import scan_groups
 
         from sosbeacon.group import Group
         from sosbeacon.group import ALL_GROUPS_ID
@@ -224,7 +225,7 @@ class TestScanGroups(gaetest.TestCase):
         message = Mock()
         message.key.urlsafe.return_value = 'abc'
 
-        scan_groups([group_key], message)
+        broadcast_to_groups([group_key], message)
 
         self.assertEqual(1, group_query_mock.call_count)
 

@@ -96,7 +96,7 @@ class Message(EntityBase):
         return message
 
 
-def scan_groups(groups, message):
+def broadcast_to_groups(groups, message):
     """Scan over the given set of groups, sending the broadcast to everyone
     in those groups.
     """

@@ -137,3 +137,8 @@ def get_group_broadcast_task(group, message, batch_id=''):
         }
     )
 
+def broadcast_to_group(group, message, iteration=0, cursor=None):
+    """Scan over people in the group, starting from cursor if provided,
+    sending the broadcast to every contact.
+    """
+

@@ -59,7 +59,6 @@ class EventStartTxHandler(webapp2.RequestHandler):
             from sosbeacon.group import Group
             groups = Group.query().iter(keys_only=True)
 
-        # TODO: Create / handle an "all" group.
         tasks = []
         for group_key in groups:
             group_urlsafe = group_key.urlsafe()

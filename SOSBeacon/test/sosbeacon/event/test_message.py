@@ -201,23 +201,17 @@ class TestScanGroups(gaetest.TestCase):
 
         self.assertEqual(2, len(call_history[3][0][0]))
 
-    def test_all_groups(self):
-        from sosbeacon.event.message import broadcast_to_groups
+    @patch('sosbeacon.group.Group.query')
+    def test_all_groups(self, group_query_mock):
         """Ensure passing in the all groups group, results in a query."""
+        from sosbeacon.event.message import broadcast_to_groups
 
-        from sosbeacon.group import Group
         from sosbeacon.group import ALL_GROUPS_ID
+        from sosbeacon.group import Group
 
-        group_iter_mock = Mock(return_value=[])
-        group_order_mock = Mock(return_value=group_iter_mock)
-        group_query_mock = Mock(return_value=group_order_mock)
-        group_query = Mock(return_value=group_query_mock)
-
-        self.patch(Group, 'query', group_query)
-
-        print ''
-        print group_iter_mock
-        print Group.query().order()
+        group_order_mock = group_query_mock.return_value.order
+        group_iter_mock = group_order_mock.return_value.iter
+        group_iter_mock.return_value = []
 
         group_key = Mock()
         group_key.id = ALL_GROUPS_ID
@@ -227,5 +221,7 @@ class TestScanGroups(gaetest.TestCase):
 
         broadcast_to_groups([group_key], message)
 
-        self.assertEqual(1, group_query_mock.call_count)
+        group_query_mock.assert_called_once_with()
+        group_order_mock.assert_called_once_with(Group.key)
+        group_iter_mock.assert_called_once_with(keys_only=True)
 

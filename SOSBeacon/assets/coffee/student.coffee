@@ -242,6 +242,9 @@ class App.SOSBeacon.View.StudentEditApp extends Backbone.View
     className: "top_view row-fluid"
     isNew: true
 
+    events:
+        "click .view-button": "viewStudents"
+
     initialize: (id) =>
         if id
             @model = new App.SOSBeacon.Model.Student({key: id})
@@ -281,6 +284,9 @@ class App.SOSBeacon.View.StudentEditApp extends Backbone.View
         App.SOSBeacon.Event.unbind(null, null, this)
 
         @editForm.close()
+
+    viewStudents: () =>
+        App.SOSBeacon.router.navigate("/student", {trigger: true})
 
 
 class App.SOSBeacon.View.StudentApp extends Backbone.View

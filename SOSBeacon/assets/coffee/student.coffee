@@ -248,8 +248,8 @@ class App.SOSBeacon.View.StudentEditApp extends Backbone.View
     initialize: (id) =>
         if id
             @model = new App.SOSBeacon.Model.Student({key: id})
+            @model.fetch({async: false})
             @isNew = false
-            return
         else
             @model = new App.SOSBeacon.Model.Student()
 
@@ -330,6 +330,10 @@ class App.SOSBeacon.View.ImportStudentsApp extends App.Skel.View.App
 
 class App.SOSBeacon.View.StudentListItem extends App.Skel.View.ListItemView
     template: JST['student/list']
+
+    edit: =>
+        App.SOSBeacon.router.navigate(
+            "/student/edit/#{@model.id}", {trigger: true})
 
     render: =>
         model_props = @model.toJSON()

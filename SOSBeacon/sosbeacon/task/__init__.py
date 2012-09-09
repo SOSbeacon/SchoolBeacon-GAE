@@ -22,8 +22,8 @@ GROUP_TX_QUEUE = "group-tx"
 METHOD_TX_QUEUE = "contact-tx"
 
 
-class EventStartTxHandler(webapp2.RequestHandler):
-    """Start the process of sending messages to every Contact associated
+class StartMessageTxHandler(webapp2.RequestHandler):
+    """Start the process of sending a message to every Contact associated
     with an Event.
 
     For each Group on an Event, insert a task that will sequentially scan the
@@ -31,6 +31,8 @@ class EventStartTxHandler(webapp2.RequestHandler):
     message for each student.
     """
     def post(self):
+        from google.appengine.api import namespace_manager
+
         # batch_id is used so that we can force resend of notices for an event.
         batch_id = self.request.get('batch', '')
 
@@ -46,38 +48,42 @@ class EventStartTxHandler(webapp2.RequestHandler):
             logging.error('Event %s not found!', event_key)
             return
 
-        if not event.active:
-            logging.error('Event %s not active!', event_key)
+        if event.closed:
+            logging.error('Event %s closed!', event_key)
             return
 
-        if not event.notice_sent:
-            logging.error('Event %s not ready to send!', event_key)
+        message_urlsafe = self.request.get('message')
+        if not message_urlsafe:
+            logging.error('No message key given.')
             return
 
-        groups = event.groups
-        if len(groups) == 1 and groups[0].id() == '__all_groups__':
-            from sosbeacon.group import Group
-            groups = Group.query().iter(keys_only=True)
+        # TODO: Use message id rather than key here for namespacing purposes?
+        message_key = ndb.Key(urlsafe=message_urlsafe)
 
-        tasks = []
-        for group_key in groups:
-            group_urlsafe = group_key.urlsafe()
-            name = "tx-s-%s-%s-%s" % (event_urlsafe, group_urlsafe, batch_id)
-            tasks.append(taskqueue.Task(
-                url='/task/event/tx/group',
-                name=name,
-                params={
-                    'event': event_urlsafe,
-                    'group': group_urlsafe,
-                    'batch': batch_id
-                }
-            ))
-            if len(tasks) > 10:
-                insert_tasks(tasks, GROUP_TX_QUEUE)
-                tasks = []
+        # TODO: Check namespace here.
+        current_namespae = unicode(namespace_manager.get_namespace())
+        if message_key.namespace() != current_namespae:
+            logging.error('Message %s not in namespace %s!',
+                          message_key, current_namespae)
+            return
 
-        if tasks:
-            insert_tasks(tasks, GROUP_TX_QUEUE)
+        message = message_key.get()
+        if not message:
+            logging.error('Message %s not found!', message_key)
+            return
+
+        # We don't want to send the wrong message to the wrong groups.
+        if message.event != event.key:
+            logging.error('Message %s not belong to Event %s!',
+                          message_key, event_key)
+            return
+
+        if message.message_type != 'b':
+            logging.error('Message %s is not a broadcast!', message_key)
+            return
+
+        broadcast_to_groups(event.groups, message_key, batch_id)
+
 
 
 class EventGroupTxHandler(webapp2.RequestHandler):

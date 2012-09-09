@@ -96,7 +96,7 @@ class Message(EntityBase):
         return message
 
 
-def broadcast_to_groups(groups, message):
+def broadcast_to_groups(group_keys, message_key, batch_id=''):
     """Scan over the given set of groups, sending the broadcast to everyone
     in those groups.
     """
@@ -105,13 +105,13 @@ def broadcast_to_groups(groups, message):
     from sosbeacon.group import Group
     from sosbeacon.group import ALL_GROUPS_ID
 
-    if len(groups) == 1 and groups[0].id == ALL_GROUPS_ID:
-        groups = Group.query().order(Group.key).iter(keys_only=True)
+    if len(group_keys) == 1 and group_keys[0].id == ALL_GROUPS_ID:
+        group_keys = Group.query().order(Group.key).iter(keys_only=True)
 
     tasks = []
-    for group in groups:
+    for group_key in group_keys:
         # TODO: Batch tasks or start
-        tasks.append(get_group_broadcast_task(group, message))
+        tasks.append(get_group_broadcast_task(group_key, message_key, batch_id))
 
         if len(tasks) > 10:
             insert_tasks(tasks, GROUP_TX_QUEUE)
@@ -121,19 +121,23 @@ def broadcast_to_groups(groups, message):
         insert_tasks(tasks, GROUP_TX_QUEUE)
 
 
-def get_group_broadcast_task(group, message, batch_id=''):
+def get_group_broadcast_task(group_key, message_key, batch_id='',
+                             iteration=0, cursor=''):
     """Get a task to scan and broadcast messages to all students in group."""
-    group_urlsafe = group.urlsafe()
-    message_urlsafe = message.key.urlsafe()
+    group_urlsafe = group_key.urlsafe()
+    message_urlsafe = message_key.urlsafe()
 
-    name = "tx-%s-%s-%s" % (group_urlsafe, message_urlsafe, batch_id)
+    name = "tx-%s-%s-%s-%d" % (
+        group_urlsafe, message_urlsafe, batch_id, iteration)
     return taskqueue.Task(
         url='/task/event/tx/group',
         name=name,
         params={
-            'message': message_urlsafe,
             'group': group_urlsafe,
-            'batch': batch_id
+            'message': message_urlsafe,
+            'batch': batch_id,
+            'cursor': cursor.urlsafe(),
+            'iter': iteration
         }
     )
 

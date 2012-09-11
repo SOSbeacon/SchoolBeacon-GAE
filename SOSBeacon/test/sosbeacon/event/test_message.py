@@ -216,6 +216,90 @@ class TestBroadcastToGroups(gaetest.TestCase):
         group_order_mock.assert_called_once_with(Group.key)
         group_iter_mock.assert_called_once_with(keys_only=True)
 
+class TestGetGroupBroadcastTask(gaetest.TestCase):
+    """Test the get_group_broadcast_task method to ensure it returns a
+    task with the proper settings.
+    """
+
+    @patch('google.appengine.api.taskqueue.Task', autospec=True)
+    def test_task_name(self, task_mock):
+        """Ensure the resultant task name contains enough to be unique."""
+        from sosbeacon.event.message import get_group_broadcast_task
+
+        group_key = Mock()
+        group_key.urlsafe.return_value = "GROUPKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "MESSAGEKEY"
+
+        batch_id = "BATCHID"
+        iteration = 7
+
+        ret_value = get_group_broadcast_task(
+            group_key, message_key, batch_id, iteration)
+
+        task_name = task_mock.call_args[1]['name']
+        self.assertIn('GROUPKEY', task_name)
+        self.assertIn('MESSAGEKEY', task_name)
+        self.assertIn('BATCHID', task_name)
+        self.assertIn('7', task_name)
+
+    @patch('google.appengine.api.taskqueue.Task', autospec=True)
+    def test_task_params(self, task_mock):
+        """Ensure the resultant task parms contain all info."""
+        from sosbeacon.event.message import get_group_broadcast_task
+
+        group_key = Mock()
+        group_key.urlsafe.return_value = "AGROUPKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "SOMEMESSAGEKEY"
+
+        batch_id = "THEBATCHID"
+        iteration = 19
+
+        ret_value = get_group_broadcast_task(
+            group_key, message_key, batch_id, iteration)
+
+        check_params = {
+            'group': 'AGROUPKEY',
+            'message': 'SOMEMESSAGEKEY',
+            'batch': 'THEBATCHID',
+            'cursor': '',
+            'iter': 19
+        }
+        self.assertEqual(check_params, task_mock.call_args[1]['params'])
+
+    @patch('google.appengine.api.taskqueue.Task', autospec=True)
+    def test_cursor(self, task_mock):
+        """Ensure the resultant task parms contain the cursor."""
+        from sosbeacon.event.message import get_group_broadcast_task
+
+        group_key = Mock()
+        group_key.urlsafe.return_value = "ZGROUPKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "AMESSAGEKEY"
+
+        cursor = Mock()
+        cursor.urlsafe.return_value = "CURSOR,THE"
+
+        batch_id = "ABATCHID"
+        iteration = 33
+
+        ret_value = get_group_broadcast_task(
+            group_key, message_key, batch_id, iteration, cursor)
+
+        check_params = {
+            'group': 'ZGROUPKEY',
+            'message': 'AMESSAGEKEY',
+            'batch': 'ABATCHID',
+            'cursor': 'CURSOR,THE',
+            'iter': 33
+        }
+        self.assertEqual(check_params, task_mock.call_args[1]['params'])
+
+
 class TestBroadcastToGroup(gaetest.TestCase):
     """Test the broadcast_to_group method to ensure it inserts the expected
     tasks.

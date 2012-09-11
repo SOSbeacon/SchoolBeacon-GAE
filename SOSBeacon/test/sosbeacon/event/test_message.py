@@ -143,20 +143,15 @@ class TestMessageModel(gaetest.TestCase):
             Message.from_dict, message_dict)
 
 
-class TestScanGroups(gaetest.TestCase):
+class TestBroadcastToGroups(gaetest.TestCase):
     """Test the broadcast_to_groups method to ensure it inserts a batch of
     tasks per ten groups.
     """
 
-    def test_one_group(self):
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    def test_one_group(self, insert_tasks_mock):
         """Ensure event key is required to create a message."""
-        from sosbeacon import utils
-
         from sosbeacon.event.message import broadcast_to_groups
-
-        insert_tasks_mock = Mock()
-
-        self.patch(utils, 'insert_tasks', insert_tasks_mock)
 
         group_keys = []
         for i in range(9):
@@ -164,22 +159,17 @@ class TestScanGroups(gaetest.TestCase):
             group_key.urlsafe.return_value = i + 100
             group_keys.append(group_key)
 
-        message = Mock()
-        message.key.urlsafe.return_value = 'abc'
+        message_key = Mock()
+        message_key.urlsafe.return_value = 'abc'
 
-        broadcast_to_groups(group_keys, message)
+        broadcast_to_groups(group_keys, message_key, '')
 
         self.assertEqual(insert_tasks_mock.call_count, 1)
 
-    def test_multiple_groups(self):
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    def test_multiple_groups(self, insert_tasks_mock):
         """Ensure event key is required to create a message."""
-        from sosbeacon import utils
-
         from sosbeacon.event.message import broadcast_to_groups
-
-        insert_tasks_mock = Mock()
-
-        self.patch(utils, 'insert_tasks', insert_tasks_mock)
 
         group_keys = []
         for i in xrange(35):
@@ -187,10 +177,10 @@ class TestScanGroups(gaetest.TestCase):
             group_key.urlsafe.return_value = i + 100
             group_keys.append(group_key)
 
-        message = Mock()
-        message.key.urlsafe.return_value = 'abc'
+        message_key = Mock()
+        message_key.urlsafe.return_value = 'abc'
 
-        broadcast_to_groups(group_keys, message)
+        broadcast_to_groups(group_keys, message_key, '')
 
         self.assertEqual(4, insert_tasks_mock.call_count)
 
@@ -201,8 +191,9 @@ class TestScanGroups(gaetest.TestCase):
 
         self.assertEqual(2, len(call_history[3][0][0]))
 
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
     @patch('sosbeacon.group.Group.query')
-    def test_all_groups(self, group_query_mock):
+    def test_all_groups(self, group_query_mock, insert_tasks_mock):
         """Ensure passing in the all groups group, results in a query."""
         from sosbeacon.event.message import broadcast_to_groups
 
@@ -216,10 +207,10 @@ class TestScanGroups(gaetest.TestCase):
         group_key = Mock()
         group_key.id = ALL_GROUPS_ID
 
-        message = Mock()
-        message.key.urlsafe.return_value = 'abc'
+        message_key = Mock()
+        message_key.urlsafe.return_value = 'abc'
 
-        broadcast_to_groups([group_key], message)
+        broadcast_to_groups([group_key], message_key, '')
 
         group_query_mock.assert_called_once_with()
         group_order_mock.assert_called_once_with(Group.key)

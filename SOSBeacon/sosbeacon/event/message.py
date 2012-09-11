@@ -139,7 +139,7 @@ def get_group_broadcast_task(group_key, message_key, batch_id='',
             'group': group_urlsafe,
             'message': message_urlsafe,
             'batch': batch_id,
-            'cursor': cursor.urlsafe(),
+            'cursor': cursor.urlsafe() if cursor else '',
             'iter': iteration
         }
     )

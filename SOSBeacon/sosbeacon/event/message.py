@@ -6,7 +6,11 @@ import voluptuous
 
 from skel.datastore import EntityBase
 
+GROUP_TX_ENDPOINT = '/task/event/tx/group'
 GROUP_TX_QUEUE = "group-tx"
+
+STUDENT_TX_ENDPOINT = '/task/event/tx/group'
+STUDENT_TX_QUEUE = "student-tx"
 
 message_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
@@ -96,14 +100,13 @@ class Message(EntityBase):
         return message
 
 
-def broadcast_to_groups(group_keys, message_key, batch_id=''):
+def broadcast_to_groups(group_keys, message_key, batch_id):
     """Scan over the given set of groups, sending the broadcast to everyone
     in those groups.
     """
-    from sosbeacon.utils import insert_tasks
-
-    from sosbeacon.group import Group
     from sosbeacon.group import ALL_GROUPS_ID
+    from sosbeacon.group import Group
+    from sosbeacon.utils import insert_tasks
 
     if len(group_keys) == 1 and group_keys[0].id == ALL_GROUPS_ID:
         group_keys = Group.query().order(Group.key).iter(keys_only=True)
@@ -130,7 +133,7 @@ def get_group_broadcast_task(group_key, message_key, batch_id='',
     name = "tx-%s-%s-%s-%d" % (
         group_urlsafe, message_urlsafe, batch_id, iteration)
     return taskqueue.Task(
-        url='/task/event/tx/group',
+        url=GROUP_TX_ENDPOINT,
         name=name,
         params={
             'group': group_urlsafe,

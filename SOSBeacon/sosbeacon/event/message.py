@@ -144,8 +144,35 @@ def get_group_broadcast_task(group_key, message_key, batch_id='',
         }
     )
 
-def broadcast_to_group(group, message, iteration=0, cursor=None):
+
+def broadcast_to_group(group_key, message_key, batch_id='',
+                       iteration=0, cursor=None):
     """Scan over people in the group, starting from cursor if provided,
     sending the broadcast to every contact.
     """
+    from sosbeacon.group import get_students
+    from sosbeacon.utils import insert_tasks
+
+    students, cursor, more = get_students(group_key, cursor)
+
+    if more:
+        continuation = get_group_broadcast_task(
+            group_key, message_key, batch_id, iteration + 1, cursor)
+
+        insert_tasks((continuation,), GROUP_TX_QUEUE)
+
+    tasks = []
+    for student_key in students:
+        task = get_student_broadcast_task(student_key, message_key, batch_id)
+        if not task:
+            continue
+
+        tasks.append(task)
+
+        if len(tasks) > 10:
+            insert_tasks(tasks, STUDENT_TX_QUEUE)
+            tasks = []
+
+    if tasks:
+        insert_tasks(tasks, STUDENT_TX_QUEUE)
 

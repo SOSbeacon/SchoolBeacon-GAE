@@ -216,3 +216,116 @@ class TestBroadcastToGroups(gaetest.TestCase):
         group_order_mock.assert_called_once_with(Group.key)
         group_iter_mock.assert_called_once_with(keys_only=True)
 
+class TestBroadcastToGroup(gaetest.TestCase):
+    """Test the broadcast_to_group method to ensure it inserts the expected
+    tasks.
+    """
+
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    @patch('sosbeacon.event.message.get_group_broadcast_task', autospec=True)
+    @patch('sosbeacon.group.get_students', autospec=True)
+    def test_continuation(self, get_students_mock,
+                          get_group_broadcast_task_mock, insert_tasks_mock):
+        """Verify a continuation task is inserted if there are more students."""
+        from sosbeacon.event.message import GROUP_TX_QUEUE
+        from sosbeacon.event.message import broadcast_to_group
+
+        group_key = object()
+        message_key = object()
+        cursor = object()
+
+        get_students_mock.return_value = ((), cursor, True)
+
+        continuation_marker = object()
+        get_group_broadcast_task_mock.return_value = continuation_marker
+
+        broadcast_to_group(group_key=group_key, message_key=message_key,
+                           batch_id='alpha', iteration=17, cursor=cursor)
+
+        get_students_mock.assert_called_once_with(group_key, cursor)
+
+        get_group_broadcast_task_mock.assert_called_once_with(
+            group_key, message_key, 'alpha', 18, cursor)
+
+        insert_tasks_mock.assert_called_once_with(
+            (continuation_marker,), GROUP_TX_QUEUE)
+
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    @patch('sosbeacon.event.message.get_group_broadcast_task', autospec=True)
+    @patch('sosbeacon.group.get_students', autospec=True)
+    def test_no_continuation(self, get_students_mock,
+                             get_group_broadcast_task_mock, insert_tasks_mock):
+        """Verify a continuation task is not inserted if there are not more
+        students.
+        """
+        from sosbeacon.event.message import GROUP_TX_QUEUE
+        from sosbeacon.event.message import broadcast_to_group
+
+        group_key = object()
+        message_key = object()
+        cursor = object()
+
+        get_students_mock.return_value = ((), cursor, False)
+
+        continuation_marker = object()
+        get_group_broadcast_task_mock.return_value = continuation_marker
+
+        broadcast_to_group(group_key=group_key, message_key=message_key,
+                           batch_id='alpha', iteration=17, cursor=cursor)
+
+        get_students_mock.assert_called_once_with(group_key, cursor)
+
+        self.assertEqual(get_group_broadcast_task_mock.call_count, 0)
+        self.assertEqual(insert_tasks_mock.call_count, 0)
+
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    @patch('sosbeacon.group.get_students', autospec=True)
+    @patch('sosbeacon.event.message.get_student_broadcast_task', autospec=True)
+    def test_no_student_task_returned(self, get_student_broadcast_task_mock,
+                                      get_students_mock, insert_tasks_mock):
+        """Verify a continuation task is not inserted if there are not more
+        students.
+        """
+        from sosbeacon.event.message import broadcast_to_group
+
+        group_key = object()
+        message_key = object()
+
+        get_students_mock.return_value = ((object(),), None, False)
+
+        get_student_broadcast_task_mock.return_value = None
+
+        broadcast_to_group(group_key=group_key, message_key=message_key,
+                           batch_id='alpha')
+
+        get_students_mock.assert_called_once_with(group_key, None)
+
+        self.assertEqual(insert_tasks_mock.call_count, 0)
+
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    @patch('sosbeacon.group.get_students', autospec=True)
+    @patch('sosbeacon.event.message.get_student_broadcast_task', autospec=True)
+    def test_student_task_returned(self, get_student_broadcast_task_mock,
+                                   get_students_mock, insert_tasks_mock):
+        """Verify a continuation task is not inserted if there are not more
+        students.
+        """
+        from sosbeacon.event.message import STUDENT_TX_QUEUE
+        from sosbeacon.event.message import broadcast_to_group
+
+        group_key = object()
+        message_key = object()
+
+        get_students_mock.return_value = ((object(),), None, False)
+
+        student_task = object()
+        get_student_broadcast_task_mock.return_value = student_task
+
+        broadcast_to_group(group_key=group_key, message_key=message_key,
+                           batch_id='alpha')
+
+        get_students_mock.assert_called_once_with(group_key, None)
+
+        insert_tasks_mock.assert_called_once_with(
+            [student_task,], STUDENT_TX_QUEUE)
+

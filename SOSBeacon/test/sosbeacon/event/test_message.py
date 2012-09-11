@@ -216,6 +216,25 @@ class TestBroadcastToGroups(gaetest.TestCase):
         group_order_mock.assert_called_once_with(Group.key)
         group_iter_mock.assert_called_once_with(keys_only=True)
 
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    @patch('sosbeacon.event.message.get_group_broadcast_task', autospec=True)
+    def test_batch_passed_through(self, get_task_mock, insert_tasks_mock):
+        """Ensure batch is passed to task generation function."""
+        from sosbeacon.event.message import broadcast_to_groups
+
+        group_key = Mock()
+        group_key.id = 'SomeGroup'
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = 'abc'
+
+        broadcast_to_groups([group_key], message_key, '')
+
+        self.assertEqual(insert_tasks_mock.call_count, 1)
+
+        get_task_mock.assert_called_once_with(group_key, message_key, '')
+
+
 class TestGetGroupBroadcastTask(gaetest.TestCase):
     """Test the get_group_broadcast_task method to ensure it returns a
     task with the proper settings.

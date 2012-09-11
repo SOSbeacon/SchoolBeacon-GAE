@@ -176,3 +176,22 @@ def broadcast_to_group(group_key, message_key, batch_id='',
     if tasks:
         insert_tasks(tasks, STUDENT_TX_QUEUE)
 
+
+def get_student_broadcast_task(student_key, message_key, batch_id=''):
+    """Get a task to broadcast a message to all a student's contacts."""
+    student_urlsafe = student_key.urlsafe()
+    message_urlsafe = message_key.urlsafe()
+
+    name = "tx-%s-%s-%s" % (
+        student_urlsafe, message_urlsafe, batch_id)
+    return taskqueue.Task(
+        url=STUDENT_TX_ENDPOINT,
+        name=name,
+        params={
+            'student': student_urlsafe,
+            'message': message_urlsafe,
+            'batch': batch_id
+        }
+    )
+
+

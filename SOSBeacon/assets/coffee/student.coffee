@@ -13,17 +13,22 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
         }
 
     initialize: =>
+        @loadGroups()
+        @loadContacts()
+
+        return this
+
+    loadGroups: =>
         @groups = new App.SOSBeacon.Collection.GroupList()
         groups = @get('groups')
         if groups and not _.isEmpty(groups)
             url = @groups.url + '/' + groups.join()
             @groups.fetch({url: url, async: false})
 
+    loadContacts: =>
         @contacts = @nestCollection(
             'contacts',
             new App.SOSBeacon.Collection.ContactList(@get('contacts')))
-
-        return this
 
     validators:
         name: new App.Util.Validate.string(len: {min: 1, max: 100}),
@@ -107,7 +112,7 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
             editView = new App.SOSBeacon.View.GroupSelect(model: group)
             editView.on('removed', @removeGroupSelect)
             @groupSelects.push(editView)
-            el.find('fieldset.groups').append(editView.render().el)
+            @$el.find('fieldset.groups').append(editView.render().el)
         )
 
     renderContacts: () =>
@@ -249,6 +254,7 @@ class App.SOSBeacon.View.StudentEditApp extends Backbone.View
         if id
             @model = new App.SOSBeacon.Model.Student({key: id})
             @model.fetch({async: false})
+            @model.initialize()
             @isNew = false
         else
             @model = new App.SOSBeacon.Model.Student()

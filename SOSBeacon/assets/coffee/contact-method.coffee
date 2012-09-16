@@ -52,7 +52,7 @@ class App.SOSBeacon.View.ContactMethod extends Backbone.View
 
 class App.SOSBeacon.View.ContactMethodEdit extends Backbone.View
     tagName: "fieldset"
-    className: "contact-method-edit"
+    className: "contact-method-edit input-prepend"
     template: JST['contact-method/edit']
 
     propertyMap:
@@ -74,7 +74,17 @@ class App.SOSBeacon.View.ContactMethodEdit extends Backbone.View
         @model.editView = this
 
     render: =>
-        @$el.html(@template(@model.toJSON()))
+        icon = ''
+        if @model.get('type') == 'email'
+            icon = 'envelope'
+        else if @model.get('type') == 'phone'
+            icon = 'volume-up'
+        else
+            icon = ''
+
+        obj_json = @model.toJSON()
+        obj_json.icon = icon
+        @$el.html(@template(obj_json))
         return this
 
     updateValue: (property, value) =>

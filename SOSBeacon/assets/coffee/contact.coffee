@@ -114,13 +114,28 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
     render: =>
         @$el.html(@template(@model.toJSON()))
 
-        @model.methods.each((info, i) =>
-            editView = new App.SOSBeacon.View.ContactMethodEdit({model: info})
+        @render_methods()
+        @render_types()
+
+        return this
+
+    render_methods: =>
+        for method in ['email', 'phone', 'text']
+            # get the method if it exists
+            contact_method = @model.methods.find((m) ->
+                return m.get('type') == method
+            )
+            if not contact_method
+                contact_method = new App.SOSBeacon.Model.ContactMethod(
+                    {type: method})
+
+            editView = new App.SOSBeacon.View.ContactMethodEdit(
+                {model: contact_method})
             editView.on('removed', @removeContactMethod)
             @contactMethodViews.push(editView)
-            @$el.find('fieldset.methods').append(editView.render().el)
-        )
+            @$el.find('div.methods').append(editView.render().el)
 
+    render_types: =>
         contactType = @model.get('type')
 
         select = @$('select.type')
@@ -137,8 +152,6 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
         if contactType == "d"
             name = @$('div.name').hide()
 
-        return this
-
     addMethod: =>
         for method in @model.methods.models
             if _.isEmpty($.trim(method.editView.$el.find('input.method').val()))
@@ -149,7 +162,7 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
 
         editView = new App.SOSBeacon.View.ContactMethodEdit({model: method})
         rendered = editView.render()
-        @$el.find('fieldset.methods').append(rendered.el)
+        @$el.find('div.methods').append(rendered.el)
         method.editView = editView
 
         rendered.$el.find('input.method').focus()

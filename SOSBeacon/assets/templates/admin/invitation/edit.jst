@@ -1,0 +1,14 @@
+<div class="control-group">
+
+  <% if (isnew) { %>
+    <input type="text" value="<%- name %>" placeholder="Name..."
+           autocomplete="off" class="name value" />
+    <input type="text" value="<%- email %>" placeholder="Email..."
+           autocomplete="off" class="email value" />
+  <% } else { %>
+    <span class="name"><%- name %></span>:&nbsp;
+    <span class="email value"><%- email %></span>
+  <% } %>
+  <a class="remove-method icon-remove"></a>
+</div>
+

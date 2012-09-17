@@ -5,6 +5,7 @@ import voluptuous
 from skel.datastore import EntityBase
 from skel.rest_api.rules import RestQueryRule
 
+ALL_GROUPS_ID = "__all__"
 
 group_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
@@ -63,4 +64,21 @@ class Group(EntityBase):
         group['notes'] = self.notes
 
         return group
+
+
+def get_students(group_key, cursor=None, batch_size=50):
+    """Return the next batch of students in this group, insert continuation
+    task if there are more to process for this batch.
+
+    Returns a tuple of students, new cursor, more.
+    """
+    from sosbeacon.student import Student
+
+    query = Student.query().order(Student.key)
+
+    query = query.filter(Student.groups == group_key)
+
+    start_cursor = ndb.Cursor(urlsafe=cursor)
+
+    return query.fetch_page(batch_size, start_cursor=start_cursor)
 

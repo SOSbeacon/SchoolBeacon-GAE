@@ -2,25 +2,31 @@
 import gaetest
 import mock
 
-from sosbeacon.utils import number_encode
-from sosbeacon.utils import number_decode
+from datetime import datetime
 
 
 class TestNumberEncoding(gaetest.TestCase):
     def test_encoder(self):
         """Ensure encoder produces expected encoded output."""
+        from sosbeacon.utils import number_encode
+
         number = 123
         encoded = number_encode(number)
         self.assertEqual(encoded, 'b6')
 
     def test_decoder(self):
         """Ensure decoded correctly decodes a known encoded number."""
+        from sosbeacon.utils import number_decode
+
         encoded = 'b6'
         number = number_decode(encoded)
         self.assertEqual(number, 123)
 
     def test_inverse(self):
         """Ensure decode(encode(number)) == number over a range of numbers."""
+        from sosbeacon.utils import number_decode
+        from sosbeacon.utils import number_encode
+
         for number in range(0, 500000, 339):
             encoded = number_encode(number)
             decoded = number_decode(encoded)
@@ -96,4 +102,45 @@ class TestInsertTasks(gaetest.TestCase):
 
         self.assertEqual(added, 0)
         self.assertEqual(add.call_count, 19)
+
+
+class TestFormatDatetime(gaetest.TestCase):
+    def test_date(self):
+        """Ensure a date with no hours / minutes is retuned as a date."""
+        from sosbeacon.utils import format_datetime
+
+        date = datetime(year=2012, month=8, day=30)
+        encoded = format_datetime(date)
+        self.assertEqual('08/30/12', encoded)
+
+    def test_date_with_time(self):
+        """Ensure a date with hours and minutes is retuned as a datetime."""
+        from sosbeacon.utils import format_datetime
+
+        date = datetime(year=2012, month=8, day=30, hour=7, minute=13)
+        encoded = format_datetime(date)
+        self.assertEqual('08/30/12 07:13', encoded)
+
+    def test_date_with_zero_hours(self):
+        """Ensure a date with minutes but no hours is retuned as a datetime."""
+        from sosbeacon.utils import format_datetime
+
+        date = datetime(year=2012, month=8, day=30, hour=0, minute=13)
+        encoded = format_datetime(date)
+        self.assertEqual('08/30/12 00:13', encoded)
+
+    def test_date_with_zero_minutes(self):
+        """Ensure a date with hours but no minutes is retuned as a datetime."""
+        from sosbeacon.utils import format_datetime
+
+        date = datetime(year=2012, month=8, day=30, hour=19, minute=0)
+        encoded = format_datetime(date)
+        self.assertEqual('08/30/12 19:00', encoded)
+
+    def test_non_input(self):
+        """Ensure a missing date returns the empty string."""
+        from sosbeacon.utils import format_datetime
+
+        encoded = format_datetime(None)
+        self.assertEqual('', encoded)
 

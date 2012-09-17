@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
 """Setup paths and App Engine's stubs, then run tests."""
 
 import os
@@ -26,6 +25,7 @@ import tempfile
 
 CURRENT_PATH = os.getcwdu()
 
+# Setup your paths here...
 paths = [
     os.path.join(CURRENT_PATH, 'lib'),
     os.path.join(CURRENT_PATH, 'lib', 'local'),
@@ -34,16 +34,18 @@ paths = [
 try:
     from dev_appserver import fix_sys_path
 except ImportError:
+    # Something is not setup right, maybe they're using a local .pth file.
     import site
     site.addsitedir('.')
 
+    # Now, try again.
     from dev_appserver import fix_sys_path
 
 fix_sys_path()
 
 sys.path.extend(paths)
 
-import gaetest as unittest
+import unittest
 
 
 stub_config = {
@@ -56,9 +58,9 @@ stub_config = {
 
 def run():
     parser = argparse.ArgumentParser(description='Run tests')
-    parser.add_argument('tests', nargs='?', default='', help="The path to the tests")
+    parser.add_argument('tests', nargs='*', default='', help="Path to tests to be run.")
     parser.add_argument('--failfast', action='store_true', default=False)
-    parser.add_argument('--verbosity', '-v', type=int, default=1)
+    parser.add_argument('--verbosity', '-v', type=int, default=2)
 
     args = parser.parse_args()
 
@@ -71,8 +73,8 @@ def run():
 
 def _run_suite(suite, options):
     runner = unittest.TextTestRunner(
-    verbosity=options.verbosity,
-    failfast=options.failfast)
+        verbosity=options.verbosity,
+        failfast=options.failfast)
 
     return runner.run(suite)
 
@@ -107,6 +109,9 @@ def _setup_environment():
 
     dev_appserver.SetupStubs('unittest', **config)
 
+
+    import logging
+    logging.getLogger().setLevel(logging.DEBUG)
 
 if __name__ == '__main__':
     run()

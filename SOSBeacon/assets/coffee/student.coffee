@@ -220,7 +220,7 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         rendered = editView.render()
         @$('ul.contacts').append(rendered.el)
 
-        rendered.$el.find('select.type').focus()
+        rendered.$el.find('select.contact-type').focus()
 
         return false
 

@@ -64,36 +64,30 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
 
     events:
         "click a.remove-contact": "destroy"
-        "click button.add_method": "addMethod"
-        "change select.type": "typeChanged"
-        "blur select.type": "typeChanged"
-        "change input.name": "validate"
-        "blur input.name": "validate"
-        "change textarea.notes": "validate"
-        "blur textarea.notes": "validate"
+        "change select.contact-type": "typeChanged"
+        "blur select.contact-type": "typeChanged"
+        "change input.contact-name": "validate"
+        "blur input.contact-name": "validate"
+        "change textarea.contact-notes": "validate"
+        "blur textarea.contact-notes": "validate"
         "keypress .edit": "updateOnEnter"
 
     initialize: =>
         @contactMethodViews = []
         return super()
 
-    validate: =>
-        type = @$('select.type').val()
-
-        name_input = @$('input.name')
+    validate: ->
+        type = @$('select.contact-type').val()
+        name_input = @$('input.contact-name')
         name = $.trim(name_input.val())
 
-        if type != "d" and _.isEmpty(name)
-            App.Util.Form._displayMessage(
-                name_input,
-                'error',
-                'Name is required for non-direct contacts.')
+        if not @validateContacts(type, name, name_input)
             return false
 
         saved = @model.set({
             name: if type != 'd' then name else '',
             type: type,
-            notes: $.trim(@$('textarea.notes').val())
+            notes: $.trim(@$('textarea.contact-notes').val())
         })
         if saved == false
             return false
@@ -101,13 +95,31 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
         App.Util.Form._clearMessage(name_input)
         return true
 
+    validateContacts: (type, name, name_input) =>
+        if type != "d" and _.isEmpty(name)
+            App.Util.Form._displayMessage(
+                name_input,
+                'error',
+                'Name is required for non-direct contacts.')
+            return false
+
+        badMethods = false
+        @model.methods.filter((method) ->
+            error = method.editView.validate()
+            if not error
+                badMethods = true
+        )
+        if badMethods
+            return false
+
+        return true
 
     typeChanged: =>
-        type = @$('select.type').val()
+        type = @$('select.contact-type').val()
         if type == "d"
-            name = @$('div.name').hide()
+            name = @$('div.contact-name').hide()
         else
-            name = @$('div.name').show()
+            name = @$('div.contact-name').show()
 
         @validate()
 
@@ -128,17 +140,20 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
             if not contact_method
                 contact_method = new App.SOSBeacon.Model.ContactMethod(
                     {type: method})
+                @model.methods.add(contact_method)
 
-            editView = new App.SOSBeacon.View.ContactMethodEdit(
-                {model: contact_method})
-            editView.on('removed', @removeContactMethod)
+            if not contact_method.editView?
+                editView = new App.SOSBeacon.View.ContactMethodEdit(
+                    {model: contact_method})
+                contact_method.editView = editView
+
             @contactMethodViews.push(editView)
             @$el.find('div.methods').append(editView.render().el)
 
     render_types: =>
         contactType = @model.get('type')
 
-        select = @$('select.type')
+        select = @$('select.contact-type')
         App.SOSBeacon.contactTypes.each((type, i) =>
             option = $('<option></option>')
                 .attr('value', type.get('type'))
@@ -150,32 +165,10 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
             select.append(option)
         )
         if contactType == "d"
-            name = @$('div.name').hide()
-
-    addMethod: =>
-        for method in @model.methods.models
-            if _.isEmpty($.trim(method.editView.$el.find('input.method').val()))
-                return false
-
-        method = new @model.methods.model()
-        @model.methods.add(method)
-
-        editView = new App.SOSBeacon.View.ContactMethodEdit({model: method})
-        rendered = editView.render()
-        @$el.find('div.methods').append(rendered.el)
-        method.editView = editView
-
-        rendered.$el.find('input.method').focus()
-
-        return false
+            name = @$('div.contact-name').hide()
 
     updateOnEnter: (e) =>
         focusItem = $("*:focus")
-
-        if e.keyCode == 13
-            if focusItem.hasClass('method')
-                @addMethod()
-                return false
 
         return false
 

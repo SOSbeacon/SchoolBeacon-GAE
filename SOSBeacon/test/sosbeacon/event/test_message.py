@@ -1,11 +1,11 @@
 
-import gaetest
+import unittest
 
 from mock import Mock
 from mock import patch
 
 
-class TestMessageModel(gaetest.TestCase):
+class TestMessageModel(unittest.TestCase):
     """Test that Message to / from dict methods work as expected."""
 
     def test_from_empty_dict(self):
@@ -143,7 +143,7 @@ class TestMessageModel(gaetest.TestCase):
             Message.from_dict, message_dict)
 
 
-class TestBroadcastToGroups(gaetest.TestCase):
+class TestBroadcastToGroups(unittest.TestCase):
     """Test the broadcast_to_groups method to ensure it inserts a batch of
     tasks per ten groups.
     """
@@ -235,7 +235,7 @@ class TestBroadcastToGroups(gaetest.TestCase):
         get_task_mock.assert_called_once_with(group_key, message_key, '')
 
 
-class TestGetGroupBroadcastTask(gaetest.TestCase):
+class TestGetGroupBroadcastTask(unittest.TestCase):
     """Test the get_group_broadcast_task method to ensure it returns a
     task with the proper settings.
     """
@@ -319,7 +319,7 @@ class TestGetGroupBroadcastTask(gaetest.TestCase):
         self.assertEqual(check_params, task_mock.call_args[1]['params'])
 
 
-class TestBroadcastToGroup(gaetest.TestCase):
+class TestBroadcastToGroup(unittest.TestCase):
     """Test the broadcast_to_group method to ensure it inserts the expected
     tasks.
     """

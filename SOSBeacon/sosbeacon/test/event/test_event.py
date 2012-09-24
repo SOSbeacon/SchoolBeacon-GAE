@@ -1,10 +1,10 @@
 
 import unittest
 
-import gaetest
+import mock
 
 
-class TestEventModel(gaetest.TestCase):
+class TestEventModel(unittest.TestCase):
     """Test that Event to / from dict methods work as expected."""
 
     def test_from_empty_dict(self):
@@ -85,20 +85,17 @@ class TestEventModel(gaetest.TestCase):
         # TODO: Figure out if this test has any value.
         self.assertEqual(EVENT_DRAFT_STATUS, event.status)
 
-    def test_status_change_to_draft_from_sent(self):
+    @mock.patch('google.appengine.ext.ndb.Key.get')
+    def test_status_change_to_draft_from_sent(self, key_get_mock):
         """Ensure status can not be changed from sent to draft."""
         from google.appengine.ext import ndb
-
-        def get(*args, **kwargs):
-            return event
-
-        self.patch(ndb.Key, 'get', get)
 
         from sosbeacon.event.event import Event
         from sosbeacon.event.event import EVENT_DRAFT_STATUS
         from sosbeacon.event.event import EVENT_SENT_STATUS
 
         event = Event(status=EVENT_SENT_STATUS)
+        key_get_mock.return_value = event
 
         event_dict = {
             'key': ndb.Key(Event, 1),
@@ -109,8 +106,8 @@ class TestEventModel(gaetest.TestCase):
             'groups': []
         }
 
-        event = Event.from_dict(event_dict)
+        new_event = Event.from_dict(event_dict)
 
         # TODO: Figure out if this test has any value.
-        self.assertEqual(EVENT_SENT_STATUS, event.status)
+        self.assertEqual(EVENT_SENT_STATUS, new_event.status)
 

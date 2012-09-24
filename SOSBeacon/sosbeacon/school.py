@@ -1,18 +1,38 @@
 
+import os
+
 from google.appengine.ext import ndb
 
 import voluptuous
 
+from skel.datastore import EntityBase
+from skel.rest_api.rules import RestQueryRule
+
+
 school_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'name': basestring,
-    'owner': voluptuous.ndbkey(),
-    'invited': [basestring],
-    'users': [voluptuous.ndbkey()],
+    #'owner': voluptuous.ndbkey(),
+    'invitations': [{
+        'key': basestring,
+        'name': basestring,
+        'email': basestring
+        }],
+    #'users': [voluptuous.ndbkey()],
 }
 
-class School(ndb.Model):
+school_query_schema = {
+    'flike_name': basestring,
+}
+
+
+class School(EntityBase):
     """Represents a school."""
+
+    _query_properties = {
+        'name': RestQueryRule('name_', lambda x: x.lower() if x else ''),
+    }
+
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
@@ -25,13 +45,13 @@ class School(ndb.Model):
 
     # User nick name, key
     name = ndb.StringProperty('n', indexed=False)
-    n_ = ndb.ComputedProperty(lambda self: self.name.lower())
+    name_ = ndb.ComputedProperty(lambda self: self.name.lower(), name='n_')
 
     # Associated user info.
     owner = ndb.KeyProperty('o', kind='User')
     users = ndb.KeyProperty('ul', kind='User', repeated=True)
 
-    invited = ndb.StringProperty('rtl', repeated=True)
+    invitations = ndb.JsonProperty('ic')
 
     def _pre_put_hook(self):
         """Ran before the entity is written to the datastore."""
@@ -46,14 +66,47 @@ class School(ndb.Model):
             school = key.get()
 
         if not school:
-            school = cls()
+            # We need a key to send invites, so this must be pre-generated.
+            # Root key is only used to avoid namespace collisions.
+            root_key = ndb.Key(cls, 1, namespace='_x_')
+            new_id = cls.allocate_ids(size=1, parent=root_key)
+
+            school_key = ndb.Key(cls, new_id[0], namespace='_x_')
+            school = cls(key=school_key)
 
         school.name = data.get('name')
 
-        school.owner = data.get('owner')
-        school.users = data.get('users')
+        #owner = data.get('owner')
+        #if owner:
+        #    school.owner = data.get('owner')
 
-        school.invited = data.get('invited')
+        #school.users = data.get('users')
+
+        # Process invitations.
+        raw_invitations = data.get('invitations')
+
+        invitations = {}
+        for invitation in raw_invitations:
+            token = invitation['key']
+            name = invitation.get('name')
+            email = invitation.get('email')
+
+            invitations[token] = {
+                'name': name,
+                'email': email,
+                'isnew': False
+            }
+
+            if invitation['isnew']:
+                # NOTE: Yes. I am a bad person for putting this here.
+                send_invitation_email(
+                    school=school,
+                    token=token,
+                    name=name,
+                    email=email,
+                )
+
+        school.invitations = invitations
 
         return school
 
@@ -61,6 +114,16 @@ class School(ndb.Model):
         """Return a School entity represented as a dict of values
         suitable for School.from_dict.
         """
+        invitations = []
+        if self.invitations:
+            for key, invitation in self.invitations.iteritems():
+                invitations.append({
+                    'key': key,
+                    'name': invitation.get('name'),
+                    'email': invitation.get('email'),
+                    'isnew': False
+                })
+
         school = {
             'version': self.version_,
             'key': self.key.urlsafe(),
@@ -72,11 +135,42 @@ class School(ndb.Model):
             'name': self.name,
 
             # user info
-            'owner': self.owner.urlsafe(),
+            'owner': self.owner.urlsafe() if self.owner else '',
             'users': [key.urlsafe() for key in self.users],
 
             # Invite tokens
-            'invited': self.invited,
+            'invitations': invitations
         }
         return school
+
+def send_invitation_email(school, token, name, email):
+    """Send user and inviation to join the School Admins."""
+    from google.appengine.api import mail
+
+    try:
+        name = name.strip().split()[0]
+    except IndexError:
+        pass
+
+    host = os.environ['HTTP_HOST']
+    url = "https://%s/_ah/login_required?sc=%s&tk=%s" % (
+        host, school.key.urlsafe(), token)
+
+    message = """
+    Hello %s,
+      You have been invited to join %s on SBeacon.  Please click the following
+    link to accept.
+
+    %s
+
+    Thanks and welcome to SBeacon,
+      The SBeacon Team
+    """ % (name, school.name, url)
+
+    email = mail.EmailMessage(sender="SBeacon <clifforloff@gmail.com>",
+                              subject='%s Invited You to SBeacon' % (school.name,),
+                              to=email,
+                              body=message)
+
+    email.send()
 

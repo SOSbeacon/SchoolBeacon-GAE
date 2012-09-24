@@ -413,8 +413,8 @@ def send_notification(event, method, short_id):
     logging.info('Sending notice to %s via mail api.', method)
     from google.appengine.api import mail
 
-    message = mail.EmailMessage(sender="SOS Beacon <robert.kluin@ezoxsystems.com>",
-                                        subject=event.title)
+    message = mail.EmailMessage(sender="SBeacon <clifforloff@gmail.com>",
+                                subject=event.title)
 
     message.to = method
 

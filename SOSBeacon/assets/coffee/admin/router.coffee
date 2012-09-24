@@ -34,4 +34,5 @@ class App.SOSAdmin.Router extends Backbone.Router
         $(@el).append(@currentView.render().el)
 
     showSchool: () =>
-        #@swap(App.SOSBeacon.View.StudentApp)
+        @swap(App.SOSAdmin.View.SchoolApp)
+

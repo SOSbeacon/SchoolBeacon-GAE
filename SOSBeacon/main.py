@@ -74,9 +74,10 @@ class MainHandler(TemplateHandler):
             session = session_store.get_session()
             school_key = session.get('s')
             if school_key:
-                from sosbeacon.school import School
+                from sosbeacon.school import School  # To get the model in mem.
                 school = ndb.Key(urlsafe=school_key).get()
-                self._school_name = school.name
+                if school:
+                    self._school_name = school.name
 
         return self._school_name
 

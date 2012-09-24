@@ -21,13 +21,17 @@ class App.SOSBeacon.Model.ContactMethod extends Backbone.Model
     @validatePhoneNumber: (value) =>
         # Do we have a possibly valid phone number?
         value = value.replace(/[^\d]/g, "")
-        if value.length != 11
+        if value.length < 10 or value.length > 11
             return false
         return true
 
     @formatPhoneNumber: (value) =>
-        if value.length != 11
+        value = value.replace(/[^\d]/g, "")
+        if value.length == 10
+            value = '1' + value
+        else if value.length != 11
             return value
+
         return (value[0] + ' (' + value.substr(1, 3) + ') ' +
                  value.substr(4, 3) + '-' + value.substr(7, 4))
 

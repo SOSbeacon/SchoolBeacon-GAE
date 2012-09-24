@@ -1,11 +1,12 @@
 
-import gaetest
+import unittest
+
 import mock
 
 from datetime import datetime
 
 
-class TestNumberEncoding(gaetest.TestCase):
+class TestNumberEncoding(unittest.TestCase):
     def test_encoder(self):
         """Ensure encoder produces expected encoded output."""
         from sosbeacon.utils import number_encode
@@ -33,14 +34,12 @@ class TestNumberEncoding(gaetest.TestCase):
             self.assertEqual(number, decoded)
 
 
-class TestInsertTasks(gaetest.TestCase):
-    def test_insert_batch(self):
-        """Ensure taskqueue.Queue.add is called exactly once."""
-        from google.appengine.api import taskqueue
-        from sosbeacon.utils import insert_tasks
+class TestInsertTasks(unittest.TestCase):
 
-        queue = mock.Mock()
-        self.patch(taskqueue, 'Queue', queue)
+    @mock.patch('google.appengine.api.taskqueue.Queue')
+    def test_insert_batch(self, queue_mock):
+        """Ensure taskqueue.Queue.add is called exactly once."""
+        from sosbeacon.utils import insert_tasks
 
         tasks = []
         for i in xrange(1, 10):
@@ -48,7 +47,8 @@ class TestInsertTasks(gaetest.TestCase):
         added = insert_tasks(tasks, 'default')
         self.assertEqual(added, 9)
 
-    def test_splits_once(self):
+    @mock.patch('google.appengine.api.taskqueue.Queue.add')
+    def test_splits_once(self, queue_add_mock):
         """Ensure task batches are split and insertion is retried on
         TaskAlreadyExistsError.
         """
@@ -59,52 +59,48 @@ class TestInsertTasks(gaetest.TestCase):
             if 2 in args[0]:
                 raise taskqueue.TombstonedTaskError('uh oh')
 
-        add = mock.Mock()
-        add.side_effect = side_effect
-        self.patch(taskqueue.Queue, 'add', add)
+        queue_add_mock.side_effect = side_effect
 
         tasks = [i for i in xrange(0, 9)]
         added = insert_tasks(tasks, 'default')
 
         self.assertEqual(added, 8)
-        self.assertEqual(add.call_count, 7)
+        self.assertEqual(queue_add_mock.call_count, 7)
 
-    def test_splits_on_tombstoned(self):
+    @mock.patch('google.appengine.api.taskqueue.Queue.add')
+    def test_splits_on_tombstoned(self, queue_add_mock):
         """Ensure task batches are split and insertion is retried on
         TombstonedTaskError.
         """
         from google.appengine.api import taskqueue
         from sosbeacon.utils import insert_tasks
 
-        add = mock.Mock()
-        add.side_effect = taskqueue.TombstonedTaskError
-        self.patch(taskqueue.Queue, 'add', add)
+        queue_add_mock.side_effect = taskqueue.TombstonedTaskError
 
         tasks = [i for i in xrange(0, 7)]
         added = insert_tasks(tasks, 'default')
 
         self.assertEqual(added, 0)
-        self.assertEqual(add.call_count, 13)
+        self.assertEqual(queue_add_mock.call_count, 13)
 
-    def test_splits_on_taskexists(self):
+    @mock.patch('google.appengine.api.taskqueue.Queue.add')
+    def test_splits_on_taskexists(self, queue_add_mock):
         """Ensure task batches are split and insertion is retried on
         TaskAlreadyExistsError.
         """
         from google.appengine.api import taskqueue
         from sosbeacon.utils import insert_tasks
 
-        add = mock.Mock()
-        add.side_effect = taskqueue.TaskAlreadyExistsError
-        self.patch(taskqueue.Queue, 'add', add)
+        queue_add_mock.side_effect = taskqueue.TaskAlreadyExistsError
 
         tasks = [i for i in xrange(0, 10)]
         added = insert_tasks(tasks, 'default')
 
         self.assertEqual(added, 0)
-        self.assertEqual(add.call_count, 19)
+        self.assertEqual(queue_add_mock.call_count, 19)
 
 
-class TestFormatDatetime(gaetest.TestCase):
+class TestFormatDatetime(unittest.TestCase):
     def test_date(self):
         """Ensure a date with no hours / minutes is retuned as a date."""
         from sosbeacon.utils import format_datetime
@@ -143,4 +139,61 @@ class TestFormatDatetime(gaetest.TestCase):
 
         encoded = format_datetime(None)
         self.assertEqual('', encoded)
+
+
+class TestGetLatestDatetime(unittest.TestCase):
+    def test_no_lhs(self):
+        """Ensure a missing lhs returns rhs."""
+        from sosbeacon.utils import get_latest_datetime
+
+        lhs = None
+        rhs = object()
+
+        result = get_latest_datetime(lhs, rhs)
+
+        self.assertIs(rhs, result)
+
+    def test_no_rhs(self):
+        """Ensure a missing lhs returns rhs."""
+        from sosbeacon.utils import get_latest_datetime
+
+        lhs = object()
+        rhs = None
+
+        result = get_latest_datetime(lhs, rhs)
+
+        self.assertIs(lhs, result)
+
+    def test_larger_lhs(self):
+        """Ensure a missing lhs returns rhs."""
+        from sosbeacon.utils import get_latest_datetime
+
+        lhs = datetime(2012, 9, 20, 3, 45)
+        rhs = datetime(2012, 9, 20, 2, 45)
+
+        result = get_latest_datetime(lhs, rhs)
+
+        self.assertIs(lhs, result)
+
+    def test_larger_rhs(self):
+        """Ensure a missing lhs returns rhs."""
+        from sosbeacon.utils import get_latest_datetime
+
+        lhs = datetime(2012, 9, 20, 2, 59)
+        rhs = datetime(2012, 9, 20, 3, 00)
+
+        result = get_latest_datetime(lhs, rhs)
+
+        self.assertIs(rhs, result)
+
+    def test_equal_inputs(self):
+        """Ensure a missing lhs returns rhs."""
+        from sosbeacon.utils import get_latest_datetime
+
+        lhs = rhs = datetime(2012, 9, 20, 2, 59)
+
+        result = get_latest_datetime(lhs, rhs)
+
+        self.assertIs(rhs, result)
+        self.assertIs(lhs, result)
 

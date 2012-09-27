@@ -39,6 +39,21 @@ def format_datetime(datetime):
     return datetime.strftime('%m/%d/%y %H:%M')
 
 
+# Compare two datetimes.
+
+def get_latest_datetime(lhs, rhs):
+    """Compare to datetimes, right-hand-side and left-hand-side, and return
+    the most-recent (the greatest).
+    """
+    if not lhs:
+        return rhs
+
+    if not rhs:
+        return lhs
+
+    return max(lhs, rhs)
+
+
 # Helper to auto-retry inserting tasks, should one fail.
 
 def insert_tasks(tasks, queue_name=None):

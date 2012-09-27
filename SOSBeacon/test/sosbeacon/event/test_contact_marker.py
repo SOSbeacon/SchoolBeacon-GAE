@@ -1,8 +1,10 @@
 
-import gaetest
+import unittest
+
+import mock
 
 
-class TestContactMarkerMerge(gaetest.TestCase):
+class TestContactMarkerMerge(unittest.TestCase):
     """Test that ContactMarker merge logic functions as expected."""
 
     def test_merge_non_ack(self):
@@ -223,7 +225,8 @@ class TestContactMarkerMerge(gaetest.TestCase):
         left = ContactMarker(students=students_1)
         right = ContactMarker(students=students_2)
         left.merge(right)
-        self.assertEqual(sorted(students_1 + students_2), sorted(left.students))
+        self.assertEqual(sorted(students_1 + students_2),
+                         sorted(left.students))
 
     def test_merge_overlapping_students(self):
         """Ensure merging students with overlaps."""

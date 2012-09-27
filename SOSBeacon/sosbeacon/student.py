@@ -20,7 +20,8 @@ student_schema = {
         'name': basestring,
         'type': voluptuous.any('p', 'o', 'd'),
         'notes': basestring,
-        'methods': [{'type': basestring, 'value': basestring}]
+        'methods': [{'type': voluptuous.any('e', 't', 'p'),
+                     'value': basestring}]
     }]
 }
 

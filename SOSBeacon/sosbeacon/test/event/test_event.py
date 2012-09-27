@@ -3,9 +3,18 @@ import unittest
 
 import mock
 
+from google.appengine.ext import testbed
+
 
 class TestEventModel(unittest.TestCase):
     """Test that Event to / from dict methods work as expected."""
+
+    def setUp(self):
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
 
     def test_from_empty_dict(self):
         """Ensure merging two non-acked doesn't ack."""

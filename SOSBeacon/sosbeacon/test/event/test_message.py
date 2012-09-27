@@ -4,9 +4,18 @@ import unittest
 from mock import Mock
 from mock import patch
 
+from google.appengine.ext import testbed
+
 
 class TestMessageModel(unittest.TestCase):
     """Test that Message to / from dict methods work as expected."""
+
+    def setUp(self):
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
 
     def test_from_empty_dict(self):
         """Ensure event key is required to create a message."""
@@ -147,6 +156,13 @@ class TestBroadcastToGroups(unittest.TestCase):
     """Test the broadcast_to_groups method to ensure it inserts a batch of
     tasks per ten groups.
     """
+
+    def setUp(self):
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
 
     @patch('sosbeacon.utils.insert_tasks', autospec=True)
     def test_one_group(self, insert_tasks_mock):
@@ -431,4 +447,333 @@ class TestBroadcastToGroup(unittest.TestCase):
 
         insert_tasks_mock.assert_called_once_with(
             [student_task,], STUDENT_TX_QUEUE)
+
+
+class TestGetStudentBroadcastTask(unittest.TestCase):
+    """Test the get_student_broadcast_task method to ensure it generates the
+    expected task.
+    """
+
+    @patch('google.appengine.api.taskqueue.Task', autospec=True)
+    def test_task_name(self, task_mock):
+        """Ensure the resultant task name contains enough to be unique."""
+        from sosbeacon.event.message import get_student_broadcast_task
+
+        student_key = Mock()
+        student_key.urlsafe.return_value = "STUDENTKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "MESSAGEKEY"
+
+        batch_id = "BATCHID"
+
+        ret_value = get_student_broadcast_task(
+            student_key, message_key, batch_id)
+
+        task_name = task_mock.call_args[1]['name']
+        self.assertIn('STUDENTKEY', task_name)
+        self.assertIn('MESSAGEKEY', task_name)
+        self.assertIn('BATCHID', task_name)
+
+    @patch('google.appengine.api.taskqueue.Task', autospec=True)
+    def test_task_params(self, task_mock):
+        """Ensure the resultant task parms contain all info."""
+        from sosbeacon.event.message import get_student_broadcast_task
+
+        student_key = Mock()
+        student_key.urlsafe.return_value = "ASTUDENTKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "SOMEMESSAGEKEY"
+
+        batch_id = "THEBATCHID"
+
+        ret_value = get_student_broadcast_task(
+            student_key, message_key, batch_id)
+
+        check_params = {
+            'student': 'ASTUDENTKEY',
+            'message': 'SOMEMESSAGEKEY',
+            'batch': 'THEBATCHID',
+        }
+        self.assertEqual(check_params, task_mock.call_args[1]['params'])
+
+
+class TestBroadcastToStudent(unittest.TestCase):
+    """Test the broadcast_to_student method to ensure it sends the
+    expected task.
+    """
+
+    def test_no_student(self):
+        """Ensure the method does not error if the student is not found."""
+        from sosbeacon.event.message import broadcast_to_student
+
+        student_key = Mock()
+        student_key.get.return_value = None
+
+        message_key = Mock()
+
+        broadcast_to_student(student_key, message_key)
+
+    @patch('sosbeacon.event.message.get_contact_broadcast_task', autospec=True)
+    def test_no_contacts(self, get_contact_broadcast_task_mock):
+        """Ensure the method does not error if no contacts are found."""
+        from sosbeacon.event.message import broadcast_to_student
+
+        student_key = Mock()
+        student_key.get.return_value.name = "Joe Blow"
+        student_key.get.return_value.contacts = ()
+
+        message_key = Mock()
+
+        broadcast_to_student(student_key, message_key)
+
+        self.assertFalse(get_contact_broadcast_task_mock.called)
+
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    @patch('sosbeacon.event.message.get_contact_broadcast_task', autospec=True)
+    def test_broadcast_to_contacts(self, get_contact_broadcast_task_mock,
+                                   insert_tasks_mock):
+        """Ensure the method does not error if no contacts are found."""
+        from sosbeacon.event.message import broadcast_to_student
+
+        contacts = ({'t': 'test', 'name': 'me'},)
+
+        student_key = Mock()
+        student_key.get.return_value.name = "Joe Blow"
+        student_key.get.return_value.contacts = contacts
+
+        message_key = Mock()
+
+        broadcast_to_student(student_key, message_key)
+
+        get_contact_broadcast_task_mock.assert_called_once_with(
+            message_key, student_key, contacts[0], '')
+
+        self.assertEqual(1, insert_tasks_mock.call_count)
+
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    @patch('google.appengine.ext.ndb.Model.put', autospec=True)
+    def test_student_marker_inserted(self, put_mock, insert_tasks_mock):
+        """Ensure the method creates the student marker."""
+        from sosbeacon.event.message import broadcast_to_student
+
+        student_key = Mock()
+        student_key.get.return_value.name = "Joe Blow"
+        student_key.get.return_value.contacts = ()
+        student_key.id = 211
+
+        message_key = Mock()
+        student_key.get.return_value.event.id = 919
+
+        broadcast_to_student(student_key, message_key)
+
+        self.assertEqual(1, put_mock.call_count)
+
+
+class TestGetContactBroadcastTask(unittest.TestCase):
+    """Test the get_contact_broadcast_task function to ensure it generates the
+    expected task.
+    """
+
+    @patch('google.appengine.api.taskqueue.Task', autospec=True)
+    def test_task_name(self, task_mock):
+        """Ensure the resultant task name contains enough to be unique."""
+        from sosbeacon.event.message import get_contact_broadcast_task
+
+        student_key = Mock()
+        student_key.urlsafe.return_value = "STUDENTKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "MESSAGEKEY"
+
+        batch_id = "BATCHID"
+
+        contact = {
+            'name': 'Johny Jones',
+            'methods': (
+                {'type': 't', 'value': '1234567890'},
+                {'type': 'e', 'value': 'johny@jones.com'},
+            )
+        }
+
+        get_contact_broadcast_task(message_key, student_key, contact, batch_id)
+
+        task_name = task_mock.call_args[1]['name']
+        self.assertIn('STUDENTKEY', task_name)
+        self.assertIn('MESSAGEKEY', task_name)
+        self.assertIn('BATCHID', task_name)
+        self.assertIn('1234567890', task_name)
+        self.assertIn('johny@jones.com', task_name)
+
+    @patch('google.appengine.api.taskqueue.Task', autospec=True)
+    def test_task_params(self, task_mock):
+        """Ensure the resultant task parms contain all info."""
+        from sosbeacon.event.message import get_contact_broadcast_task
+
+        student_key = Mock()
+        student_key.urlsafe.return_value = "ASTUDENTKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "SOMEMESSAGEKEY"
+
+        batch_id = "THEBATCHID"
+
+        contact = {
+            'name': 'Johny Jones',
+            'methods': (
+                {'type': 't', 'value': '1234567890'},
+                {'type': 'e', 'value': 'johny@jones.com'},
+            )
+        }
+
+        get_contact_broadcast_task(message_key, student_key, contact, batch_id)
+
+        check_params = {
+            'student': 'ASTUDENTKEY',
+            'message': 'SOMEMESSAGEKEY',
+            'batch': 'THEBATCHID',
+            'contact': contact,
+        }
+        self.assertEqual(check_params, task_mock.call_args[1]['params'])
+
+    @patch('google.appengine.api.taskqueue.Task', autospec=True)
+    def test_no_methods(self, task_mock):
+        """Ensure the resultant task parms contain all info."""
+        #raise Exception("Make sure it doesn't send a task if no methods.")
+        from sosbeacon.event.message import get_contact_broadcast_task
+
+        student_key = Mock()
+        student_key.urlsafe.return_value = "ASTUDENTKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "SOMEMESSAGEKEY"
+
+        batch_id = "THEBATCHID"
+
+        contact = {
+            'name': 'Johny Jones',
+            'methods': ()
+        }
+
+        ret_value = get_contact_broadcast_task(
+            message_key, student_key, contact, batch_id)
+
+        self.assertIsNone(ret_value)
+
+    @patch('google.appengine.api.taskqueue.Task', autospec=True)
+    def test_missing_methods(self, task_mock):
+        """Ensure the resultant task parms contain all info."""
+        #raise Exception("Make sure it doesn't send a task if no methods.")
+        from sosbeacon.event.message import get_contact_broadcast_task
+
+        student_key = Mock()
+        student_key.urlsafe.return_value = "ASTUDENTKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "SOMEMESSAGEKEY"
+
+        batch_id = "THEBATCHID"
+
+        contact = {
+            'name': 'Johny Jones'
+        }
+
+        ret_value = get_contact_broadcast_task(
+            message_key, student_key, contact, batch_id)
+
+        self.assertIsNone(ret_value)
+
+
+class TestBroadcastToContact(unittest.TestCase):
+    """Test the broadcast_to_contact method to ensure it inserts the
+    expected tasks.
+    """
+
+    def setUp(self):
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    def test_no_methods(self, insert_tasks_mock):
+        """Ensure the method does not error if no contact is passed."""
+        from sosbeacon.event.message import broadcast_to_contact
+
+        message_key = Mock()
+        message_key.get.return_value = None
+
+        student_key = Mock()
+        student_key.get.return_value = None
+
+        contact = {}
+
+        ret_value = broadcast_to_contact(message_key, student_key, contact)
+
+        self.assertFalse(insert_tasks_mock.called)
+        self.assertIsNone(ret_value)
+
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    def test_no_searchable_methods(self, insert_tasks_mock):
+        """Ensure the method does not error if no contact is passed."""
+        from sosbeacon.event.message import broadcast_to_contact
+
+        message_key = Mock()
+        message_key.get.return_value = None
+
+        student_key = Mock()
+        student_key.get.return_value = None
+
+        contact = {
+            'methods': [
+                {'type': 'p', 'value': '1233211234'}
+            ]
+        }
+
+        ret_value = broadcast_to_contact(message_key, student_key, contact)
+
+        self.assertFalse(insert_tasks_mock.called)
+        self.assertIsNone(ret_value)
+
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    @patch('sosbeacon.event.message.get_contact_broadcast_task', autospec=True)
+    def test_broadcast_to_contacts(self, get_contact_broadcast_task_mock,
+                                   insert_tasks_mock):
+        """Ensure the method does not error if no contacts are found."""
+        from sosbeacon.event.message import broadcast_to_student
+
+        contacts = ({'t': 'test', 'name': 'me'},)
+
+        student_key = Mock()
+        student_key.get.return_value.name = "Joe Blow"
+        student_key.get.return_value.contacts = contacts
+
+        message_key = Mock()
+
+        broadcast_to_student(student_key, message_key)
+
+        get_contact_broadcast_task_mock.assert_called_once_with(
+            message_key, student_key, contacts[0], '')
+
+        self.assertEqual(1, insert_tasks_mock.call_count)
+
+    @patch('sosbeacon.utils.insert_tasks', autospec=True)
+    @patch('google.appengine.ext.ndb.Model.put', autospec=True)
+    def test_student_marker_inserted(self, put_mock, insert_tasks_mock):
+        """Ensure the method creates the student marker."""
+        from sosbeacon.event.message import broadcast_to_student
+
+        student_key = Mock()
+        student_key.get.return_value.name = "Joe Blow"
+        student_key.get.return_value.contacts = ()
+        student_key.id = 211
+
+        message_key = Mock()
+        student_key.get.return_value.event.id = 919
+
+        broadcast_to_student(student_key, message_key)
+
+        self.assertEqual(1, put_mock.call_count)
 

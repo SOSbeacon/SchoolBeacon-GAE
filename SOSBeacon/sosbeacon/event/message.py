@@ -1,3 +1,5 @@
+import logging
+from datetime import datetime
 
 from google.appengine.api import taskqueue
 from google.appengine.ext import ndb
@@ -9,8 +11,14 @@ from skel.datastore import EntityBase
 GROUP_TX_ENDPOINT = '/task/event/tx/group'
 GROUP_TX_QUEUE = "group-tx"
 
-STUDENT_TX_ENDPOINT = '/task/event/tx/group'
+STUDENT_TX_ENDPOINT = '/task/event/tx/student'
 STUDENT_TX_QUEUE = "student-tx"
+
+CONTACT_TX_ENDPOINT = '/task/event/tx/contact'
+CONTACT_TX_QUEUE = "contact-tx"
+
+METHOD_TX_ENDPOINT = '/task/event/tx/method'
+METHOD_TX_QUEUE = "method-tx"
 
 message_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
@@ -176,6 +184,11 @@ def broadcast_to_group(group_key, message_key, batch_id='',
     if tasks:
         insert_tasks(tasks, STUDENT_TX_QUEUE)
 
+    #update_event_counts(
+    #    event_key, group_urlsafe, iteration,
+    #    contact_count=len(self.seen_methods),
+    #    student_count=len(students))
+
 
 def get_student_broadcast_task(student_key, message_key, batch_id=''):
     """Get a task to broadcast a message to all a student's contacts."""
@@ -194,4 +207,226 @@ def get_student_broadcast_task(student_key, message_key, batch_id=''):
         }
     )
 
+
+def broadcast_to_student(student_key, message_key, batch_id=''):
+    """Send broadcast to each of the student's contacts."""
+    from sosbeacon.event.student_marker import StudentMarker
+    from sosbeacon.utils import insert_tasks
+
+    student = student_key.get()
+
+    if not student:
+        # TODO: ?
+        logging.info('Tried to broadcast %s to missing student %s.',
+                     message_key.urlsafe(), student_key.urlsafe())
+        return
+
+    message = message_key.get()
+
+    tasks = []
+
+    contacts = {}
+    for contact in student.contacts:
+        # TODO: Optimize task building with memcache markers to
+        # avoid building tasks that already exist.
+
+        task = get_contact_broadcast_task(
+            message_key, student_key, contact, batch_id)
+
+        if not task:
+            continue
+
+        tasks.append(task)
+
+        # TODO: WTF is this?
+        contacts[contact['t']] = contact
+
+    if tasks:
+        insert_tasks(tasks, CONTACT_TX_QUEUE)
+
+    marker_key = ndb.Key(
+        StudentMarker, "%s:%s" % (student_key.id, message.event.id))
+
+    new_marker = StudentMarker(
+        key=marker_key,
+        name=student.name,
+        contacts=contacts,
+        last_broadcast=datetime.now()
+    )
+
+    @ndb.transactional
+    def txn(new_marker):
+        marker = new_marker.key.get()
+
+        if marker:
+            marker.merge(new_marker)
+        else:
+            marker = new_marker
+
+        marker.put()
+
+    txn(new_marker)
+
+
+def get_contact_broadcast_task(message_key, student_key, contact, batch_id=''):
+    """Get a task to broadcast a message to a contact."""
+    student_urlsafe = student_key.urlsafe()
+    message_urlsafe = message_key.urlsafe()
+
+    BROADCAST_TYPES = ('e', 't')
+
+    methods = []
+    for method in contact.get('methods', ()):
+        method_type = method.get('type')
+        value = method.get('value')
+
+        if not value or method_type not in BROADCAST_TYPES:
+            continue
+
+        methods.append(value)
+
+    if not methods:
+        return
+
+    contact_ident = '|'.join(sorted(methods))
+
+    name = "tx-%s-%s-%s-%s" % (
+        student_urlsafe, message_urlsafe, batch_id, contact_ident)
+    return taskqueue.Task(
+        url=CONTACT_TX_ENDPOINT,
+        name=name,
+        params={
+            'student': student_urlsafe,
+            'message': message_urlsafe,
+            'batch': batch_id,
+            'contact': contact
+        }
+    )
+
+
+def broadcast_to_contact(message_key, student_key, contact, batch_id=''):
+    """Insert tasks to send message to each contact method, and create a
+    contact marker.
+    """
+    from sosbeacon.event.contact_marker import get_marker_short_id
+    from sosbeacon.utils import insert_tasks
+
+    SEARCH_TYPES = ('e', 't')
+
+    # Find methods we want to query by.
+    methods = set()
+    for method in contact.get('methods', ()):
+        method_type = method.get('type')
+        value = method.get('value')
+
+        if not value or method_type not in SEARCH_TYPES:
+            continue
+
+        methods.add(value)
+
+    if not methods:
+        return
+
+    short_id = get_marker_short_id(message_key, student_key, contact, methods)
+
+    method_tasks = []
+    for method in methods:
+        method_tasks = get_method_broadcast_task(
+            message_key, short_id, method, batch_id)
+
+    insert_tasks(method_tasks, METHOD_TX_QUEUE)
+
+
+def get_method_broadcast_task(message_key, short_id, method, batch_id=''):
+    """Get a task to broadcast a message to a contact method."""
+    import hashlib
+
+    message_urlsafe = message_key.urlsafe()
+
+    method_ident = hashlib.sha1(method).hexdigest()
+
+    name = "tx-%s-%s-%s-%s" % (
+        message_urlsafe, short_id, batch_id, method_ident)
+    return taskqueue.Task(
+        url=METHOD_TX_ENDPOINT,
+        name=name,
+        params={
+            'message': message_urlsafe,
+            'batch': batch_id,
+            'short_id': short_id,
+            'method': method
+        }
+    )
+
+
+def broadcast_to_method(message_key, short_id, method):
+    """Send the message to the given contact method."""
+    import os
+
+    from sosbeacon import utils
+
+    message = message_key.get()
+
+    encoded_event = utils.number_encode(message.event.id())
+    encoded_method = utils.number_encode(short_id)
+
+    host = os.environ['HTTP_HOST']
+
+    url = "http://%s/e/%s/%s" % (host, encoded_event, encoded_method)
+
+    if '@' not in method:
+        broadcast_sms(method, message, url)
+        return
+
+    broadcast_email(method, message, url)
+
+
+def broadcast_sms(number, message, url):
+    """Send a message to a given phone number."""
+    from twilio.rest import TwilioRestClient
+
+    import settings
+
+    logging.debug('Sending notice to %s via twilio.', number)
+
+    body = message.message['sms']
+    body = "%s - %s" % (body, url)
+
+    client = TwilioRestClient(settings.TWILIO_ACCOUNT,
+                              settings.TWILIO_TOKEN)
+
+    message = client.sms.messages.create(
+        to="+%s" % (number), from_="+14155992671", body=body)
+
+
+def broadcast_email(address, message, url):
+    """Send an email to a given email address."""
+    from google.appengine.api import mail
+
+    logging.info('Sending notice to %s via mail api.', address)
+
+    message = mail.EmailMessage(sender="SBeacon <clifforloff@gmail.com>",
+                                subject=message.title)
+
+    message.to = address
+
+    message.body = "%s\n\n%s" % (message.message['message'], url)
+
+    message.send()
+
+    #TODO: enable sendgrid integration
+    #TODO: it might make sense to group emails as we can add more than one to
+    # address per email sent
+    # import sendgrid
+    # s = sendgrid.Sendgrid(settings.SENDGRID_ACCOUNT,
+    #                       settings.SENDGRID_PASSWORD,
+    #                       secure=True)
+    # body = "%s\n\n%s" % (message.message['message'], url)
+    # message = sendgrid.Message(
+    #     "SBeacon <clifforloff@gmail.com>",
+    #     title,
+    #     "plain body",
+    #     body)
+    # message.add_to(address)
+    # s.web.send(message)
 

@@ -13,21 +13,31 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
         }
 
     initialize: =>
+        @loadGroups()
+        @loadContacts()
+
+        return this
+
+    loadGroups: =>
         @groups = new App.SOSBeacon.Collection.GroupList()
         groups = @get('groups')
         if groups and not _.isEmpty(groups)
             url = @groups.url + '/' + groups.join()
             @groups.fetch({url: url, async: false})
 
+    loadContacts: =>
         @contacts = @nestCollection(
             'contacts',
             new App.SOSBeacon.Collection.ContactList(@get('contacts')))
 
+    validators:
+        name: new App.Util.Validate.string(len: {min: 1, max: 100}),
+ 
     validate: (attrs) =>
         hasError = false
         errors = {}
 
-        if attrs.type != 'd' and _.isEmpty(attrs.name)
+        if _.isEmpty(attrs.name)
             hasError = true
             errors.name = "Missing name."
 
@@ -58,10 +68,15 @@ class App.SOSBeacon.Collection.StudentList extends Backbone.Paginator.requestPag
     server_api: {}
 
 
-class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
+class App.SOSBeacon.View.StudentEditForm extends Backbone.View
     template: JST['student/edit']
-    modelType: App.SOSBeacon.Model.Student
+    addMode: true
     focusButton: 'input#name'
+    className: "row-fluid"
+    id: "add_area"
+
+    propertyMap:
+        name: "input.name",
 
     events:
         "change": "change"
@@ -69,13 +84,48 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         "click button.add_contact": "addContact"
         "submit form" : "save"
         "keypress .edit": "updateOnEnter"
-        "hidden": "close"
 
-    initialize: =>
+    initialize: (model) =>
+        @model = model
+
+        @validator = new App.Util.FormValidator(this,
+            propertyMap: @propertyMap
+            validatorMap: @model.validators
+        )
+
+        @model.bind('error', App.Util.Form.displayValidationErrors)
+
         @groupSelects = []
         @contactEdits = []
+        @model = model
 
-        return super()
+    render: () =>
+        @$el.html(@template(@model.toJSON()))
+
+        @renderGroups()
+        @renderContacts()
+
+        return this
+
+    renderGroups: () =>
+        @model.groups.each((group, i) =>
+            editView = new App.SOSBeacon.View.GroupSelect(model: group)
+            editView.on('removed', @removeGroupSelect)
+            @groupSelects.push(editView)
+            @$el.find('fieldset.groups').append(editView.render().el)
+        )
+
+    renderContacts: () =>
+        contactList = @$('ul.contacts')
+        @model.contacts.each((contact, i) =>
+            editView = new App.SOSBeacon.View.ContactEdit({model: contact})
+            editView.on('removed', @removeContact)
+            @contactEdits.push(editView)
+            contactList.append(editView.render().el)
+        )
+
+    change: (event) =>
+        App.Util.Form.hideAlert()
 
     removeGroupSelect: (select) =>
         # Remove group from model.
@@ -117,39 +167,23 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         if not _.isEmpty(badContacts) or not _.isEmpty(badGroups)
             return false
 
-        saved = @model.save({
+        App.Util.FormValidator._clearMessage(@$('fieldset.groups'))
+
+        @model.save(
             name: @$('input.name').val()
             identifier: @$('input.identifier').val()
             groups: groupList
             notes: $.trim(@$('textarea.notes').val())
-        }, {
-            error: App.Util.Form.processErrors
-        })
-        if saved == false
-            return false
-
-        return super()
-
-    render: (asModal) =>
-        el = @$el
-        el.html(@template(@model.toJSON()))
-
-        @model.groups.each((group, i) =>
-            editView = new App.SOSBeacon.View.GroupSelect(model: group)
-            editView.on('removed', @removeGroupSelect)
-            @groupSelects.push(editView)
-            el.find('fieldset.groups').append(editView.render().el)
         )
 
-        contactList = @$('ul.contacts')
-        @model.contacts.each((contact, i) =>
-            editView = new App.SOSBeacon.View.ContactEdit({model: contact})
-            editView.on('removed', @removeContact)
-            @contactEdits.push(editView)
-            contactList.append(editView.render().el)
-        )
+        if @model.isValid()
+            App.Util.Form.hideAlert()
+            App.Util.Form.showAlert(
+                "Successs!", "Save successful", "alert-success")
 
-        return super(asModal)
+            App.SOSBeacon.Event.trigger('model:save', @model, this)
+
+        return false
 
     addGroup: () =>
         badGroup = _.find(@groupSelects, (groupSelect) ->
@@ -186,7 +220,7 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
         rendered = editView.render()
         @$('ul.contacts').append(rendered.el)
 
-        rendered.$el.find('select.type').focus()
+        rendered.$el.find('select.contact-type').focus()
 
         return false
 
@@ -202,26 +236,93 @@ class App.SOSBeacon.View.StudentEdit extends App.Skel.View.EditView
                 @addContact()
                 return false
 
-        return super(e)
+            @save()
+
+            return false
 
 
-class App.SOSBeacon.View.StudentApp extends App.Skel.View.ModelApp
+class App.SOSBeacon.View.StudentEditApp extends Backbone.View
+    template: JST['student/itemheader']
     id: "sosbeaconapp"
-    template: JST['student/view']
-    modelType: App.SOSBeacon.Model.Student
-    form: App.SOSBeacon.View.StudentEdit
+    className: "top_view row-fluid"
+    isNew: true
 
     events:
-        "click .add-button": "add"
+        "click .view-button": "viewStudents"
+
+    initialize: (id) =>
+        if id
+            @model = new App.SOSBeacon.Model.Student({key: id})
+            @model.fetch({async: false})
+            @model.initialize()
+            @isNew = false
+        else
+            @model = new App.SOSBeacon.Model.Student()
+
+        @editForm = new App.SOSBeacon.View.StudentEditForm(@model)
+        App.SOSBeacon.Event.bind("model:save", @modelSaved, this)
+
+    modelSaved: () =>
+        if @isNew
+            @model = new App.SOSBeacon.Model.Student()
+            @editForm.initialize(@model)
+            @editForm.$("form").each(() ->
+                @reset()
+            )
+
+    render: () =>
+        @$el.html(@template(@model.toJSON()))
+        @$el.append(@editForm.render().el)
+
+        @renderHeader()
+
+        return this
+
+    renderHeader: () =>
+        header = @$("#editheader")
+
+        if @addMode
+            header.html("Add New #{header.text()}")
+        else
+            header.html("Edit #{header.text()}")
+
+    onClose: () =>
+        App.SOSBeacon.Event.unbind(null, null, this)
+
+        @editForm.close()
+
+    viewStudents: () =>
+        App.SOSBeacon.router.navigate("/student", {trigger: true})
+
+
+class App.SOSBeacon.View.StudentApp extends Backbone.View
+    id: "sosbeaconapp"
+    template: JST['student/view']
+
+    events:
         "click .import-button": "import"
+        "click .add-button": "add"
 
     initialize: =>
         @collection = new App.SOSBeacon.Collection.StudentList()
         @listView = new App.SOSBeacon.View.StudentList(@collection)
 
+    render: =>
+        @$el.html(@template())
+        @$el.append(@listView.render().el)
+
+        $("#add_new").focus()
+
+        return this
+
     import: =>
-        #todo prompt for doc to import
         App.SOSBeacon.router.navigate("/student/import", {trigger: true})
+
+    add: =>
+        App.SOSBeacon.router.navigate("/student/new", {trigger: true})
+
+    onClose: =>
+        @listView.close()
 
 
 class App.SOSBeacon.View.ImportStudentsApp extends App.Skel.View.App
@@ -235,6 +336,10 @@ class App.SOSBeacon.View.ImportStudentsApp extends App.Skel.View.App
 
 class App.SOSBeacon.View.StudentListItem extends App.Skel.View.ListItemView
     template: JST['student/list']
+
+    edit: =>
+        App.SOSBeacon.router.navigate(
+            "/student/edit/#{@model.id}", {trigger: true})
 
     render: =>
         model_props = @model.toJSON()

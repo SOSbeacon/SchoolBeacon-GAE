@@ -30,6 +30,7 @@ student_query_schema = {
     'feq_groups': voluptuous.any('', voluptuous.ndbkey()),
 }
 
+
 class Student(EntityBase):
     """Represents a student."""
 
@@ -127,6 +128,7 @@ def import_students(file_):
 
     return results
 
+
 def import_student(student_array, group_lookup=None):
     messages = []
 
@@ -165,6 +167,7 @@ def import_student(student_array, group_lookup=None):
     future = student.put_async()
     return student, future, messages
 
+
 def _build_contacts(student_array):
     contacts = []
     contact_info = student_array[3:]
@@ -175,6 +178,7 @@ def _build_contacts(student_array):
         contact_info = contact_info[5:]
 
     return contacts
+
 
 def _contact_from_args(name, email, voice=None, text=None):
     messages = []
@@ -199,18 +203,20 @@ def _contact_from_args(name, email, voice=None, text=None):
 
     return info, messages
 
+
 def valid_email(email):
     if EMAIL_REGEX.match(email):
         return True
 
     return False
 
+
 def validate_and_standardize_phone(number):
     import string
     messages = []
 
     try:
-        stuff = string.maketrans('','')
+        stuff = string.maketrans('', '')
         non_digits = stuff.translate(None, string.digits)
         number = number.translate(None, non_digits)
     except Exception, e:
@@ -231,10 +237,11 @@ def validate_and_standardize_phone(number):
 
     return number, messages
 
+
 def _get_group(group_name, group_lookup):
-    """ Return a group for the group name passed in. Checks the group cache first
-    if not there then queries by the lower case name. If not there then creates
-    a new group.
+    """Return a group for the group name passed in. Checks the group cache
+    first if not there then queries by the lower case name. If not there then
+    creates a new group.
     """
     #check for existing group by name
     if group_name.lower() in group_lookup:
@@ -249,6 +256,6 @@ def _get_group(group_name, group_lookup):
         return group.key, None
 
     logging.debug("No group found for %s, creating a new one", group_name)
-    group =  Group(name=group_name, active=True)
+    group = Group(name=group_name, active=True)
     future = group.put_async()
     return group.key, future

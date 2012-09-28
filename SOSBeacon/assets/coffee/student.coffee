@@ -13,13 +13,14 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
         }
 
     initialize: =>
+        @groups = new App.SOSBeacon.Collection.GroupList()
+
         @loadGroups()
         @loadContacts()
 
         return this
 
     loadGroups: =>
-        @groups = new App.SOSBeacon.Collection.GroupList()
         groups = @get('groups')
         if groups and not _.isEmpty(groups)
             url = @groups.url + '/' + groups.join()

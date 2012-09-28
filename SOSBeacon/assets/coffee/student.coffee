@@ -90,7 +90,7 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         @model = model
 
         @validator = new App.Util.FormValidator(this,
-            propertyMap: @propertyMap
+            propertyMap: @propertyMap,
             validatorMap: @model.validators
         )
 
@@ -98,7 +98,6 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
 
         @groupSelects = []
         @contactEdits = []
-        @model = model
 
     render: () =>
         @$el.html(@template(@model.toJSON()))

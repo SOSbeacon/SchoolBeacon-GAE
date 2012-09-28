@@ -118,9 +118,9 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
     typeChanged: =>
         type = @$('select.contact-type').val()
         if type == "d"
-            name = @$('div.contact-name').hide()
+            name = @$('input.contact-name').hide()
         else
-            name = @$('div.contact-name').show()
+            name = @$('input.contact-name').show()
 
         @validate()
 
@@ -164,7 +164,7 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
             select.append(option)
         )
         if contactType == "d"
-            name = @$('div.contact-name').hide()
+            name = @$('input.contact-name').hide()
 
     updateOnEnter: (e) =>
         focusItem = $("*:focus")

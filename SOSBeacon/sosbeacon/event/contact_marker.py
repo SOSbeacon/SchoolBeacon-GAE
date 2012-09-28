@@ -7,6 +7,10 @@ from skel.datastore import EntityBase
 
 from sosbeacon.event.event import Event
 
+
+CONTACT_MERGE_ENDPOINT = '/task/event/update/contact_marker'
+CONTACT_MERGE_QUEUE = "contact-update"
+
 marker_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'acknowledged': voluptuous.boolean(),
@@ -165,3 +169,25 @@ def create_or_update_marker(event_key, student_key, contact, search_methods):
     insert_update_marker_task(marker.key, student_key, contact, search_methods)
 
     return marker.short_id
+
+
+def insert_update_marker_task(marker_key, student_key,
+                              contact, search_methods):
+    """Insert a task to merge a contact's info into a marker."""
+    from google.appengine.api import taskqueue
+
+    marker_urlsafe = marker_key.urlsafe()
+    student_urlsafe = student_key.urlsafe()
+
+    task = taskqueue.Task(
+        url=CONTACT_MERGE_ENDPOINT,
+        params={
+            'marker': marker_urlsafe,
+            'student': student_urlsafe,
+            'contact': contact,
+            'methods': search_methods
+        }
+    )
+
+    taskqueue.Queue(name=CONTACT_MERGE_QUEUE).add(task)
+

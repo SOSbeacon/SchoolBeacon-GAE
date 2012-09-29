@@ -96,7 +96,6 @@ class App.SOSBeacon.View.ContactMethodEdit extends Backbone.View
 
         @model.bind('change', @render, this)
         @model.bind('destroy', @remove, this)
-        @model.editView = this
 
     render: =>
         icon = ''

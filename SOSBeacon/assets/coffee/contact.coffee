@@ -104,8 +104,9 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
             return false
 
         badMethods = false
-        @model.methods.filter((method) ->
-            error = method.editView.validate()
+
+        @contactMethodViews.filter((methodView) ->
+            error = methodView.validate()
             if not error
                 badMethods = true
         )
@@ -117,9 +118,9 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
     typeChanged: =>
         type = @$('select.contact-type').val()
         if type == "d"
-            name = @$('div.contact-name').hide()
+            name = @$('input.contact-name').hide()
         else
-            name = @$('div.contact-name').show()
+            name = @$('input.contact-name').show()
 
         @validate()
 
@@ -142,10 +143,8 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
                     {type: method})
                 @model.methods.add(contact_method)
 
-            if not contact_method.editView?
-                editView = new App.SOSBeacon.View.ContactMethodEdit(
-                    {model: contact_method})
-                contact_method.editView = editView
+            editView = new App.SOSBeacon.View.ContactMethodEdit(
+                {model: contact_method})
 
             @contactMethodViews.push(editView)
             @$el.find('div.methods').append(editView.render().el)
@@ -165,7 +164,7 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
             select.append(option)
         )
         if contactType == "d"
-            name = @$('div.contact-name').hide()
+            name = @$('input.contact-name').hide()
 
     updateOnEnter: (e) =>
         focusItem = $("*:focus")
@@ -175,6 +174,12 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
     destroy: =>
         @trigger('removed', @)
         @model.destroy()
+
+    onClose: =>
+        App.SOSBeacon.Event.unbind(null, null, this)
+
+        for view in @contactMethodViews
+            view.close()
 
 
 class App.SOSBeacon.View.ContactListItem extends App.Skel.View.ListItemView
@@ -198,7 +203,6 @@ class App.SOSBeacon.View.ContactSelect extends Backbone.View
     initialize: ->
         @model.bind('change', @render, this)
         @model.bind('destroy', @remove, this)
-        @model.editView = this
 
     render: () =>
         @$el.html(@template(@model.toJSON()))

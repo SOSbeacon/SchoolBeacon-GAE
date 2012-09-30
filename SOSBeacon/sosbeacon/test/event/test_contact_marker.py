@@ -543,3 +543,119 @@ class TestInsertUpdateMarkerTask(unittest.TestCase):
 
         self.assertTrue(queue_add_mock.called)
 
+class TestUpdateMarker(unittest.TestCase):
+    """Ensure update_marker correctly merges the new student and contact
+    information, then inserts a marker merge task.
+    """
+
+    @mock.patch('sosbeacon.event.contact_marker.ContactMarker.put',
+                autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.insert_merge_task',
+                autospec=True)
+    def test_methods_get_merged(self, insert_merge_task_mock, marker_put_mock):
+        """Test that methods don't get duplicated, but new stuff is added."""
+        from google.appengine.ext import ndb
+
+        from sosbeacon.event.contact_marker import ContactMarker
+        from sosbeacon.event.contact_marker import update_marker
+
+        methods = ['abc']
+
+        marker_key = mock.Mock(spec=ndb.Key)
+        marker_key.kind.return_value = "ContactMarker"
+
+        marker = ContactMarker(key=marker_key, students={}, methods=methods[:])
+        marker_key.get.return_value = marker
+
+        student_key = 'STUDENTKEY'
+        contact = {'id': 1}
+
+        new_methods = ['abc', '123', '456']
+
+        update_marker(marker_key, student_key, contact, new_methods[:])
+
+        all_methods = sorted(set(new_methods) | set(methods))
+
+        self.assertEqual(all_methods, sorted(marker.methods))
+
+        self.assertTrue(marker_put_mock.called)
+
+        self.assertEqual(1, insert_merge_task_mock.call_count)
+
+    @mock.patch('sosbeacon.event.contact_marker.ContactMarker.put',
+                autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.insert_merge_task',
+                autospec=True)
+    def test_student_gets_added(self, insert_merge_task_mock, marker_put_mock):
+        """Test that methods don't get duplicated."""
+        from google.appengine.ext import ndb
+
+        from sosbeacon.event.contact_marker import ContactMarker
+        from sosbeacon.event.contact_marker import update_marker
+
+        methods = ['abc']
+
+        marker_key = mock.Mock(spec=ndb.Key)
+        marker_key.kind.return_value = "ContactMarker"
+
+        marker = ContactMarker(key=marker_key, students={}, methods=methods[:])
+        marker_key.get.return_value = marker
+
+        student_key = 'STUDENTKEY'
+        contact = {'id': '1'}
+
+        update_marker(marker_key, student_key, contact.copy(), methods)
+
+        self.assertIn(student_key, marker.students)
+
+        self.assertEqual({contact['id']: contact},
+                         marker.students[student_key])
+
+        self.assertTrue(marker_put_mock.called)
+
+        self.assertEqual(1, insert_merge_task_mock.call_count)
+
+    @mock.patch('sosbeacon.event.contact_marker.ContactMarker.put',
+                autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.insert_merge_task',
+                autospec=True)
+    def test_contact_gets_added_to_student(self, insert_merge_task_mock,
+                                           marker_put_mock):
+        """Test that methods don't get duplicated."""
+        from google.appengine.ext import ndb
+
+        from sosbeacon.event.contact_marker import ContactMarker
+        from sosbeacon.event.contact_marker import update_marker
+
+        methods = ['abc']
+
+        student_key = 'STUDENTKEY'
+        student_contacts = {
+            'alpha': 'bravo'
+        }
+
+        marker_key = mock.Mock(spec=ndb.Key)
+        marker_key.kind.return_value = "ContactMarker"
+
+        marker = ContactMarker(
+            key=marker_key,
+            students={
+                student_key: student_contacts.copy()
+            },
+            methods=methods[:])
+        marker_key.get.return_value = marker
+
+        contact = {'id': '1'}
+
+        update_marker(marker_key, student_key, contact.copy(), methods)
+
+        self.assertIn(student_key, marker.students)
+
+        student_contacts[contact['id']] = contact.copy()
+
+        self.assertEqual(student_contacts, marker.students[student_key])
+
+        self.assertTrue(marker_put_mock.called)
+
+        self.assertEqual(1, insert_merge_task_mock.call_count)
+

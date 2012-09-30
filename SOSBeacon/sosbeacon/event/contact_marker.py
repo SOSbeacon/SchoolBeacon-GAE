@@ -136,7 +136,8 @@ def get_marker_for_methods(event_key, search_methods):
 
 def create_or_update_marker(event_key, student_key, contact, search_methods):
     """Look for a marker for the requested methods.  If one is found, return
-    its short_id, if multiple are found, merge them, then return the short_id.
+    its short_id, if multiple are found, request a merge, then return one's
+    short_id.
     """
     if not search_methods:
         raise ValueError('Non-empty value for search_methods is required.')
@@ -190,4 +191,21 @@ def insert_update_marker_task(marker_key, student_key,
     )
 
     taskqueue.Queue(name=CONTACT_MERGE_QUEUE).add(task)
+
+
+@ndb.transactional
+def update_marker(marker_key, student_key, contact, search_methods):
+    """Look for a marker for the requested methods.  If one is found, return
+    its short_id, if multiple are found, merge them, then return the short_id.
+    """
+    marker = marker_key.get()
+
+    marker.search_methods = list(
+        set(marker.search_methods) | set(search_methods))
+
+    student_contacts = marker.students.setdefault(student_key, {})
+    if contact['id'] not in student_contacts:
+        student_contacts[contact['id']] = contact
+
+    marker.put()
 

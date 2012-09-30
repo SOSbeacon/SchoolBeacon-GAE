@@ -198,14 +198,13 @@ def insert_update_marker_task(marker_key, student_key,
 
 
 @ndb.transactional
-def update_marker(marker_key, student_key, contact, search_methods):
+def update_marker(marker_key, student_key, contact, methods):
     """Look for a marker for the requested methods.  If one is found, return
     its short_id, if multiple are found, merge them, then return the short_id.
     """
     marker = marker_key.get()
 
-    marker.search_methods = list(
-        set(marker.search_methods) | set(search_methods))
+    marker.methods = list(set(marker.methods) | set(methods))
 
     student_contacts = marker.students.setdefault(student_key, {})
     if contact['id'] not in student_contacts:

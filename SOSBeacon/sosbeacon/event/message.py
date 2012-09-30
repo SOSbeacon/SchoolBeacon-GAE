@@ -308,7 +308,7 @@ def broadcast_to_contact(message_key, student_key, contact, batch_id=''):
     """Insert tasks to send message to each contact method, and create a
     contact marker.
     """
-    from sosbeacon.event.contact_marker import get_marker_short_id
+    from sosbeacon.event.contact_marker import create_or_update_marker
     from sosbeacon.utils import insert_tasks
 
     SEARCH_TYPES = ('e', 't')
@@ -327,7 +327,10 @@ def broadcast_to_contact(message_key, student_key, contact, batch_id=''):
     if not methods:
         return
 
-    short_id = get_marker_short_id(message_key, student_key, contact, methods)
+    message = message_key.get()
+
+    short_id = create_or_update_marker(
+        message.event, student_key, contact, methods)
 
     method_tasks = []
     for method in methods:

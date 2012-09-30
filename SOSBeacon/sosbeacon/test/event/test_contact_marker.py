@@ -26,7 +26,7 @@ class TestContactMarkerMerge(unittest.TestCase):
         self.assertFalse(left.acknowledged)
 
     def test_merge_ack_to_non_ack(self):
-        """Ensure merging two non-acked doesn't ack."""
+        """Ensure merging acked to non-acked acks."""
         from sosbeacon.event.contact_marker import ContactMarker
 
         left = ContactMarker(acknowledged=False)
@@ -35,7 +35,7 @@ class TestContactMarkerMerge(unittest.TestCase):
         self.assertTrue(left.acknowledged)
 
     def test_merge_non_ack_to_ack(self):
-        """Ensure merging two non-acked doesn't ack."""
+        """Ensure merging non-acked to acked stays acked."""
         from sosbeacon.event.contact_marker import ContactMarker
 
         left = ContactMarker(acknowledged=True)
@@ -44,7 +44,7 @@ class TestContactMarkerMerge(unittest.TestCase):
         self.assertTrue(left.acknowledged)
 
     def test_merge_acks(self):
-        """Ensure merging two non-acked doesn't ack."""
+        """Ensure merging two acked stays acked."""
         from sosbeacon.event.contact_marker import ContactMarker
 
         left = ContactMarker(acknowledged=True)
@@ -62,7 +62,7 @@ class TestContactMarkerMerge(unittest.TestCase):
         self.assertEqual(0, left.last_viewed_date)
 
     def test_merge_last_viewed_date(self):
-        """Ensure merging non-acked with acked sets view date."""
+        """Ensure merging acked to non-acked sets view date."""
         from sosbeacon.event.contact_marker import ContactMarker
 
         left = ContactMarker(last_viewed_date=0)
@@ -71,7 +71,7 @@ class TestContactMarkerMerge(unittest.TestCase):
         self.assertEqual(12345, left.last_viewed_date)
 
     def test_merge_last_viewed_date_with_non_acked(self):
-        """Ensure merging non-acked with acked sets view date."""
+        """Ensure merging non-acked with acked preserves view date."""
         from sosbeacon.event.contact_marker import ContactMarker
 
         left = ContactMarker(last_viewed_date=321123)
@@ -80,7 +80,9 @@ class TestContactMarkerMerge(unittest.TestCase):
         self.assertEqual(321123, left.last_viewed_date)
 
     def test_merge_last_viewed_date_with_smaller(self):
-        """Ensure merging non-acked with acked sets view date."""
+        """Ensure merging earlier acked with later acked keeps most recent
+        ack date.
+        """
         from sosbeacon.event.contact_marker import ContactMarker
 
         left = ContactMarker(last_viewed_date=100)
@@ -89,7 +91,9 @@ class TestContactMarkerMerge(unittest.TestCase):
         self.assertEqual(100, left.last_viewed_date)
 
     def test_merge_last_viewed_date_with_larger(self):
-        """Ensure merging non-acked with acked sets view date."""
+        """Ensure merging more recently acked with earlier acked keeps most
+        recent ack date.
+        """
         from sosbeacon.event.contact_marker import ContactMarker
 
         left = ContactMarker(last_viewed_date=20)
@@ -98,7 +102,7 @@ class TestContactMarkerMerge(unittest.TestCase):
         self.assertEqual(200, left.last_viewed_date)
 
     def test_merge_last_viewed_date_with_same(self):
-        """Ensure merging non-acked with acked sets view date."""
+        """Ensure merging acked with acked preserves ack date."""
         from sosbeacon.event.contact_marker import ContactMarker
 
         left = ContactMarker(last_viewed_date=334)
@@ -269,11 +273,11 @@ class TestGetMarkerForMethods(unittest.TestCase):
         event_key = ndb.Key(Event, 'EVENTKEY')
 
         self.assertRaisesRegexp(
-            ValueError, "value for search_methods is required.",
+            ValueError, "value for methods is required.",
             get_marker_for_methods, event_key, [])
 
     def test_no_event_key(self):
-        """Ensure error is raised if there are no methods."""
+        """Ensure error is raised if no event_key is given."""
         from sosbeacon.event.contact_marker import get_marker_for_methods
 
         self.assertRaisesRegexp(
@@ -350,7 +354,7 @@ class TestGetMarkerForMethods(unittest.TestCase):
     @mock.patch('sosbeacon.event.contact_marker.find_markers_for_methods',
                 autospec=True)
     def test_one_place_holder(self, find_markers_for_methods_mock):
-        """Ensure one place holders is returned."""
+        """Ensure one place holder is returned."""
         from google.appengine.ext import ndb
 
         from sosbeacon.event.contact_marker import ContactMarker

@@ -639,7 +639,7 @@ class TestGetContactBroadcastTask(unittest.TestCase):
 
     @patch('google.appengine.api.taskqueue.Task', autospec=True)
     def test_no_methods(self, task_mock):
-        """Ensure the resultant task parms contain all info."""
+        """Ensure no task is returned when there are no contact methods."""
         #raise Exception("Make sure it doesn't send a task if no methods.")
         from sosbeacon.event.message import get_contact_broadcast_task
 
@@ -663,7 +663,9 @@ class TestGetContactBroadcastTask(unittest.TestCase):
 
     @patch('google.appengine.api.taskqueue.Task', autospec=True)
     def test_missing_methods(self, task_mock):
-        """Ensure the resultant task parms contain all info."""
+        """Ensure there is no exception raised and no task is return when the
+        methods key is missing.
+        """
         #raise Exception("Make sure it doesn't send a task if no methods.")
         from sosbeacon.event.message import get_contact_broadcast_task
 

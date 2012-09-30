@@ -94,7 +94,7 @@ def find_markers_for_methods(event_key, methods):
         raise ValueError('event_key is required.')
 
     if not methods:
-        raise ValueError('Non-empty value for search_methods is required.')
+        raise ValueError('Non-empty value for methods is required.')
 
     return ContactMarker.query(
         ContactMarker.event == event_key, ContactMarker.methods.IN(methods))

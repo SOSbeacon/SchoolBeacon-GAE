@@ -9,7 +9,11 @@ from sosbeacon.event.event import Event
 
 
 CONTACT_MERGE_ENDPOINT = '/task/event/update/contact_marker'
-CONTACT_MERGE_QUEUE = "contact-update"
+CONTACT_MERGE_QUEUE = "contact-marker-update"
+
+MARKER_MERGE_ENDPOINT = '/task/event/merge/contact_marker'
+MARKER_MERGE_QUEUE = "contact-marker-merge"
+
 
 marker_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
@@ -208,4 +212,23 @@ def update_marker(marker_key, student_key, contact, search_methods):
         student_contacts[contact['id']] = contact
 
     marker.put()
+
+    insert_merge_task(marker.event, methods)
+
+
+def insert_merge_task(event_key, search_methods):
+    """Insert a task to merge contact markers for the given search_methods."""
+    from google.appengine.api import taskqueue
+
+    event_urlsafe = event_key.urlsafe()
+
+    task = taskqueue.Task(
+        url=MARKER_MERGE_ENDPOINT,
+        params={
+            'event': event_urlsafe,
+            'methods': search_methods
+        }
+    )
+
+    taskqueue.Queue(name=MARKER_MERGE_QUEUE).add(task)
 

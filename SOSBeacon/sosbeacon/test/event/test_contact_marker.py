@@ -659,3 +659,31 @@ class TestUpdateMarker(unittest.TestCase):
 
         self.assertEqual(1, insert_merge_task_mock.call_count)
 
+
+class TestInsertMergeTask(unittest.TestCase):
+    """Ensure the insert_update_marker_task creates and inserts a task to
+    update a contact marker.
+    """
+
+    @mock.patch('google.appengine.api.taskqueue.Task', autospec=True)
+    @mock.patch('google.appengine.api.taskqueue.Queue.add', autospec=True)
+    def test_task_params(self, queue_add_mock, task_mock):
+        """Ensure the resultant task name contains enough to be unique."""
+        from sosbeacon.event.contact_marker import insert_merge_task
+
+        event_key = mock.Mock()
+        event_key.urlsafe.return_value = "EVENTKEY"
+
+        search_methods = ['a', 123]
+
+        insert_merge_task(event_key, search_methods[:])
+
+        check_params = {
+            'event': 'EVENTKEY',
+            'methods': search_methods[:]
+        }
+
+        self.assertEqual(check_params, task_mock.call_args[1]['params'])
+
+        self.assertTrue(queue_add_mock.called)
+

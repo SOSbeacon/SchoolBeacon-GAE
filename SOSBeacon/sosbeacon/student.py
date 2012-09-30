@@ -53,6 +53,8 @@ class Student(EntityBase):
     groups = ndb.KeyProperty('g', repeated=True)
     contacts = ndb.JsonProperty('c')
 
+    notes = ndb.TextProperty()
+
     @classmethod
     def from_dict(cls, data):
         """Instantiate a Student entity from a dict of values."""
@@ -66,6 +68,7 @@ class Student(EntityBase):
 
         student.name = data.get('name')
         student.identifier = data.get('identifier')
+        student.notes = data.get('notes')
 
         student.groups = data.get('groups')
         student.contacts = data.get('contacts')
@@ -83,6 +86,7 @@ class Student(EntityBase):
 
         student['contacts'] = self.contacts if self.contacts else []
         student['groups'] = [key.urlsafe() for key in self.groups]
+        student['notes'] = self.notes or ''
 
         return student
 

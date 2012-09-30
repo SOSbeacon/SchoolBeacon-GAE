@@ -1,30 +1,21 @@
 <div class="control-group">
-  <label for="type" class="control-label">Type:</label>
+  <label class="control-label">Contact:</label>
   <div class="controls">
-    <select id="type" name="type" class="type"/></select>
-  </div>
-</div>
-
-<div class="control-group name">
-  <label for="name" class="control-label">Name:</label>
-  <div class="controls">
-    <input id="name" name="name" type="text" value="<%- name %>" 
-           autocomplete="off" class="name" placeholder="Name..." />
+    <select id="contact-type" name="contact-type" class="contact-type"/></select>
+    <input id="contact-name" name="contact-name" type="text" value="<%- name %>" 
+      autocomplete="off" class="contact-name" placeholder="Name..." />
   </div>
 </div>
 <div class="control-group">
   <label class="control-label">Contact Methods:</label>
   <div class="controls">
-    <div class="control">
-      <fieldset class="methods"></fieldset>
-      <button class="method add_method btn btn-primary">add contact method</button>
-    </div>
+    <div class="control methods"></div>
   </div>
 </div>
 <div class="control-group">
   <label for="notes" class="control-label">Notes:</label>
   <div class="controls">
-    <textarea id="notes" name="notes" class="notes input-xlarge"
-              placeholder="Notes..."><%- notes %></textarea>
+    <textarea id="contact-notes" name="contact-notes" class="contact-notes input-xlarge"
+      placeholder="Notes..."><%- notes %></textarea>
   </div>
 </div>

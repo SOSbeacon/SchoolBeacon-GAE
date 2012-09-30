@@ -23,6 +23,8 @@ class App.SOSBeacon.Router extends Backbone.Router
         "": "showStudent"
         "groupstudents/:id": "showGroupStudents"
         "student": "showStudent"
+        "student/new": "addStudent"
+        "student/edit/:id": "editStudent"
         "student/import": "showImportStudents"
         "group": "showGroup"
         "broadcast": "showBroadcast"
@@ -47,6 +49,12 @@ class App.SOSBeacon.Router extends Backbone.Router
 
     showStudent: () =>
         @swap(App.SOSBeacon.View.StudentApp)
+
+    addStudent: () =>
+        @swap(App.SOSBeacon.View.StudentEditApp)
+
+    editStudent: (id) =>
+        @swap(App.SOSBeacon.View.StudentEditApp, id)
 
     showGroup: () =>
         @swap(App.SOSBeacon.View.GroupApp)

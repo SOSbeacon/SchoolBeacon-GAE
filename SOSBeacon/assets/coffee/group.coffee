@@ -212,11 +212,11 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
     className: "control-group"
 
     propertyMap:
-        "name": "input.name"
+        "name": "input.group-name-select"
 
     events:
         "click a.remove": "removeSelect"
-        "blur input.name": "checkGroup"
+        "blur input.group-name-select": "checkGroup"
 
     initialize: =>
         @options.autoAdd ?= true
@@ -226,7 +226,7 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
         if @typeahead?.shown
             return true
 
-        candidateName = $.trim(@$('input.name').val())
+        candidateName = $.trim(@$('input.group-name-select').val())
 
         if @model.id or not candidateName
             @validator.clearMessage('name')
@@ -237,7 +237,7 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
 
     render: =>
         @$el.html(@template(@model.toJSON()))
-        @$('input.name').typeahead({
+        @$('input.group-name-select').typeahead({
             value_property: 'name'
             updater: (item) =>
                 @model.set(item, {silent: true})
@@ -262,19 +262,19 @@ class App.SOSBeacon.View.GroupSelect extends Backbone.View
     maybeClear: (typeahead) =>
         @typeahead = typeahead
 
-        candidateName = @$('input.name').val()
+        candidateName = @$('input.group-name-select').val()
         if not @model.id or @model.get('name') == candidateName
             return
 
         @model.reset()
-        @$('input.name').val(candidateName)
+        @$('input.group-name-select').val(candidateName)
 
     removeSelect: =>
         @trigger('removed', @)
         return @close()
 
     onClose: =>
-        @$('input.name').trigger('cleanup')
+        @$('input.group-name-select').trigger('cleanup')
         if @options.groupCollection
             @options.groupCollection.remove(@model)
 

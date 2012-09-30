@@ -1,1 +1,6 @@
-__version__ = '0.0.1'
+
+import sys
+import os
+
+sys.path.insert(0, os.getcwd())
+

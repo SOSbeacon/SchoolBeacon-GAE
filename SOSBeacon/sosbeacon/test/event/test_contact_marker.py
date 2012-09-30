@@ -526,18 +526,19 @@ class TestInsertUpdateMarkerTask(unittest.TestCase):
         search_methods = ['a', 123]
 
         insert_update_marker_task(
-            marker_key, student_key, contact, search_methods)
+            marker_key, student_key, contact.copy(), search_methods[:])
 
         check_params = {
             'marker': 'MARKERKEY',
             'student': 'STUDENTKEY',
-            'contact': contact,
-            'methods': search_methods
+            'contact': contact.copy(),
+            'methods': search_methods[:]
         }
 
         self.assertEqual(check_params, task_mock.call_args[1]['params'])
 
         self.assertTrue(queue_add_mock.called)
+
 
 class TestUpdateMarker(unittest.TestCase):
     """Ensure update_marker correctly merges the new student and contact

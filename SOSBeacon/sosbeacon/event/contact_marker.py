@@ -5,6 +5,7 @@ import voluptuous
 
 from skel.datastore import EntityBase
 
+from sosbeacon.event.event import Event
 
 marker_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
@@ -20,12 +21,18 @@ marker_query_schema = {
 
 
 class ContactMarker(EntityBase):
-    """Used to store Contact-Events tx / view metadata."""
+    """Used to store Contact-Events tx / view metadata.
+
+    Key name is constructed as:
+        event.short_id + ':' + ContactMarker.short_id
+    """
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
     # Used to query for short URLs
     short_id = ndb.StringProperty('i')
+
+    event = ndb.KeyProperty(Event)
 
     # contact name, for display
     name = ndb.StringProperty('nm')
@@ -34,6 +41,10 @@ class ContactMarker(EntityBase):
     last_viewed_date = ndb.IntegerProperty('at', indexed=False)
 
     students = ndb.JsonProperty('s', indexed=False)
+
+    methods = ndb.StringProperty('m', indexed=True, repeated=True)
+
+    place_holder = ndb.KeyProperty('p', indexed=False)
 
     def merge(self, other):
         """Merge this MethodMarker entity with another MethodMarker."""
@@ -67,7 +78,90 @@ class ContactMarker(EntityBase):
         marker['acknowledged'] = self.acknowledged
         marker['last_viewed_date'] = self.last_viewed_date
 
-        marker['students'] = [student for student, name, voice in self.students]
+        marker['students'] = [
+            student for student, name, voice in self.students]
 
         return marker
 
+
+def find_markers_for_methods(event_key, methods):
+    """Helper method to return a ContactMarker query for the given event and
+    methods.
+
+    This method exists primarily to make unit testing easier.
+    """
+    if not event_key:
+        raise ValueError('event_key is required.')
+
+    if not methods:
+        raise ValueError('Non-empty value for methods is required.')
+
+    return ContactMarker.query(
+        ContactMarker.event == event_key, ContactMarker.methods.IN(methods))
+
+
+def get_marker_for_methods(event_key, search_methods):
+    # Setup query to search for matching markers.
+    query = find_markers_for_methods(event_key, search_methods)
+
+    # Assess results to see if there is any overlap.
+    place_holder_counts = {}
+    markers = []
+    for marker in query:
+        if not marker.place_holder:
+            markers.append(marker)
+            continue
+
+        count = place_holder_counts.get(marker.place_holder, 0)
+        place_holder_counts[marker.place_holder] = count + 1
+
+    if not place_holder_counts and not markers:
+        return None
+
+    if place_holder_counts:
+        place_holder_key = sorted(
+            place_holder_counts, key=lambda x: place_holder_counts[x])[-1]
+        place_holder = place_holder_key.get()
+    else:
+        place_holder = markers.pop()
+
+    insert_merge_task(event_key, search_methods)
+
+    return place_holder
+
+
+def create_or_update_marker(event_key, student_key, contact, search_methods):
+    """Look for a marker for the requested methods.  If one is found, return
+    its short_id, if multiple are found, merge them, then return the short_id.
+    """
+    if not search_methods:
+        raise ValueError('Non-empty value for search_methods is required.')
+
+    if not contact:
+        raise ValueError('Contact is required.')
+
+    if not student_key:
+        raise ValueError('student_key is required.')
+
+    if not event_key:
+        raise ValueError('event_key is required.')
+
+    marker = get_marker_for_methods(event_key, search_methods)
+
+    if not marker:
+        # TODO: What needs set?
+        short_id = str(ContactMarker.allocate_ids(size=1, parent=event_key)[0])
+        key_id = "%s:%s" % (event_key.id, short_id)
+        marker = ContactMarker(
+            id=key_id,
+            event=event_key,
+            name=contact.get('name'),
+            students={student_key.id(): contact},
+            short_id=short_id,
+            methods=search_methods)
+        marker.put()
+        return marker.short_id
+
+    insert_update_marker_task(marker.key, student_key, contact, search_methods)
+
+    return marker.short_id

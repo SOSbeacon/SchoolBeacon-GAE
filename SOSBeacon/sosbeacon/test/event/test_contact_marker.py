@@ -472,12 +472,9 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
 
     @mock.patch('sosbeacon.event.contact_marker.insert_update_marker_task',
                 autospec=True)
-    @mock.patch('sosbeacon.event.contact_marker.insert_merge_task',
-                autospec=True)
     @mock.patch('sosbeacon.event.contact_marker.find_markers_for_methods',
                 autospec=True)
     def test_sort_place_holders(self, find_markers_for_methods_mock,
-                                insert_merge_task_mock,
                                 insert_update_marker_task_mock):
         """Ensure an exsting short_id is returned, and contact merged, if
         there is a matching marker.
@@ -506,7 +503,6 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
         self.assertEqual('A', ret_value)
 
         self.assertEqual(1, insert_update_marker_task_mock.call_count)
-        self.assertEqual(1, insert_merge_task_mock.call_count)
 
 
 class TestInsertUpdateMarkerTask(unittest.TestCase):

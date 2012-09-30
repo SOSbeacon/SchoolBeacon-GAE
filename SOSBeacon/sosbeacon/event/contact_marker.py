@@ -133,8 +133,6 @@ def get_marker_for_methods(event_key, search_methods):
     else:
         place_holder = markers.pop()
 
-    insert_merge_task(event_key, search_methods)
-
     return place_holder
 
 

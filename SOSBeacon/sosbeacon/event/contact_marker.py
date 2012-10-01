@@ -240,3 +240,48 @@ def insert_merge_task(event_key, search_methods):
 
     taskqueue.Queue(name=MARKER_MERGE_QUEUE).add(task)
 
+
+def merge_markers(event_key, search_methods):
+    """Combine the contact markers for search_methods, merging as needed."""
+
+    markers = find_markers_for_methods(event_key, search_methods)
+
+    marker_map = {}
+    # Organize markers by place holder
+    place_holder_map = {}
+    acknowledged = set()
+    for marker in markers:
+        marker_map[marker.key] = marker
+        place_holder_map.setdefault(marker.place_holder, []).append(marker)
+        if marker.acknowledged:
+            acknowledged.add(marker.key)
+
+    # Redirect dupes to the most-referenced marker to minimize RPCs needed.
+    place_holders = sorted(
+        place_holder_map, key=lambda x: len(place_holder_map[x]),
+        reverse=True)
+
+    base_marker_key = None
+    if place_holders:
+        base_marker_key = place_holders[0]
+        if not base_marker_key and len(place_holder_map) > 1:
+            base_marker_key = place_holders[1]
+
+    if base_marker_key:
+        base_marker = marker_map[base_marker_key]
+    elif acknowledged:
+        base_marker = marker_map[acknowledged.pop()]
+    else:
+        base_marker = markers[0]
+
+    for marker in markers:
+        if marker == base_marker:
+            continue
+
+        # TODO: actually put the merged stuff.
+        newly_acked_students = base_marker.merge(marker)
+
+        update_marker_pair(base_marker, marker)
+
+    # do_stuff_with_new_acks(newly_acked_students)
+

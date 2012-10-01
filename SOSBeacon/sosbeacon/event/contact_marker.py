@@ -285,3 +285,19 @@ def merge_markers(event_key, search_methods):
 
     # do_stuff_with_new_acks(newly_acked_students)
 
+
+def update_marker_pair(marker1, marker2):
+    @ndb.transactional(xg=True)
+    def update_marker_pair(marker1, revision1, marker2, revision2):
+        check_entity1 = marker1.key.get()
+        if check_entity1.revision != revision1:
+            raise Exception("Marker1 revision out of date.")
+
+        check_entity2 = marker2.key.get()
+        if check_entity2.revision != revision2:
+            raise Exception("Marker2 revision out of date.")
+
+        ndb.put_multi([marker1, marker2])
+
+    update_marker_pair(marker1, marker1.revision, marker2, marker2.revision)
+

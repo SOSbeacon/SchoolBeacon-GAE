@@ -924,3 +924,56 @@ class TestMergeMarkers(unittest.TestCase):
 
         self.assertEqual(3, update_marker_pair_mock.call_count)
 
+
+class TestUpdateMarkerPair(unittest.TestCase):
+    """Ensure update_marker_pair updates the two markers, and remerges if a
+    marker is out of date.
+    """
+
+    def setUp(self):
+        from google.appengine.datastore.datastore_stub_util import \
+            TimeBasedHRConsistencyPolicy
+
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_datastore_v3_stub(
+            consistency_policy=TimeBasedHRConsistencyPolicy())
+        self.testbed.init_memcache_stub()
+
+        self.marker1 = ContactMarker(
+            id='a',
+            students={'a': 'student_a'},
+            methods=['method_a']
+        )
+        self.marker2 = ContactMarker(
+            id='b',
+            students={'b': 'student_b'},
+            methods=['method_b'],
+        )
+
+    def test_both_valid(self):
+        """Test that the two markers are put if both are valid."""
+        from sosbeacon.event.contact_marker import update_marker_pair
+
+        self.marker1.put()
+        self.marker2.put()
+
+        update_marker_pair(self.marker1, self.marker2)
+
+    def test_exception_raised_if_one_ood(self):
+        """Test that the an exception is raised is a marker is stale."""
+        from sosbeacon.event.contact_marker import update_marker_pair
+
+        self.marker1.put()
+        self.marker2.put()
+
+        evil_marker1 = self.marker1.key.get(use_cache=False)
+        evil_marker1.put(use_cache=False)
+
+        self.assertRaisesRegexp(
+            Exception, "revision out of date.",
+            update_marker_pair, self.marker1, self.marker2)
+

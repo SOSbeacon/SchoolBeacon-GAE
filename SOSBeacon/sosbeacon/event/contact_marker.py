@@ -56,6 +56,8 @@ class ContactMarker(EntityBase):
 
     def merge(self, other):
         """Merge this MethodMarker entity with another MethodMarker."""
+        other.place_holder = self.key
+
         self.acknowledged = max(self.acknowledged, other.acknowledged)
 
         self.last_viewed_date = max(

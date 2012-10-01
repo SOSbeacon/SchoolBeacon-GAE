@@ -2,3 +2,4 @@ nose
 rednose
 mock
 nose-exclude
+nosegunit

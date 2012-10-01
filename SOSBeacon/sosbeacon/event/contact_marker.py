@@ -7,6 +7,14 @@ from skel.datastore import EntityBase
 
 from sosbeacon.event.event import Event
 
+
+CONTACT_MERGE_ENDPOINT = '/task/event/update/contact_marker'
+CONTACT_MERGE_QUEUE = "contact-marker-update"
+
+MARKER_MERGE_ENDPOINT = '/task/event/merge/contact_marker'
+MARKER_MERGE_QUEUE = "contact-marker-merge"
+
+
 marker_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'acknowledged': voluptuous.boolean(),
@@ -125,14 +133,13 @@ def get_marker_for_methods(event_key, search_methods):
     else:
         place_holder = markers.pop()
 
-    insert_merge_task(event_key, search_methods)
-
     return place_holder
 
 
 def create_or_update_marker(event_key, student_key, contact, search_methods):
     """Look for a marker for the requested methods.  If one is found, return
-    its short_id, if multiple are found, merge them, then return the short_id.
+    its short_id, if multiple are found, request a merge, then return one's
+    short_id.
     """
     if not search_methods:
         raise ValueError('Non-empty value for search_methods is required.')
@@ -165,3 +172,60 @@ def create_or_update_marker(event_key, student_key, contact, search_methods):
     insert_update_marker_task(marker.key, student_key, contact, search_methods)
 
     return marker.short_id
+
+
+def insert_update_marker_task(marker_key, student_key,
+                              contact, search_methods):
+    """Insert a task to merge a contact's info into a marker."""
+    from google.appengine.api import taskqueue
+
+    marker_urlsafe = marker_key.urlsafe()
+    student_urlsafe = student_key.urlsafe()
+
+    task = taskqueue.Task(
+        url=CONTACT_MERGE_ENDPOINT,
+        params={
+            'marker': marker_urlsafe,
+            'student': student_urlsafe,
+            'contact': contact,
+            'methods': search_methods
+        }
+    )
+
+    taskqueue.Queue(name=CONTACT_MERGE_QUEUE).add(task)
+
+
+@ndb.transactional
+def update_marker(marker_key, student_key, contact, methods):
+    """Look for a marker for the requested methods.  If one is found, return
+    its short_id, if multiple are found, merge them, then return the short_id.
+    """
+    marker = marker_key.get()
+
+    marker.methods = list(set(marker.methods) | set(methods))
+
+    student_contacts = marker.students.setdefault(student_key, {})
+    if contact['id'] not in student_contacts:
+        student_contacts[contact['id']] = contact
+
+    marker.put()
+
+    insert_merge_task(marker.event, methods)
+
+
+def insert_merge_task(event_key, search_methods):
+    """Insert a task to merge contact markers for the given search_methods."""
+    from google.appengine.api import taskqueue
+
+    event_urlsafe = event_key.urlsafe()
+
+    task = taskqueue.Task(
+        url=MARKER_MERGE_ENDPOINT,
+        params={
+            'event': event_urlsafe,
+            'methods': search_methods
+        }
+    )
+
+    taskqueue.Queue(name=MARKER_MERGE_QUEUE).add(task)
+

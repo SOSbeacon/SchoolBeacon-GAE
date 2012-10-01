@@ -95,7 +95,6 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
 
         @model.bind('error', App.Util.Form.displayValidationErrors)
 
-        @groupSelects = []
         @contactEdits = []
 
     render: () =>
@@ -109,27 +108,20 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         return this
 
     renderGroups: () =>
-        #TODO: switch to a underscore filter
-        ids = []
-        @model.groups.each((group, i) =>
-            ids.push(group.id)
-        )
-        @$("#group-select").val(ids)
-
-        @$("#group-select").select2({
-            placeholder: "Select a group...",
-            openOnEnter: false,
-        })
-
         allGroups = new App.SOSBeacon.Collection.GroupList()
         allGroups.fetch(async: false)
         allGroups.each((group, i) =>
             @$("#group-select").append(
                 $("<option></option>")
+                    .attr('value', group.get('key'))
                     .html(group.get('name'))
-                    .attr('value', group.id)
             )
         )
+
+        @$("#group-select").val(@model.get('groups')).select2({
+            placeholder: "Select a group...",
+            openOnEnter: false,
+        })
 
         @$("input.select2-input").css('width', '100%')
 
@@ -144,16 +136,6 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
 
     change: (event) =>
         App.Util.Form.hideAlert()
-
-    removeGroupSelect: (select) =>
-        # Remove group from model.
-        @model.groups.remove(select.model)
-
-        # Remove group list of group selects.
-        index = _.indexOf(@groupSelects, select)
-        delete @groupSelects[index]
-
-        return true
 
     removeContact: (contactEdit) =>
         # Remove group from model.

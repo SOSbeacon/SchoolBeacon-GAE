@@ -259,6 +259,60 @@ class TestContactMarkerMerge(unittest.TestCase):
         self.assertEqual(sorted(set(students_1 + students_2)),
                          sorted(left.students))
 
+    def test_merge_methods_with_no_methods(self):
+        """Ensure merging methods with no methods preserves methods."""
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        methods = ['123312', 'samsmith@me.com']
+
+        left = ContactMarker(methods=methods[:])
+        right = ContactMarker()
+        left.merge(right)
+        self.assertEqual(sorted(methods), sorted(left.methods))
+
+    def test_merge_no_methods_with_methods(self):
+        """Ensure merging no methods with methods preserves methods."""
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        methods = ['123312', 'samsmith@me.com']
+
+        left = ContactMarker()
+        right = ContactMarker(methods=methods[:])
+        left.merge(right)
+        self.assertEqual(sorted(methods), sorted(left.methods))
+
+    def test_merge_same_methods(self):
+        """Ensure merging same methods doesn't dupe."""
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        methods = [
+            '1234567890', 'johnjones@earth.com',
+            '2098765432', 'billybob@somewhere.com'
+        ]
+
+        left = ContactMarker(methods=methods[:])
+        right = ContactMarker(methods=methods[:])
+        left.merge(right)
+        self.assertEqual(sorted(set(methods[:])), sorted(left.methods))
+
+    def test_merge_methods_with_overlapping_methods(self):
+        """Ensure merging new methods with overlapping methods doesn't dupe."""
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        base_methods = [
+            '1234567890', 'johnjones@earth.com',
+            '2098765432', 'billybob@somewhere.com'
+        ]
+
+        methods_1 = base_methods + ['123312', 'samsmith@me.com']
+        methods_2 = base_methods + ['848423', 'frank.frankton@me.com']
+
+        left = ContactMarker(methods=methods_1[:])
+        right = ContactMarker(methods=methods_2[:])
+        left.merge(right)
+        self.assertEqual(sorted(set(methods_1 + methods_2)),
+                         sorted(left.methods))
+
 
 class TestGetMarkerForMethods(unittest.TestCase):
     """Test get_marker_for_methods correctly gets existing ContactMarkers."""
@@ -433,7 +487,7 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
             create_or_update_marker, object(), object(), {}, ['a'])
 
     def test_no_student_key(self):
-        """Ensure error is raised if no contact is provided."""
+        """Ensure error is raised if no student is provided."""
         from sosbeacon.event.contact_marker import create_or_update_marker
 
         self.assertRaisesRegexp(
@@ -441,7 +495,7 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
             create_or_update_marker, object(), None, {'a': True}, ['a'])
 
     def test_no_event_key(self):
-        """Ensure error is raised if no contact is provided."""
+        """Ensure error is raised if no event is provided."""
         from sosbeacon.event.contact_marker import create_or_update_marker
 
         self.assertRaisesRegexp(
@@ -517,7 +571,7 @@ class TestInsertUpdateMarkerTask(unittest.TestCase):
     @mock.patch('google.appengine.api.taskqueue.Task', autospec=True)
     @mock.patch('google.appengine.api.taskqueue.Queue.add', autospec=True)
     def test_task_params(self, queue_add_mock, task_mock):
-        """Ensure the resultant task name contains enough to be unique."""
+        """Ensure the update marker task name contains enough to be unique."""
         from sosbeacon.event.contact_marker import insert_update_marker_task
 
         marker_key = mock.Mock()
@@ -554,7 +608,9 @@ class TestUpdateMarker(unittest.TestCase):
     @mock.patch('sosbeacon.event.contact_marker.insert_merge_task',
                 autospec=True)
     def test_methods_get_merged(self, insert_merge_task_mock, marker_put_mock):
-        """Test that methods don't get duplicated, but new stuff is added."""
+        """Test that existing methods don't get duplicated and new methods get
+        added.
+        """
         from google.appengine.ext import ndb
 
         from sosbeacon.event.contact_marker import ContactMarker
@@ -588,7 +644,7 @@ class TestUpdateMarker(unittest.TestCase):
     @mock.patch('sosbeacon.event.contact_marker.insert_merge_task',
                 autospec=True)
     def test_student_gets_added(self, insert_merge_task_mock, marker_put_mock):
-        """Test that methods don't get duplicated."""
+        """Test a new student is added to the marker."""
         from google.appengine.ext import ndb
 
         from sosbeacon.event.contact_marker import ContactMarker
@@ -622,7 +678,7 @@ class TestUpdateMarker(unittest.TestCase):
                 autospec=True)
     def test_contact_gets_added_to_student(self, insert_merge_task_mock,
                                            marker_put_mock):
-        """Test that methods don't get duplicated."""
+        """Test that new contact is added to the existing student."""
         from google.appengine.ext import ndb
 
         from sosbeacon.event.contact_marker import ContactMarker
@@ -669,7 +725,7 @@ class TestInsertMergeTask(unittest.TestCase):
     @mock.patch('google.appengine.api.taskqueue.Task', autospec=True)
     @mock.patch('google.appengine.api.taskqueue.Queue.add', autospec=True)
     def test_task_params(self, queue_add_mock, task_mock):
-        """Ensure the resultant task name contains enough to be unique."""
+        """Ensure the marker merge task name contains enough to be unique."""
         from sosbeacon.event.contact_marker import insert_merge_task
 
         event_key = mock.Mock()
@@ -687,4 +743,237 @@ class TestInsertMergeTask(unittest.TestCase):
         self.assertEqual(check_params, task_mock.call_args[1]['params'])
 
         self.assertTrue(queue_add_mock.called)
+
+
+class TestMergeMarkers(unittest.TestCase):
+    """Ensure merge_markers correctly combines markers and fires ack signals
+    when one of the markers has been aacked.
+    """
+
+    def setUp(self):
+        from google.appengine.datastore.datastore_stub_util import \
+            TimeBasedHRConsistencyPolicy
+
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_datastore_v3_stub(
+            consistency_policy=TimeBasedHRConsistencyPolicy())
+        self.testbed.init_memcache_stub()
+
+        self.marker1 = ContactMarker(
+            id='a',
+            students={'a': 'student_a'},
+            methods=['method_a']
+        )
+        self.marker2 = ContactMarker(
+            id='b',
+            students={'b': 'student_b'},
+            methods=['method_b'],
+        )
+        self.marker3 = ContactMarker(
+            id='c',
+            students={'c': 'student_c'},
+            methods=['method_c'],
+        )
+        self.marker4 = ContactMarker(
+            id='d',
+            students={'d': 'student_d'},
+            methods=['method_d'],
+        )
+
+    @mock.patch('google.appengine.ext.ndb.put_multi', autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.find_markers_for_methods',
+                autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.update_marker_pair',
+                autospec=True)
+    def test_all_new(self, update_marker_pair_mock,
+                     find_markers_for_methods_mock, put_multi_mock):
+        """Ensure all of the new markers are merged."""
+        from sosbeacon.event.contact_marker import merge_markers
+
+        all_students = self.marker1.students.keys()
+        all_students.extend(self.marker2.students.keys())
+        all_students.extend(self.marker3.students.keys())
+
+        all_methods = self.marker1.methods[:]
+        all_methods.extend(self.marker2.methods[:])
+        all_methods.extend(self.marker3.methods[:])
+
+        find_markers_for_methods_mock.return_value = (
+            self.marker1, self.marker2, self.marker3)
+
+        merge_markers(object(), object())
+
+        self.assertEqual(sorted(all_students), sorted(self.marker1.students))
+        self.assertEqual(sorted(all_methods), sorted(self.marker1.methods))
+
+        self.assertEqual(self.marker1.key, self.marker2.place_holder)
+        self.assertEqual(self.marker1.key, self.marker3.place_holder)
+
+        self.assertEqual(2, update_marker_pair_mock.call_count)
+
+    @mock.patch('google.appengine.ext.ndb.put_multi', autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.find_markers_for_methods',
+                autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.update_marker_pair',
+                autospec=True)
+    def test_new_with_one_acked(self, update_marker_pair_mock,
+                                find_markers_for_methods_mock,
+                                put_multi_mock):
+        """Ensure the new markers are merged, and the acked marker is used
+        as the base.
+        """
+        from sosbeacon.event.contact_marker import merge_markers
+
+        self.marker2.acknowledged = True
+        self.marker2.last_viewed_date = 12345
+
+        all_students = self.marker1.students.keys()
+        all_students.extend(self.marker2.students.keys())
+        all_students.extend(self.marker3.students.keys())
+
+        all_methods = self.marker1.methods[:]
+        all_methods.extend(self.marker2.methods[:])
+        all_methods.extend(self.marker3.methods[:])
+
+        find_markers_for_methods_mock.return_value = (
+            self.marker1, self.marker2, self.marker3)
+
+        merge_markers(object(), object())
+
+        self.assertEqual(sorted(all_students), sorted(self.marker2.students))
+        self.assertEqual(sorted(all_methods), sorted(self.marker2.methods))
+
+        self.assertEqual(self.marker2.key, self.marker1.place_holder)
+        self.assertEqual(self.marker2.key, self.marker3.place_holder)
+
+        self.assertEqual(2, update_marker_pair_mock.call_count)
+
+    @mock.patch('google.appengine.ext.ndb.put_multi', autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.find_markers_for_methods',
+                autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.update_marker_pair',
+                autospec=True)
+    def test_with_place_holder(self, update_marker_pair_mock,
+                               find_markers_for_methods_mock,
+                               put_multi_mock):
+        """Ensure the marker already pointed at is used as the base."""
+        from sosbeacon.event.contact_marker import merge_markers
+
+        self.marker3.place_holder = self.marker1.key
+
+        all_students = self.marker1.students.keys()
+        all_students.extend(self.marker2.students.keys())
+        all_students.extend(self.marker3.students.keys())
+
+        all_methods = self.marker1.methods[:]
+        all_methods.extend(self.marker2.methods[:])
+        all_methods.extend(self.marker3.methods[:])
+
+        find_markers_for_methods_mock.return_value = (
+            self.marker1, self.marker2, self.marker3)
+
+        merge_markers(object(), object())
+
+        self.assertEqual(sorted(all_students), sorted(self.marker1.students))
+        self.assertEqual(sorted(all_methods), sorted(self.marker1.methods))
+
+        self.assertEqual(self.marker1.key, self.marker2.place_holder)
+        self.assertEqual(self.marker1.key, self.marker3.place_holder)
+
+        self.assertEqual(2, update_marker_pair_mock.call_count)
+
+    @mock.patch('google.appengine.ext.ndb.put_multi', autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.find_markers_for_methods',
+                autospec=True)
+    @mock.patch('sosbeacon.event.contact_marker.update_marker_pair',
+                autospec=True)
+    def test_with_multiple_place_holders(self, update_marker_pair_mock,
+                                         find_markers_for_methods_mock,
+                                         put_multi_mock):
+        """Ensure marker pointed at the most is used as the base."""
+        from sosbeacon.event.contact_marker import merge_markers
+
+        self.marker3.place_holder = self.marker1.key
+        self.marker4.place_holder = self.marker1.key
+        self.marker2.place_holder = self.marker3.key
+
+        all_students = self.marker1.students.keys()
+        all_students.extend(self.marker2.students.keys())
+        all_students.extend(self.marker3.students.keys())
+        all_students.extend(self.marker4.students.keys())
+
+        all_methods = self.marker1.methods[:]
+        all_methods.extend(self.marker2.methods[:])
+        all_methods.extend(self.marker3.methods[:])
+        all_methods.extend(self.marker4.methods[:])
+
+        find_markers_for_methods_mock.return_value = (
+            self.marker1, self.marker2, self.marker3, self.marker4)
+
+        merge_markers(object(), object())
+
+        self.assertEqual(sorted(all_students), sorted(self.marker1.students))
+        self.assertEqual(sorted(all_methods), sorted(self.marker1.methods))
+
+        self.assertEqual(self.marker1.key, self.marker2.place_holder)
+        self.assertEqual(self.marker1.key, self.marker3.place_holder)
+
+        self.assertEqual(3, update_marker_pair_mock.call_count)
+
+
+class TestUpdateMarkerPair(unittest.TestCase):
+    """Ensure update_marker_pair updates the two markers, and remerges if a
+    marker is out of date.
+    """
+
+    def setUp(self):
+        from google.appengine.datastore.datastore_stub_util import \
+            TimeBasedHRConsistencyPolicy
+
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_datastore_v3_stub(
+            consistency_policy=TimeBasedHRConsistencyPolicy())
+        self.testbed.init_memcache_stub()
+
+        self.marker1 = ContactMarker(
+            id='a',
+            students={'a': 'student_a'},
+            methods=['method_a']
+        )
+        self.marker2 = ContactMarker(
+            id='b',
+            students={'b': 'student_b'},
+            methods=['method_b'],
+        )
+
+    def test_both_valid(self):
+        """Test that the two markers are put if both are valid."""
+        from sosbeacon.event.contact_marker import update_marker_pair
+
+        self.marker1.put()
+        self.marker2.put()
+
+        update_marker_pair(self.marker1, self.marker2)
+
+    def test_exception_raised_if_one_ood(self):
+        """Test that the an exception is raised is a marker is stale."""
+        from sosbeacon.event.contact_marker import update_marker_pair
+
+        self.marker1.put()
+        self.marker2.put()
+
+        evil_marker1 = self.marker1.key.get(use_cache=False)
+        evil_marker1.put(use_cache=False)
+
+        self.assertRaisesRegexp(
+            Exception, "revision out of date.",
+            update_marker_pair, self.marker1, self.marker2)
 

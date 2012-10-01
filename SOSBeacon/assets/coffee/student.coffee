@@ -81,7 +81,6 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
 
     events:
         "change": "change"
-        "click button.add_group": "addGroup"
         "click button.add_contact": "addContact"
         "submit form" : "save"
         "keypress .edit": "updateOnEnter"
@@ -96,7 +95,6 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
 
         @model.bind('error', App.Util.Form.displayValidationErrors)
 
-        @groupSelects = []
         @contactEdits = []
 
     render: () =>
@@ -105,15 +103,27 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         @renderGroups()
         @renderContacts()
 
+        @$("#name").focus()
+
         return this
 
     renderGroups: () =>
-        @model.groups.each((group, i) =>
-            editView = new App.SOSBeacon.View.GroupSelect(model: group)
-            editView.on('removed', @removeGroupSelect)
-            @groupSelects.push(editView)
-            @$el.find('fieldset.groups').append(editView.render().el)
+        allGroups = new App.SOSBeacon.Collection.GroupList()
+        allGroups.fetch(async: false)
+        allGroups.each((group, i) =>
+            @$("#group-select").append(
+                $("<option></option>")
+                    .attr('value', group.get('key'))
+                    .html(group.get('name'))
+            )
         )
+
+        @$("#group-select").val(@model.get('groups')).select2({
+            placeholder: "Select a group...",
+            openOnEnter: false,
+        })
+
+        @$("input.select2-input").css('width', '100%')
 
     renderContacts: () =>
         contactList = @$('ul.contacts')
@@ -126,16 +136,6 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
 
     change: (event) =>
         App.Util.Form.hideAlert()
-
-    removeGroupSelect: (select) =>
-        # Remove group from model.
-        @model.groups.remove(select.model)
-
-        # Remove group list of group selects.
-        index = _.indexOf(@groupSelects, select)
-        delete @groupSelects[index]
-
-        return true
 
     removeContact: (contactEdit) =>
         # Remove group from model.
@@ -151,28 +151,21 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         if e
             e.preventDefault()
 
-        groupList = []
-        badGroups = _.filter(@groupSelects, (groupSelect) ->
-            groupValid = groupSelect.checkGroup()
-            groupId = groupSelect.model.id
-            if groupId and groupValid
-                groupList.push(groupId)
-            return not groupValid
-        )
+        groupIds = @$("#group-select").val()
+        if not groupIds
+            groupIds = []
 
         badContacts = _.filter(@contactEdits, (contactEdit) ->
             contactValid = contactEdit.validate()
             return not contactValid
         )
-        if not _.isEmpty(badContacts) or not _.isEmpty(badGroups)
+        if not _.isEmpty(badContacts)
             return false
-
-        App.Util.FormValidator._clearMessage(@$('fieldset.groups'))
 
         @model.save(
             name: @$('input.name').val()
             identifier: @$('input.identifier').val()
-            groups: groupList
+            groups: groupIds
             notes: $.trim(@$('textarea.notes').val())
         )
 
@@ -182,30 +175,6 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
                 "Successs!", "Save successful", "alert-success")
 
             App.SOSBeacon.Event.trigger('model:save', @model, this)
-
-        return false
-
-    addGroup: () =>
-        badGroup = _.find(@groupSelects, (groupSelect) ->
-            if groupSelect.model.id
-                return false
-            return true
-        )
-        if badGroup
-            badGroup.$('input.name').focus()
-            return false
-
-        group = new @model.groups.model()
-        @model.groups.add(group)
-
-        editView = new App.SOSBeacon.View.GroupSelect(model: group)
-        editView.on('removed', @removeGroupSelect)
-        @groupSelects.push(editView)
-
-        rendered = editView.render()
-        @$el.find('fieldset.groups').append(rendered.el)
-
-        rendered.$el.find('input.group').focus()
 
         return false
 
@@ -228,10 +197,6 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         focusItem = $("*:focus")
 
         if e.keyCode == 13
-            if focusItem.hasClass('group')
-                @addGroup()
-                return false
-
             if focusItem.hasClass('contact')
                 @addContact()
                 return false

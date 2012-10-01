@@ -58,6 +58,7 @@ def _bundle_skel(app_path, env, debug=False):
         path.join(JS_LIB_PATH, 'bootstrap.js'),
         path.join(JS_LIB_PATH, 'bootstrap-typeahead-improved.js'),
         path.join(JS_LIB_PATH, 'date.js'),
+        path.join(JS_LIB_PATH, 'select2.js'),
     )
 
     #TOOD: add require so we can simplify this
@@ -91,11 +92,13 @@ def _bundle_3rd_party_css(app_path, env, debug=False):
     if debug:
         bundle = Bundle(
                 path.join('css', 'bootstrap.css'),
+                path.join('css', 'select2.css'),
                 output=path.join(app_path, 'css', 'lib.css')
             )
     else:
         bundle = Bundle(
                 path.join('css', 'min', 'bootstrap.min.css'),
+                path.join('css', 'select2.css'),
                 output=path.join(app_path, 'css', 'lib.css')
             )
 

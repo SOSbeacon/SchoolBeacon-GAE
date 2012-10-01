@@ -165,7 +165,6 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
 
     events:
         "change": "change"
-        "click button.add_group": "addGroup"
         "submit form" : "save"
         "keypress .edit": "updateOnEnter"
         "hidden": "close"
@@ -177,19 +176,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
             validatorMap: @model.validators
         )
 
-        @groupSelects = []
-
         return super()
-
-    removeGroupSelect: (select) =>
-        # Remove group from model.
-        @model.groups.remove(select.model)
-
-        # Remove group list of group selects.
-        index = _.indexOf(@groupSelects, select)
-        delete @groupSelects[index]
-
-        return true
 
     smsUpdated: =>
         smsMessage = @$('textarea.summary').val()
@@ -200,30 +187,21 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         if e
             e.preventDefault()
 
-        groupList = []
-        badGroups = _.filter(@groupSelects, (groupSelect) ->
-            groupValid = groupSelect.checkGroup()
-            groupId = groupSelect.model.id
-            if groupId and groupValid
-                groupList.push(groupId)
-            return not groupValid
-        )
-        if not _.isEmpty(badGroups)
-            return false
+        groupIds = @$("#group-select").val()
+        if not groupIds
+            groupIds = []
 
-        if _.isEmpty(groupList)
+        if _.isEmpty(groupIds)
             App.Util.FormValidator._displayMessage(
                 @$('fieldset.groups'), 'error', "At least one group is required.")
             return false
-
-        App.Util.FormValidator._clearMessage(@$('fieldset.groups'))
 
         @model.save(
             active: @$('input.active').prop('checked')
             title: @$('input.title').val()
             summary: @$('textarea.summary').val()
             detail: @$('textarea.detail').val()
-            groups: groupList
+            groups: groupIds
             type: @$('select.type').val()
             who_to_notify: @$('select.who_to_notify').val()
             response_wait_seconds: parseInt(@$('select.response_wait_seconds').val())
@@ -235,12 +213,7 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
         el = @$el
         el.html(@template(@model.toJSON()))
 
-        @model.groups.each((group, i) =>
-            editView = new App.SOSBeacon.View.GroupSelect(model: group)
-            editView.on('removed', @removeGroupSelect)
-            @groupSelects.push(editView)
-            el.find('fieldset.groups').append(editView.render().el)
-        )
+        @renderGroups()
 
         select = @$('.type')
         App.SOSBeacon.eventTypes.each((eventType, i) =>
@@ -280,40 +253,26 @@ class App.SOSBeacon.View.EventEdit extends App.Skel.View.EditView
 
         return super(asModal)
 
-    addGroup: () =>
-        badGroup = _.find(@groupSelects, (groupSelect) ->
-            if groupSelect.model.id
-                return false
-            return true
+    renderGroups: () =>
+        allGroups = new App.SOSBeacon.Collection.GroupList()
+        allGroups.fetch(async: false)
+        allGroups.each((group, i) =>
+            @$("#group-select").append(
+                $("<option></option>")
+                    .attr('value', group.get('key'))
+                    .html(group.get('name'))
+            )
         )
-        if badGroup
-            badGroup.$('input.name').focus()
-            return false
 
-        group = new @model.groups.model()
-        @model.groups.add(group)
+        @$("#group-select").val(@model.get('groups')).select2({
+            placeholder: "Select a group...",
+            openOnEnter: false,
+        })
 
-        editView = new App.SOSBeacon.View.GroupSelect(model: group)
-        editView.on('removed', @removeGroupSelect)
-        @groupSelects.push(editView)
-
-        rendered = editView.render()
-        @$el.find('fieldset.groups').append(rendered.el)
-
-        rendered.$el.find('input.group').focus()
-
-        App.Util.FormValidator._clearMessage(@$('fieldset.groups'))
-
-        return false
+        @$("input.select2-input").css('width', '100%')
 
     updateOnEnter: (e) =>
         focusItem = $("*:focus")
-
-        if e.keyCode == 13
-            if focusItem.hasClass('group')
-                @addGroup()
-                return false
-
         return super(e)
 
 

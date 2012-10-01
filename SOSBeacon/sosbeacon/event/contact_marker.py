@@ -77,6 +77,15 @@ class ContactMarker(EntityBase):
 
         self.students = list(students)
 
+        methods = set()
+        if self.methods:
+            methods |= set(self.methods)
+
+        if other.methods:
+            methods |= set(other.methods)
+
+        self.methods = list(methods)
+
         return self
 
     def to_dict(self):

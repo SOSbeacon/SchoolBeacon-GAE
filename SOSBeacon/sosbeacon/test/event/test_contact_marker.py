@@ -259,6 +259,60 @@ class TestContactMarkerMerge(unittest.TestCase):
         self.assertEqual(sorted(set(students_1 + students_2)),
                          sorted(left.students))
 
+    def test_merge_methods_with_no_methods(self):
+        """Ensure merging methods with no methods preserves methods."""
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        methods = ['123312', 'samsmith@me.com']
+
+        left = ContactMarker(methods=methods[:])
+        right = ContactMarker()
+        left.merge(right)
+        self.assertEqual(sorted(methods), sorted(left.methods))
+
+    def test_merge_no_methods_with_methods(self):
+        """Ensure merging no methods with methods preserves methods."""
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        methods = ['123312', 'samsmith@me.com']
+
+        left = ContactMarker()
+        right = ContactMarker(methods=methods[:])
+        left.merge(right)
+        self.assertEqual(sorted(methods), sorted(left.methods))
+
+    def test_merge_same_methods(self):
+        """Ensure merging same methods doesn't dupe."""
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        methods = [
+            '1234567890', 'johnjones@earth.com',
+            '2098765432', 'billybob@somewhere.com'
+        ]
+
+        left = ContactMarker(methods=methods[:])
+        right = ContactMarker(methods=methods[:])
+        left.merge(right)
+        self.assertEqual(sorted(set(methods[:])), sorted(left.methods))
+
+    def test_merge_methods_with_overlapping_methods(self):
+        """Ensure merging new methods with overlapping methods doesn't dupe."""
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        base_methods = [
+            '1234567890', 'johnjones@earth.com',
+            '2098765432', 'billybob@somewhere.com'
+        ]
+
+        methods_1 = base_methods + ['123312', 'samsmith@me.com']
+        methods_2 = base_methods + ['848423', 'frank.frankton@me.com']
+
+        left = ContactMarker(methods=methods_1[:])
+        right = ContactMarker(methods=methods_2[:])
+        left.merge(right)
+        self.assertEqual(sorted(set(methods_1 + methods_2)),
+                         sorted(left.methods))
+
 
 class TestGetMarkerForMethods(unittest.TestCase):
     """Test get_marker_for_methods correctly gets existing ContactMarkers."""

@@ -11,6 +11,7 @@ from sosbeacon.event.message import broadcast_to_groups
 from sosbeacon.event.message import broadcast_to_method
 from sosbeacon.event.message import broadcast_to_student
 
+from sosbeacon.event.contact_marker import update_marker
 
 
 class GroupsTxHandler(webapp2.RequestHandler):
@@ -356,19 +357,72 @@ class MethodTxHandler(webapp2.RequestHandler):
         broadcast_to_method(event_key, message_key, short_id, method, batch_id)
 
 
+class UpdateContactMarkerHandler(webapp2.RequestHandler):
+    """Merge a contact's info into the contact marker."""
+    def post(self):
+        from google.appengine.api import namespace_manager
 
+        event_urlsafe = self.request.get('event')
+        if not event_urlsafe:
+            logging.error('No event key given.')
+            return
 
+        # TODO: Use event id rather than key here for namespacing purposes?
+        event_key = ndb.Key(urlsafe=event_urlsafe)
+        event = event_key.get()
+        if not event:
+            logging.error('Event %s not found!', event_key)
+            return
 
+        if event.closed:
+            logging.error('Event %s closed!', event_key)
+            return
 
+        marker_urlsafe = self.request.get('marker')
+        if not marker_urlsafe:
+            logging.error('No marker key given.')
+            return
 
+        # TODO: Use message id rather than key here for namespacing purposes?
+        marker_key = ndb.Key(urlsafe=marker_urlsafe)
 
+        # TODO: Check namespace here.
+        current_namespae = unicode(namespace_manager.get_namespace())
+        if marker_key.namespace() != current_namespae:
+            logging.error('Marker %s not in namespace %s!',
+                          marker_key, current_namespae)
+            return
 
+        marker = marker_key.get()
+        if not marker:
+            logging.error('Marker %s not found!', marker_key)
+            return
 
+        # We don't want to update the wrong marker.
+        if marker.event != event.key:
+            logging.error('Marker %s not belong to Event %s!',
+                          marker_key, event_key)
+            return
 
+        student_urlsafe = self.request.get('student')
+        if not student_urlsafe:
+            logging.error('No student key given.')
+            return
 
+        # TODO: Use student id rather than key here for namespacing purposes?
+        student_key = ndb.Key(urlsafe=student_urlsafe)
 
+        contact = self.request.get('contact')
+        if not contact:
+            logging.error('No contact given.')
+            return
 
+        methods = self.request.get('methods')
+        if not methods:
+            logging.error('No methods given.')
+            return
 
+        update_marker(marker_key, student_key, contact, methods)
 
 
 

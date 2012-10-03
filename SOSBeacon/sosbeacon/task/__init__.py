@@ -12,6 +12,7 @@ from sosbeacon.event.message import broadcast_to_method
 from sosbeacon.event.message import broadcast_to_student
 
 from sosbeacon.event.contact_marker import update_marker
+from sosbeacon.event.contact_marker import merge_markers
 
 
 class GroupsTxHandler(webapp2.RequestHandler):
@@ -425,8 +426,29 @@ class UpdateContactMarkerHandler(webapp2.RequestHandler):
         update_marker(marker_key, student_key, contact, methods)
 
 
+class MergeContactMarkerHandler(webapp2.RequestHandler):
+    """Merge a contact's info into the contact marker."""
+    def post(self):
+        event_urlsafe = self.request.get('event')
+        if not event_urlsafe:
+            logging.error('No event key given.')
+            return
 
+        # TODO: Use event id rather than key here for namespacing purposes?
+        event_key = ndb.Key(urlsafe=event_urlsafe)
+        event = event_key.get()
+        if not event:
+            logging.error('Event %s not found!', event_key)
+            return
 
+        if event.closed:
+            logging.error('Event %s closed!', event_key)
+            return
 
+        methods = self.request.get('methods')
+        if not methods:
+            logging.error('No methods given.')
+            return
 
+        merge_markers(event_key, methods)
 

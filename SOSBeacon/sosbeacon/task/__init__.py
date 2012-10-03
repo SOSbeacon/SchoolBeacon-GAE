@@ -8,6 +8,7 @@ import webapp2
 
 
 
+class GroupsTxHandler(webapp2.RequestHandler):
     """Start the process of sending a message to every Contact associated
     with an Event.
 
@@ -67,6 +68,7 @@ import webapp2
             logging.error('Message %s is not a broadcast!', message_key)
             return
 
+        broadcast_to_groups(event.groups, event_key, message_key, batch_id)
 
 
 

@@ -175,10 +175,12 @@ class TestBroadcastToGroups(unittest.TestCase):
             group_key.urlsafe.return_value = i + 100
             group_keys.append(group_key)
 
+        event_key = Mock()
+
         message_key = Mock()
         message_key.urlsafe.return_value = 'abc'
 
-        broadcast_to_groups(group_keys, message_key, '')
+        broadcast_to_groups(group_keys, event_key, message_key, '')
 
         self.assertEqual(insert_tasks_mock.call_count, 1)
 
@@ -193,10 +195,12 @@ class TestBroadcastToGroups(unittest.TestCase):
             group_key.urlsafe.return_value = i + 100
             group_keys.append(group_key)
 
+        event_key = Mock()
+
         message_key = Mock()
         message_key.urlsafe.return_value = 'abc'
 
-        broadcast_to_groups(group_keys, message_key, '')
+        broadcast_to_groups(group_keys, event_key, message_key, '')
 
         self.assertEqual(4, insert_tasks_mock.call_count)
 
@@ -223,10 +227,12 @@ class TestBroadcastToGroups(unittest.TestCase):
         group_key = Mock()
         group_key.id = ALL_GROUPS_ID
 
+        event_key = Mock()
+
         message_key = Mock()
         message_key.urlsafe.return_value = 'abc'
 
-        broadcast_to_groups([group_key], message_key, '')
+        broadcast_to_groups([group_key], event_key, message_key, '')
 
         group_query_mock.assert_called_once_with()
         group_order_mock.assert_called_once_with(Group.key)
@@ -241,14 +247,17 @@ class TestBroadcastToGroups(unittest.TestCase):
         group_key = Mock()
         group_key.id = 'SomeGroup'
 
+        event_key = Mock()
+
         message_key = Mock()
         message_key.urlsafe.return_value = 'abc'
 
-        broadcast_to_groups([group_key], message_key, '')
+        broadcast_to_groups([group_key], event_key, message_key, '')
 
         self.assertEqual(insert_tasks_mock.call_count, 1)
 
-        get_task_mock.assert_called_once_with(group_key, message_key, '')
+        get_task_mock.assert_called_once_with(
+            group_key, event_key, message_key, '')
 
 
 class TestGetGroupBroadcastTask(unittest.TestCase):
@@ -264,6 +273,9 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         group_key = Mock()
         group_key.urlsafe.return_value = "GROUPKEY"
 
+        event_key = Mock()
+        event_key.urlsafe.return_value = "EVENTKEY"
+
         message_key = Mock()
         message_key.urlsafe.return_value = "MESSAGEKEY"
 
@@ -271,10 +283,11 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         iteration = 7
 
         ret_value = get_group_broadcast_task(
-            group_key, message_key, batch_id, iteration)
+            group_key, event_key, message_key, batch_id, iteration)
 
         task_name = task_mock.call_args[1]['name']
         self.assertIn('GROUPKEY', task_name)
+        self.assertNotIn('EVENTKEY', task_name)
         self.assertIn('MESSAGEKEY', task_name)
         self.assertIn('BATCHID', task_name)
         self.assertIn('7', task_name)
@@ -287,6 +300,9 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         group_key = Mock()
         group_key.urlsafe.return_value = "AGROUPKEY"
 
+        event_key = Mock()
+        event_key.urlsafe.return_value = "SOMEEVENTKEY"
+
         message_key = Mock()
         message_key.urlsafe.return_value = "SOMEMESSAGEKEY"
 
@@ -294,10 +310,11 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         iteration = 19
 
         ret_value = get_group_broadcast_task(
-            group_key, message_key, batch_id, iteration)
+            group_key, event_key, message_key, batch_id, iteration)
 
         check_params = {
             'group': 'AGROUPKEY',
+            'event': 'SOMEEVENTKEY',
             'message': 'SOMEMESSAGEKEY',
             'batch': 'THEBATCHID',
             'cursor': '',
@@ -313,6 +330,9 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         group_key = Mock()
         group_key.urlsafe.return_value = "ZGROUPKEY"
 
+        event_key = Mock()
+        event_key.urlsafe.return_value = "ANEVENTKEY"
+
         message_key = Mock()
         message_key.urlsafe.return_value = "AMESSAGEKEY"
 
@@ -323,10 +343,11 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         iteration = 33
 
         ret_value = get_group_broadcast_task(
-            group_key, message_key, batch_id, iteration, cursor)
+            group_key, event_key, message_key, batch_id, iteration, cursor)
 
         check_params = {
             'group': 'ZGROUPKEY',
+            'event': 'ANEVENTKEY',
             'message': 'AMESSAGEKEY',
             'batch': 'ABATCHID',
             'cursor': 'CURSOR,THE',
@@ -350,6 +371,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         from sosbeacon.event.message import broadcast_to_group
 
         group_key = object()
+        event_key = object()
         message_key = object()
         cursor = object()
 
@@ -358,13 +380,14 @@ class TestBroadcastToGroup(unittest.TestCase):
         continuation_marker = object()
         get_group_broadcast_task_mock.return_value = continuation_marker
 
-        broadcast_to_group(group_key=group_key, message_key=message_key,
+        broadcast_to_group(group_key=group_key, event_key=event_key,
+                           message_key=message_key,
                            batch_id='alpha', iteration=17, cursor=cursor)
 
         get_students_mock.assert_called_once_with(group_key, cursor)
 
         get_group_broadcast_task_mock.assert_called_once_with(
-            group_key, message_key, 'alpha', 18, cursor)
+            group_key, event_key, message_key, 'alpha', 18, cursor)
 
         insert_tasks_mock.assert_called_once_with(
             (continuation_marker,), GROUP_TX_QUEUE)
@@ -381,6 +404,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         from sosbeacon.event.message import broadcast_to_group
 
         group_key = object()
+        event_key = object()
         message_key = object()
         cursor = object()
 
@@ -389,7 +413,8 @@ class TestBroadcastToGroup(unittest.TestCase):
         continuation_marker = object()
         get_group_broadcast_task_mock.return_value = continuation_marker
 
-        broadcast_to_group(group_key=group_key, message_key=message_key,
+        broadcast_to_group(group_key=group_key, event_key=event_key,
+                           message_key=message_key,
                            batch_id='alpha', iteration=17, cursor=cursor)
 
         get_students_mock.assert_called_once_with(group_key, cursor)
@@ -408,13 +433,15 @@ class TestBroadcastToGroup(unittest.TestCase):
         from sosbeacon.event.message import broadcast_to_group
 
         group_key = object()
+        event_key = object()
         message_key = object()
 
         get_students_mock.return_value = ((object(),), None, False)
 
         get_student_broadcast_task_mock.return_value = None
 
-        broadcast_to_group(group_key=group_key, message_key=message_key,
+        broadcast_to_group(group_key=group_key, event_key=event_key,
+                           message_key=message_key,
                            batch_id='alpha')
 
         get_students_mock.assert_called_once_with(group_key, None)
@@ -433,6 +460,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         from sosbeacon.event.message import broadcast_to_group
 
         group_key = object()
+        event_key = object()
         message_key = object()
 
         get_students_mock.return_value = ((object(),), None, False)
@@ -440,7 +468,8 @@ class TestBroadcastToGroup(unittest.TestCase):
         student_task = object()
         get_student_broadcast_task_mock.return_value = student_task
 
-        broadcast_to_group(group_key=group_key, message_key=message_key,
+        broadcast_to_group(group_key=group_key, event_key=event_key,
+                           message_key=message_key,
                            batch_id='alpha')
 
         get_students_mock.assert_called_once_with(group_key, None)
@@ -462,16 +491,20 @@ class TestGetStudentBroadcastTask(unittest.TestCase):
         student_key = Mock()
         student_key.urlsafe.return_value = "STUDENTKEY"
 
+        event_key = Mock()
+        event_key.urlsafe.return_value = "EVENTKEY"
+
         message_key = Mock()
         message_key.urlsafe.return_value = "MESSAGEKEY"
 
         batch_id = "BATCHID"
 
         ret_value = get_student_broadcast_task(
-            student_key, message_key, batch_id)
+            student_key, event_key, message_key, batch_id)
 
         task_name = task_mock.call_args[1]['name']
         self.assertIn('STUDENTKEY', task_name)
+        self.assertNotIn('EVENTKEY', task_name)
         self.assertIn('MESSAGEKEY', task_name)
         self.assertIn('BATCHID', task_name)
 
@@ -483,16 +516,20 @@ class TestGetStudentBroadcastTask(unittest.TestCase):
         student_key = Mock()
         student_key.urlsafe.return_value = "ASTUDENTKEY"
 
+        event_key = Mock()
+        event_key.urlsafe.return_value = "ANEVENTKEY"
+
         message_key = Mock()
         message_key.urlsafe.return_value = "SOMEMESSAGEKEY"
 
         batch_id = "THEBATCHID"
 
         ret_value = get_student_broadcast_task(
-            student_key, message_key, batch_id)
+            student_key, event_key, message_key, batch_id)
 
         check_params = {
             'student': 'ASTUDENTKEY',
+            'event': 'ANEVENTKEY',
             'message': 'SOMEMESSAGEKEY',
             'batch': 'THEBATCHID',
         }
@@ -511,9 +548,10 @@ class TestBroadcastToStudent(unittest.TestCase):
         student_key = Mock()
         student_key.get.return_value = None
 
+        event_key = Mock()
         message_key = Mock()
 
-        broadcast_to_student(student_key, message_key)
+        broadcast_to_student(student_key, event_key, message_key)
 
     @patch('sosbeacon.event.message.get_contact_broadcast_task', autospec=True)
     def test_no_contacts(self, get_contact_broadcast_task_mock):
@@ -524,9 +562,10 @@ class TestBroadcastToStudent(unittest.TestCase):
         student_key.get.return_value.name = "Joe Blow"
         student_key.get.return_value.contacts = ()
 
+        event_key = Mock()
         message_key = Mock()
 
-        broadcast_to_student(student_key, message_key)
+        broadcast_to_student(student_key, event_key, message_key)
 
         self.assertFalse(get_contact_broadcast_task_mock.called)
 
@@ -543,12 +582,13 @@ class TestBroadcastToStudent(unittest.TestCase):
         student_key.get.return_value.name = "Joe Blow"
         student_key.get.return_value.contacts = contacts
 
+        event_key = Mock()
         message_key = Mock()
 
-        broadcast_to_student(student_key, message_key)
+        broadcast_to_student(student_key, event_key, message_key)
 
         get_contact_broadcast_task_mock.assert_called_once_with(
-            message_key, student_key, contacts[0], '')
+            event_key, message_key, student_key, contacts[0], '')
 
         self.assertEqual(1, insert_tasks_mock.call_count)
 
@@ -562,11 +602,12 @@ class TestBroadcastToStudent(unittest.TestCase):
         student_key.get.return_value.name = "Joe Blow"
         student_key.get.return_value.contacts = ()
         student_key.id = 211
-
-        message_key = Mock()
         student_key.get.return_value.event.id = 919
 
-        broadcast_to_student(student_key, message_key)
+        event_key = Mock()
+        message_key = Mock()
+
+        broadcast_to_student(student_key, event_key, message_key)
 
         self.assertEqual(1, put_mock.call_count)
 
@@ -584,6 +625,9 @@ class TestGetContactBroadcastTask(unittest.TestCase):
         student_key = Mock()
         student_key.urlsafe.return_value = "STUDENTKEY"
 
+        event_key = Mock()
+        event_key.urlsafe.return_value = "EVENTKEY"
+
         message_key = Mock()
         message_key.urlsafe.return_value = "MESSAGEKEY"
 
@@ -597,10 +641,12 @@ class TestGetContactBroadcastTask(unittest.TestCase):
             )
         }
 
-        get_contact_broadcast_task(message_key, student_key, contact, batch_id)
+        get_contact_broadcast_task(
+            event_key, message_key, student_key, contact, batch_id)
 
         task_name = task_mock.call_args[1]['name']
         self.assertIn('STUDENTKEY', task_name)
+        self.assertNotIn('EVENTKEY', task_name)
         self.assertIn('MESSAGEKEY', task_name)
         self.assertIn('BATCHID', task_name)
         self.assertIn('1234567890', task_name)
@@ -613,6 +659,9 @@ class TestGetContactBroadcastTask(unittest.TestCase):
 
         student_key = Mock()
         student_key.urlsafe.return_value = "ASTUDENTKEY"
+
+        event_key = Mock()
+        event_key.urlsafe.return_value = "ANEVENTKEY"
 
         message_key = Mock()
         message_key.urlsafe.return_value = "SOMEMESSAGEKEY"
@@ -627,10 +676,12 @@ class TestGetContactBroadcastTask(unittest.TestCase):
             )
         }
 
-        get_contact_broadcast_task(message_key, student_key, contact, batch_id)
+        get_contact_broadcast_task(
+            event_key, message_key, student_key, contact, batch_id)
 
         check_params = {
             'student': 'ASTUDENTKEY',
+            'event': 'ANEVENTKEY',
             'message': 'SOMEMESSAGEKEY',
             'batch': 'THEBATCHID',
             'contact': contact,
@@ -646,6 +697,9 @@ class TestGetContactBroadcastTask(unittest.TestCase):
         student_key = Mock()
         student_key.urlsafe.return_value = "ASTUDENTKEY"
 
+        event_key = Mock()
+        event_key.urlsafe.return_value = "SOMEEVENTKEY"
+
         message_key = Mock()
         message_key.urlsafe.return_value = "SOMEMESSAGEKEY"
 
@@ -657,7 +711,7 @@ class TestGetContactBroadcastTask(unittest.TestCase):
         }
 
         ret_value = get_contact_broadcast_task(
-            message_key, student_key, contact, batch_id)
+            event_key, message_key, student_key, contact, batch_id)
 
         self.assertIsNone(ret_value)
 
@@ -672,6 +726,9 @@ class TestGetContactBroadcastTask(unittest.TestCase):
         student_key = Mock()
         student_key.urlsafe.return_value = "ASTUDENTKEY"
 
+        event_key = Mock()
+        event_key.urlsafe.return_value = "ANEVENTKEY"
+
         message_key = Mock()
         message_key.urlsafe.return_value = "SOMEMESSAGEKEY"
 
@@ -682,7 +739,7 @@ class TestGetContactBroadcastTask(unittest.TestCase):
         }
 
         ret_value = get_contact_broadcast_task(
-            message_key, student_key, contact, batch_id)
+            event_key, message_key, student_key, contact, batch_id)
 
         self.assertIsNone(ret_value)
 
@@ -704,6 +761,9 @@ class TestBroadcastToContact(unittest.TestCase):
         """Ensure the method does not error if no contact is passed."""
         from sosbeacon.event.message import broadcast_to_contact
 
+        event_key = Mock()
+        event_key.get.return_value = None
+
         message_key = Mock()
         message_key.get.return_value = None
 
@@ -712,7 +772,8 @@ class TestBroadcastToContact(unittest.TestCase):
 
         contact = {}
 
-        ret_value = broadcast_to_contact(message_key, student_key, contact)
+        ret_value = broadcast_to_contact(
+            event_key, message_key, student_key, contact)
 
         self.assertFalse(insert_tasks_mock.called)
         self.assertIsNone(ret_value)
@@ -721,6 +782,9 @@ class TestBroadcastToContact(unittest.TestCase):
     def test_no_searchable_methods(self, insert_tasks_mock):
         """Ensure the method does not error if no contact is passed."""
         from sosbeacon.event.message import broadcast_to_contact
+
+        event_key = Mock()
+        event_key.get.return_value = None
 
         message_key = Mock()
         message_key.get.return_value = None
@@ -734,48 +798,9 @@ class TestBroadcastToContact(unittest.TestCase):
             ]
         }
 
-        ret_value = broadcast_to_contact(message_key, student_key, contact)
+        ret_value = broadcast_to_contact(
+            event_key, message_key, student_key, contact)
 
         self.assertFalse(insert_tasks_mock.called)
         self.assertIsNone(ret_value)
-
-    @patch('sosbeacon.utils.insert_tasks', autospec=True)
-    @patch('sosbeacon.event.message.get_contact_broadcast_task', autospec=True)
-    def test_broadcast_to_contacts(self, get_contact_broadcast_task_mock,
-                                   insert_tasks_mock):
-        """Ensure the method does not error if no contacts are found."""
-        from sosbeacon.event.message import broadcast_to_student
-
-        contacts = ({'t': 'test', 'name': 'me'},)
-
-        student_key = Mock()
-        student_key.get.return_value.name = "Joe Blow"
-        student_key.get.return_value.contacts = contacts
-
-        message_key = Mock()
-
-        broadcast_to_student(student_key, message_key)
-
-        get_contact_broadcast_task_mock.assert_called_once_with(
-            message_key, student_key, contacts[0], '')
-
-        self.assertEqual(1, insert_tasks_mock.call_count)
-
-    @patch('sosbeacon.utils.insert_tasks', autospec=True)
-    @patch('google.appengine.ext.ndb.Model.put', autospec=True)
-    def test_student_marker_inserted(self, put_mock, insert_tasks_mock):
-        """Ensure the method creates the student marker."""
-        from sosbeacon.event.message import broadcast_to_student
-
-        student_key = Mock()
-        student_key.get.return_value.name = "Joe Blow"
-        student_key.get.return_value.contacts = ()
-        student_key.id = 211
-
-        message_key = Mock()
-        student_key.get.return_value.event.id = 919
-
-        broadcast_to_student(student_key, message_key)
-
-        self.assertEqual(1, put_mock.call_count)
 

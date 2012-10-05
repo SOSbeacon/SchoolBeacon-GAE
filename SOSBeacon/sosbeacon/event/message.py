@@ -84,7 +84,7 @@ class Message(EntityBase):
 
         if message_type == 'b':
             assert ['sms', 'email'] == message_data.keys(),\
-                   "Invalid broadcast payload."
+                "Invalid broadcast payload."
 
             # TODO: Ensure user is an admin.
             # TODO: Initiate send.
@@ -108,7 +108,7 @@ class Message(EntityBase):
         return message
 
 
-def broadcast_to_groups(group_keys, message_key, batch_id):
+def broadcast_to_groups(group_keys, event_key, message_key, batch_id):
     """Scan over the given set of groups, sending the broadcast to everyone
     in those groups.
     """
@@ -122,7 +122,9 @@ def broadcast_to_groups(group_keys, message_key, batch_id):
     tasks = []
     for group_key in group_keys:
         # TODO: Batch tasks or start
-        tasks.append(get_group_broadcast_task(group_key, message_key, batch_id))
+        tasks.append(
+            get_group_broadcast_task(
+                group_key, event_key, message_key, batch_id))
 
         if len(tasks) > 10:
             insert_tasks(tasks, GROUP_TX_QUEUE)
@@ -132,10 +134,11 @@ def broadcast_to_groups(group_keys, message_key, batch_id):
         insert_tasks(tasks, GROUP_TX_QUEUE)
 
 
-def get_group_broadcast_task(group_key, message_key, batch_id='',
-                             iteration=0, cursor=''):
+def get_group_broadcast_task(group_key, event_key, message_key,
+                             batch_id='', iteration=0, cursor=''):
     """Get a task to scan and broadcast messages to all students in group."""
     group_urlsafe = group_key.urlsafe()
+    event_urlsafe = event_key.urlsafe()
     message_urlsafe = message_key.urlsafe()
 
     name = "tx-%s-%s-%s-%d" % (
@@ -145,6 +148,7 @@ def get_group_broadcast_task(group_key, message_key, batch_id='',
         name=name,
         params={
             'group': group_urlsafe,
+            'event': event_urlsafe,
             'message': message_urlsafe,
             'batch': batch_id,
             'cursor': cursor.urlsafe() if cursor else '',
@@ -153,7 +157,7 @@ def get_group_broadcast_task(group_key, message_key, batch_id='',
     )
 
 
-def broadcast_to_group(group_key, message_key, batch_id='',
+def broadcast_to_group(group_key, event_key, message_key, batch_id='',
                        iteration=0, cursor=None):
     """Scan over people in the group, starting from cursor if provided,
     sending the broadcast to every contact.
@@ -165,13 +169,14 @@ def broadcast_to_group(group_key, message_key, batch_id='',
 
     if more:
         continuation = get_group_broadcast_task(
-            group_key, message_key, batch_id, iteration + 1, cursor)
+            group_key, event_key, message_key, batch_id, iteration + 1, cursor)
 
         insert_tasks((continuation,), GROUP_TX_QUEUE)
 
     tasks = []
     for student_key in students:
-        task = get_student_broadcast_task(student_key, message_key, batch_id)
+        task = get_student_broadcast_task(
+            student_key, event_key, message_key, batch_id)
         if not task:
             continue
 
@@ -190,9 +195,11 @@ def broadcast_to_group(group_key, message_key, batch_id='',
     #    student_count=len(students))
 
 
-def get_student_broadcast_task(student_key, message_key, batch_id=''):
+def get_student_broadcast_task(student_key, event_key, message_key,
+                               batch_id=''):
     """Get a task to broadcast a message to all a student's contacts."""
     student_urlsafe = student_key.urlsafe()
+    event_urlsafe = event_key.urlsafe()
     message_urlsafe = message_key.urlsafe()
 
     name = "tx-%s-%s-%s" % (
@@ -202,13 +209,14 @@ def get_student_broadcast_task(student_key, message_key, batch_id=''):
         name=name,
         params={
             'student': student_urlsafe,
+            'event': event_urlsafe,
             'message': message_urlsafe,
             'batch': batch_id
         }
     )
 
 
-def broadcast_to_student(student_key, message_key, batch_id=''):
+def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
     """Send broadcast to each of the student's contacts."""
     from sosbeacon.event.student_marker import StudentMarker
     from sosbeacon.utils import insert_tasks
@@ -231,7 +239,7 @@ def broadcast_to_student(student_key, message_key, batch_id=''):
         # avoid building tasks that already exist.
 
         task = get_contact_broadcast_task(
-            message_key, student_key, contact, batch_id)
+            event_key, message_key, student_key, contact, batch_id)
 
         if not task:
             continue
@@ -268,9 +276,11 @@ def broadcast_to_student(student_key, message_key, batch_id=''):
     txn(new_marker)
 
 
-def get_contact_broadcast_task(message_key, student_key, contact, batch_id=''):
+def get_contact_broadcast_task(event_key, message_key, student_key, contact,
+                               batch_id=''):
     """Get a task to broadcast a message to a contact."""
     student_urlsafe = student_key.urlsafe()
+    event_urlsafe = event_key.urlsafe()
     message_urlsafe = message_key.urlsafe()
 
     BROADCAST_TYPES = ('e', 't')
@@ -297,6 +307,7 @@ def get_contact_broadcast_task(message_key, student_key, contact, batch_id=''):
         name=name,
         params={
             'student': student_urlsafe,
+            'event': event_urlsafe,
             'message': message_urlsafe,
             'batch': batch_id,
             'contact': contact
@@ -304,7 +315,8 @@ def get_contact_broadcast_task(message_key, student_key, contact, batch_id=''):
     )
 
 
-def broadcast_to_contact(message_key, student_key, contact, batch_id=''):
+def broadcast_to_contact(event_key, message_key, student_key, contact,
+                         batch_id=''):
     """Insert tasks to send message to each contact method, and create a
     contact marker.
     """
@@ -327,23 +339,23 @@ def broadcast_to_contact(message_key, student_key, contact, batch_id=''):
     if not methods:
         return
 
-    message = message_key.get()
-
     short_id = create_or_update_marker(
-        message.event, student_key, contact, methods)
+        event_key, student_key, contact, methods)
 
     method_tasks = []
     for method in methods:
         method_tasks = get_method_broadcast_task(
-            message_key, short_id, method, batch_id)
+            event_key, message_key, short_id, method, batch_id)
 
     insert_tasks(method_tasks, METHOD_TX_QUEUE)
 
 
-def get_method_broadcast_task(message_key, short_id, method, batch_id=''):
+def get_method_broadcast_task(event_key, message_key, short_id, method,
+                              batch_id=''):
     """Get a task to broadcast a message to a contact method."""
     import hashlib
 
+    event_urlsafe = event_key.urlsafe()
     message_urlsafe = message_key.urlsafe()
 
     method_ident = hashlib.sha1(method).hexdigest()
@@ -355,6 +367,7 @@ def get_method_broadcast_task(message_key, short_id, method, batch_id=''):
         name=name,
         params={
             'message': message_urlsafe,
+            'event': event_urlsafe,
             'batch': batch_id,
             'short_id': short_id,
             'method': method
@@ -362,7 +375,7 @@ def get_method_broadcast_task(message_key, short_id, method, batch_id=''):
     )
 
 
-def broadcast_to_method(message_key, short_id, method):
+def broadcast_to_method(event_key, message_key, short_id, method):
     """Send the message to the given contact method."""
     import os
 
@@ -370,7 +383,7 @@ def broadcast_to_method(message_key, short_id, method):
 
     message = message_key.get()
 
-    encoded_event = utils.number_encode(message.event.id())
+    encoded_event = utils.number_encode(event_key.id())
     encoded_method = utils.number_encode(short_id)
 
     host = os.environ['HTTP_HOST']
@@ -398,7 +411,7 @@ def broadcast_sms(number, message, url):
     client = TwilioRestClient(settings.TWILIO_ACCOUNT,
                               settings.TWILIO_TOKEN)
 
-    message = client.sms.messages.create(
+    sms_message = client.sms.messages.create(
         to="+%s" % (number), from_="+14155992671", body=body)
 
 
@@ -408,14 +421,14 @@ def broadcast_email(address, message, url):
 
     logging.info('Sending notice to %s via mail api.', address)
 
-    message = mail.EmailMessage(sender="SBeacon <clifforloff@gmail.com>",
-                                subject=message.title)
+    email_message = mail.EmailMessage(sender="SBeacon <clifforloff@gmail.com>",
+                                      subject=message.title)
 
-    message.to = address
+    email_message.to = address
 
-    message.body = "%s\n\n%s" % (message.message['message'], url)
+    email_message.body = "%s\n\n%s" % (message.message['message'], url)
 
-    message.send()
+    email_message.send()
 
     #TODO: enable sendgrid integration
     #TODO: it might make sense to group emails as we can add more than one to

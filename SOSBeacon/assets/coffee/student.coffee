@@ -86,6 +86,8 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         "keypress .edit": "updateOnEnter"
 
     initialize: (model) =>
+        App.Util.TrackChanges.track(this)
+
         @model = model
 
         @validator = new App.Util.FormValidator(this,
@@ -175,6 +177,7 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
                 "Successs!", "Save successful", "alert-success")
 
             App.SOSBeacon.Event.trigger('model:save', @model, this)
+            App.Util.TrackChanges.clear(this)
 
         return false
 
@@ -204,6 +207,12 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
             @save()
 
             return false
+
+    onClose: () =>
+        App.Util.TrackChanges.stop(this)
+
+        for view in @contactEdits
+            view.close()
 
 
 class App.SOSBeacon.View.StudentEditApp extends Backbone.View

@@ -140,10 +140,12 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         App.Util.Form.hideAlert()
 
     removeContact: (contactEdit) =>
+        App.Util.TrackChanges.changed()
         # Remove group from model.
         @model.contacts.remove(contactEdit.model)
 
         # Remove group list of group selects.
+        contactEdit.close()
         index = _.indexOf(@contactEdits, contactEdit)
         delete @contactEdits[index]
 
@@ -212,7 +214,8 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         App.Util.TrackChanges.stop(this)
 
         for view in @contactEdits
-            view.close()
+            if view
+                view.close()
 
 
 class App.SOSBeacon.View.StudentEditApp extends Backbone.View

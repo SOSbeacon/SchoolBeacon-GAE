@@ -63,7 +63,7 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
     modelType: App.SOSBeacon.Model.Contact
 
     events:
-        "click a.remove-contact": "destroy"
+        "click button#student-remove-contact": "destroy"
         "change select.contact-type": "typeChanged"
         "blur select.contact-type": "typeChanged"
         "change input.contact-name": "validate"

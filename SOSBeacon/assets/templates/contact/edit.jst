@@ -1,21 +1,28 @@
-<div class="control-group">
-  <label class="control-label">Contact:</label>
-  <div class="controls">
-    <select id="contact-type" name="contact-type" class="contact-type"/></select>
-    <input id="contact-name" name="contact-name" type="text" value="<%- name %>" 
+<div class="contact-area container standard-back">
+  <div class="control-group">
+    <div>
+      <button id="student-remove-contact" class="student-remove-contact btn btn-danger">
+        <i class="icon-trash icon-white"></i> 
+      </button>
+    </div>
+    <label class="control-label">Contact:</label>
+    <div class="controls">
+      <select id="contact-type" name="contact-type" class="contact-type"/></select>
+      <input id="contact-name" name="contact-name" type="text" value="<%- name %>" 
       autocomplete="off" class="contact-name" placeholder="Name..." />
+    </div>
   </div>
-</div>
-<div class="control-group">
-  <label class="control-label">Contact Methods:</label>
-  <div class="controls">
-    <div class="control methods"></div>
+  <div class="control-group">
+    <label class="control-label">Contact Methods:</label>
+    <div class="controls">
+      <div class="control methods"></div>
+    </div>
   </div>
-</div>
-<div class="control-group">
-  <label for="notes" class="control-label">Notes:</label>
-  <div class="controls">
-    <textarea id="contact-notes" name="contact-notes" class="contact-notes span8 input-xlarge"
-      placeholder="Notes..."><%- notes %></textarea>
+  <div class="control-group">
+    <label for="notes" class="control-label">Notes:</label>
+    <div class="controls">
+      <textarea id="contact-notes" name="contact-notes" class="contact-notes span8 input-xlarge"
+        placeholder="Notes..."><%- notes %></textarea>
+    </div>
   </div>
 </div>

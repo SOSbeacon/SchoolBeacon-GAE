@@ -363,10 +363,12 @@ class TestBroadcastToGroup(unittest.TestCase):
 
     @patch('sosbeacon.utils.insert_tasks', autospec=True)
     @patch('sosbeacon.event.message.get_group_broadcast_task', autospec=True)
-    @patch('sosbeacon.group.get_students', autospec=True)
-    def test_continuation(self, get_students_mock,
+    @patch('sosbeacon.group.get_student_keys', autospec=True)
+    def test_continuation(self, get_student_keys_mock,
                           get_group_broadcast_task_mock, insert_tasks_mock):
-        """Verify a continuation task is inserted if there are more students."""
+        """Verify a continuation task is inserted if there are more
+        students.
+        """
         from sosbeacon.event.message import GROUP_TX_QUEUE
         from sosbeacon.event.message import broadcast_to_group
 
@@ -375,7 +377,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         message_key = object()
         cursor = object()
 
-        get_students_mock.return_value = ((), cursor, True)
+        get_student_keys_mock.return_value = ((), cursor, True)
 
         continuation_marker = object()
         get_group_broadcast_task_mock.return_value = continuation_marker
@@ -384,7 +386,7 @@ class TestBroadcastToGroup(unittest.TestCase):
                            message_key=message_key,
                            batch_id='alpha', iteration=17, cursor=cursor)
 
-        get_students_mock.assert_called_once_with(group_key, cursor)
+        get_student_keys_mock.assert_called_once_with(group_key, cursor)
 
         get_group_broadcast_task_mock.assert_called_once_with(
             group_key, event_key, message_key, 'alpha', 18, cursor)
@@ -394,13 +396,12 @@ class TestBroadcastToGroup(unittest.TestCase):
 
     @patch('sosbeacon.utils.insert_tasks', autospec=True)
     @patch('sosbeacon.event.message.get_group_broadcast_task', autospec=True)
-    @patch('sosbeacon.group.get_students', autospec=True)
-    def test_no_continuation(self, get_students_mock,
+    @patch('sosbeacon.group.get_student_keys', autospec=True)
+    def test_no_continuation(self, get_student_keys_mock,
                              get_group_broadcast_task_mock, insert_tasks_mock):
         """Verify a continuation task is not inserted if there are not more
         students.
         """
-        from sosbeacon.event.message import GROUP_TX_QUEUE
         from sosbeacon.event.message import broadcast_to_group
 
         group_key = object()
@@ -408,7 +409,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         message_key = object()
         cursor = object()
 
-        get_students_mock.return_value = ((), cursor, False)
+        get_student_keys_mock.return_value = ((), cursor, False)
 
         continuation_marker = object()
         get_group_broadcast_task_mock.return_value = continuation_marker
@@ -417,16 +418,17 @@ class TestBroadcastToGroup(unittest.TestCase):
                            message_key=message_key,
                            batch_id='alpha', iteration=17, cursor=cursor)
 
-        get_students_mock.assert_called_once_with(group_key, cursor)
+        get_student_keys_mock.assert_called_once_with(group_key, cursor)
 
         self.assertEqual(get_group_broadcast_task_mock.call_count, 0)
         self.assertEqual(insert_tasks_mock.call_count, 0)
 
     @patch('sosbeacon.utils.insert_tasks', autospec=True)
-    @patch('sosbeacon.group.get_students', autospec=True)
+    @patch('sosbeacon.group.get_student_keys', autospec=True)
     @patch('sosbeacon.event.message.get_student_broadcast_task', autospec=True)
     def test_no_student_task_returned(self, get_student_broadcast_task_mock,
-                                      get_students_mock, insert_tasks_mock):
+                                      get_student_keys_mock,
+                                      insert_tasks_mock):
         """Verify a continuation task is not inserted if there are not more
         students.
         """
@@ -436,7 +438,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         event_key = object()
         message_key = object()
 
-        get_students_mock.return_value = ((object(),), None, False)
+        get_student_keys_mock.return_value = ((object(),), None, False)
 
         get_student_broadcast_task_mock.return_value = None
 
@@ -444,15 +446,15 @@ class TestBroadcastToGroup(unittest.TestCase):
                            message_key=message_key,
                            batch_id='alpha')
 
-        get_students_mock.assert_called_once_with(group_key, None)
+        get_student_keys_mock.assert_called_once_with(group_key, None)
 
         self.assertEqual(insert_tasks_mock.call_count, 0)
 
     @patch('sosbeacon.utils.insert_tasks', autospec=True)
-    @patch('sosbeacon.group.get_students', autospec=True)
+    @patch('sosbeacon.group.get_student_keys', autospec=True)
     @patch('sosbeacon.event.message.get_student_broadcast_task', autospec=True)
     def test_student_task_returned(self, get_student_broadcast_task_mock,
-                                   get_students_mock, insert_tasks_mock):
+                                   get_student_keys_mock, insert_tasks_mock):
         """Verify a continuation task is not inserted if there are not more
         students.
         """
@@ -463,7 +465,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         event_key = object()
         message_key = object()
 
-        get_students_mock.return_value = ((object(),), None, False)
+        get_student_keys_mock.return_value = ((object(),), None, False)
 
         student_task = object()
         get_student_broadcast_task_mock.return_value = student_task
@@ -472,10 +474,10 @@ class TestBroadcastToGroup(unittest.TestCase):
                            message_key=message_key,
                            batch_id='alpha')
 
-        get_students_mock.assert_called_once_with(group_key, None)
+        get_student_keys_mock.assert_called_once_with(group_key, None)
 
         insert_tasks_mock.assert_called_once_with(
-            [student_task,], STUDENT_TX_QUEUE)
+            [student_task], STUDENT_TX_QUEUE)
 
 
 class TestGetStudentBroadcastTask(unittest.TestCase):

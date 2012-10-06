@@ -162,10 +162,10 @@ def broadcast_to_group(group_key, event_key, message_key, batch_id='',
     """Scan over people in the group, starting from cursor if provided,
     sending the broadcast to every contact.
     """
-    from sosbeacon.group import get_students
+    from sosbeacon.group import get_student_keys
     from sosbeacon.utils import insert_tasks
 
-    students, cursor, more = get_students(group_key, cursor)
+    students, cursor, more = get_student_keys(group_key, cursor)
 
     if more:
         continuation = get_group_broadcast_task(

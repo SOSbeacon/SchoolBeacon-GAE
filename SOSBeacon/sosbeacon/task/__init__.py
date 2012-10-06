@@ -301,9 +301,6 @@ class MethodTxHandler(webapp2.RequestHandler):
     def post(self):
         from google.appengine.api import namespace_manager
 
-        # batch_id is used so that we can force resend of notices for an event.
-        batch_id = self.request.get('batch', '')
-
         event_urlsafe = self.request.get('event')
         if not event_urlsafe:
             logging.error('No event key given.')
@@ -354,13 +351,14 @@ class MethodTxHandler(webapp2.RequestHandler):
         if not short_id:
             logging.error('No short_id given.')
             return
+        short_id = int(short_id)
 
         method = self.request.get('method')
         if not method:
             logging.error('No method given.')
             return
 
-        broadcast_to_method(event_key, message_key, short_id, method, batch_id)
+        broadcast_to_method(event_key, message_key, short_id, method)
 
 
 class UpdateContactMarkerHandler(webapp2.RequestHandler):

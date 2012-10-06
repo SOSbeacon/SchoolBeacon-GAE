@@ -652,6 +652,47 @@ class TestGetContactBroadcastTask(unittest.TestCase):
         self.assertIn('BATCHID', task.name)
         self.assertNotIn('johny@jones.com', task.name)
 
+    def test_methods_in_task_name(self):
+        """Ensure the resultant task name contains an encoded form of the
+        methods, so that the name is unique.
+        """
+        from sosbeacon.event.message import get_contact_broadcast_task
+
+        student_key = Mock()
+        student_key.urlsafe.return_value = "STUDENTKEY"
+
+        event_key = Mock()
+        event_key.urlsafe.return_value = "EVENTKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "MESSAGEKEY"
+
+        batch_id = "BATCHID"
+
+        contact_one = {
+            'name': 'Johny Jones',
+            'methods': (
+                {'type': 't', 'value': '1234567890'},
+                {'type': 'e', 'value': 'johny@jones.com'},
+            )
+        }
+
+        contact_two = {
+            'name': 'Johny Jones',
+            'methods': (
+                {'type': 't', 'value': '1234567890'},
+                {'type': 'e', 'value': 'jonny@jones.com'},
+            )
+        }
+
+        task_one = get_contact_broadcast_task(
+            event_key, message_key, student_key, contact_one, batch_id)
+
+        task_two = get_contact_broadcast_task(
+            event_key, message_key, student_key, contact_two, batch_id)
+
+        self.assertNotEqual(task_one.name, task_two.name)
+
     def test_task_params(self):
         """Ensure the resultant task parms contain all info."""
         from sosbeacon.event.message import get_contact_broadcast_task

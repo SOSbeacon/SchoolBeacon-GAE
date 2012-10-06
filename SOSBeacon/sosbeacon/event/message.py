@@ -425,7 +425,8 @@ def broadcast_email(address, message, url):
     logging.info('Sending notice to %s via mail api.', address)
 
     email_message = mail.EmailMessage(sender="SBeacon <clifforloff@gmail.com>",
-                                      subject=message.title)
+                                      subject='A Message from SBeacon')
+    #                                  subject=message.title)
 
     email_message.to = address
 

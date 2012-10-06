@@ -19,23 +19,23 @@ class TestEventModel(unittest.TestCase):
     def test_from_empty_dict(self):
         """Ensure merging two non-acked doesn't ack."""
         from sosbeacon.event.event import Event
-        from sosbeacon.event.event import EVENT_DRAFT_STATUS
+        from sosbeacon.event.event import EVENT_STATUS_DRAFT
 
         event = Event.from_dict({'groups': []})
         self.assertEqual('_x_', event.key.namespace())
-        self.assertEqual(EVENT_DRAFT_STATUS, event.status)
+        self.assertEqual(EVENT_STATUS_DRAFT, event.status)
 
     def test_from_dict(self):
         """Ensure merging two non-acked doesn't ack."""
         from datetime import datetime
         from sosbeacon.event.event import Event
-        from sosbeacon.event.event import EVENT_DRAFT_STATUS
+        from sosbeacon.event.event import EVENT_STATUS_DRAFT
 
         event_dict = {
             'title': 'Test Title',
             'type': 'e',
             'date': datetime(2012, 8, 30, 7, 37),
-            'status': EVENT_DRAFT_STATUS,
+            'status': EVENT_STATUS_DRAFT,
             'content': 'This is some test content',
             'groups': []
         }
@@ -56,13 +56,13 @@ class TestEventModel(unittest.TestCase):
         """Ensure to_dict(from_dict(x)) returns a correctly setup object."""
         from datetime import datetime
         from sosbeacon.event.event import Event
-        from sosbeacon.event.event import EVENT_DRAFT_STATUS
+        from sosbeacon.event.event import EVENT_STATUS_DRAFT
 
         event_dict = {
             'title': 'Test Title',
             'type': 'e',
             'date': datetime(2012, 8, 30, 7, 37),
-            'status': EVENT_DRAFT_STATUS,
+            'status': EVENT_STATUS_DRAFT,
             'content': 'This is some test content',
             'groups': []
         }
@@ -78,13 +78,13 @@ class TestEventModel(unittest.TestCase):
     def test_status_change_to_sent(self):
         """Ensure status can not be set to sent."""
         from sosbeacon.event.event import Event
-        from sosbeacon.event.event import EVENT_DRAFT_STATUS
-        from sosbeacon.event.event import EVENT_SENT_STATUS
+        from sosbeacon.event.event import EVENT_STATUS_DRAFT
+        from sosbeacon.event.event import EVENT_STATUS_SENT
 
         event_dict = {
             'title': 'Test Title',
             'type': 'e',
-            'status': EVENT_SENT_STATUS,
+            'status': EVENT_STATUS_SENT,
             'content': 'This is some test content',
             'groups': []
         }
@@ -92,7 +92,7 @@ class TestEventModel(unittest.TestCase):
         event = Event.from_dict(event_dict)
 
         # TODO: Figure out if this test has any value.
-        self.assertEqual(EVENT_DRAFT_STATUS, event.status)
+        self.assertEqual(EVENT_STATUS_DRAFT, event.status)
 
     @mock.patch('google.appengine.ext.ndb.Key.get')
     def test_status_change_to_draft_from_sent(self, key_get_mock):
@@ -100,17 +100,17 @@ class TestEventModel(unittest.TestCase):
         from google.appengine.ext import ndb
 
         from sosbeacon.event.event import Event
-        from sosbeacon.event.event import EVENT_DRAFT_STATUS
-        from sosbeacon.event.event import EVENT_SENT_STATUS
+        from sosbeacon.event.event import EVENT_STATUS_DRAFT
+        from sosbeacon.event.event import EVENT_STATUS_SENT
 
-        event = Event(status=EVENT_SENT_STATUS)
+        event = Event(status=EVENT_STATUS_SENT)
         key_get_mock.return_value = event
 
         event_dict = {
             'key': ndb.Key(Event, 1),
             'title': 'Test Title',
             'type': 'e',
-            'status': EVENT_DRAFT_STATUS,
+            'status': EVENT_STATUS_DRAFT,
             'content': 'This is some test content',
             'groups': []
         }
@@ -118,5 +118,5 @@ class TestEventModel(unittest.TestCase):
         new_event = Event.from_dict(event_dict)
 
         # TODO: Figure out if this test has any value.
-        self.assertEqual(EVENT_SENT_STATUS, new_event.status)
+        self.assertEqual(EVENT_STATUS_SENT, new_event.status)
 

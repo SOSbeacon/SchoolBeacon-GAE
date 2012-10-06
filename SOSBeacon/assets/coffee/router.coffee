@@ -12,7 +12,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
 
 class App.SOSBeacon.Router extends Backbone.Router
@@ -73,3 +72,10 @@ class App.SOSBeacon.Router extends Backbone.Router
 
     showImportStudents: () =>
         @swap(App.SOSBeacon.View.ImportStudentsApp)
+
+    navigate: (fragment, options) =>
+        return App.Util.TrackChanges.routerNavigate(
+            @navigateHistory, fragment, options)
+
+    navigateHistory: (fragment, options) =>
+        return Backbone.history.navigate(fragment, options)

@@ -303,3 +303,93 @@ class App.Util.FormValidator extends App.Util.Form
             target.val(value)
             @trigger('validate', property, value)
             return value
+
+
+class App.Util.TrackChanges
+
+    @track: (@view) =>
+        @hasChanges = false
+
+        #for later if we want to track the actual changes and do more advanced
+        #checking
+        @changes = {}
+
+        #this tracks all url changes
+        $(document).on('click', 'a', @triggerExit)
+
+        #track the change events of the passed in view
+        @view.events ?= {}
+        @view.events["change"] = @changed
+        @view.delegateEvents()
+
+        @confirmDialog = new App.Util.ConfirmDialog(
+            'Confirm',
+            'You have unsaved changes! Do you wish to continue and lose you changes?')
+
+    @changed: =>
+        @hasChanges = true
+
+    @clear: (@view) =>
+        @hasChanges = false
+        @changes = {}
+
+    @triggerExit: (event) =>
+        if not @hasChanges
+            return true
+
+        event.preventDefault()
+        return @confirmDialog.alert(@confirmEvent, event)
+
+    @routerNavigate: (callback, args...) =>
+        if not @hasChanges
+            return callback(args...)
+
+        @confirmDialog.alert(@confirmNavigate, callback, args...)
+
+    @confirmNavigate: (callback, args...) =>
+        @clear()
+        callback(args...)
+
+    @confirmEvent: (event) =>
+        #TODO: have view context?
+        @clear()
+        $(event.target).trigger(event.type)
+        anchor = $(event.target).closest('[href]')
+        location.href = anchor.attr('href')
+
+    @stop: (@view) =>
+        $(document).off('click', 'a')
+
+
+class App.Util.ConfirmDialog extends Backbone.View
+    template: JST['ui/confirm']
+    className: 'modal hide fade'
+    id: 'modal-confirm'
+
+    events:
+        'click .accept': 'accept'
+
+    initialize: (title, messageBody) =>
+        @title = title
+        @messageBody = messageBody
+
+    render: =>
+        @$el.html(@template({
+            title: @title
+            messageBody: @messageBody
+        }))
+
+        return this
+
+    alert: (callback, args...) =>
+        @args = args
+        @callback = callback
+
+        $(document).append(@render().el)
+        res = @$el.modal('show')
+
+    accept: =>
+        @$el.modal('hide')
+
+        if @callback
+            @callback(@args...)

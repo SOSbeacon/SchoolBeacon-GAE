@@ -7,15 +7,16 @@ from skel.datastore import EntityBase
 from skel.rest_api.rules import RestQueryRule
 
 
-EVENT_CLOSED_STATUS = 'cl'
-EVENT_DRAFT_STATUS = 'dr'
-EVENT_SENT_STATUS = 'se'
+EVENT_STATUS_CLOSED = 'cl'
+EVENT_STATUS_DRAFT = 'dr'
+EVENT_STATUS_SENT = 'se'
 
 
 event_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'title': basestring,
-    'status': basestring,
+    'status': voluptuous.any('', EVENT_STATUS_DRAFT, EVENT_STATUS_CLOSED,
+                             EVENT_STATUS_SENT),
     'date': basestring,
     'last_broadcast_date': basestring,
     'groups': [voluptuous.ndbkey()],
@@ -85,9 +86,9 @@ class Event(EntityBase):
         event.event_type = data.get('type')
         event.date = data.get('date')
 
-        status = data.get('status', EVENT_DRAFT_STATUS)
-        if status == EVENT_CLOSED_STATUS:
-            event.status = EVENT_CLOSED_STATUS
+        status = data.get('status', EVENT_STATUS_DRAFT)
+        if status == EVENT_STATUS_CLOSED:
+            event.status = EVENT_STATUS_CLOSED
 
         event.content = data.get('content')
         event.groups = data.get('groups')

@@ -347,8 +347,8 @@ def broadcast_to_contact(event_key, message_key, student_key, contact,
 
     method_tasks = []
     for method in methods:
-        method_tasks = get_method_broadcast_task(
-            event_key, message_key, short_id, method, batch_id)
+        method_tasks.append(get_method_broadcast_task(
+            event_key, message_key, short_id, method, batch_id))
 
     insert_tasks(method_tasks, METHOD_TX_QUEUE)
 

@@ -42,19 +42,19 @@ url_map = [
                   handler='sosbeacon.service.StudentHandler'),
     webapp2.Route(r'/service/student<:/?>',
                   handler='sosbeacon.service.StudentListHandler'),
- 
-    # Event - Student Marker
-    webapp2.Route(r'/service/event/student',
-        handler='sosbeacon.service.EventStudentListHandler'),
-    webapp2.Route(r'/service/event/student/<resource_id>',
-        handler='sosbeacon.service.EventStudentHandler'),
-    # Event
-    webapp2.Route(r'/service/event/send',
-        handler='sosbeacon.service.SendEventHandler'),
-    webapp2.Route(r'/service/event/<resource_id>',
-        handler='sosbeacon.service.EventHandler'),
-    webapp2.Route(r'/service/event<:/?>',
-        handler='sosbeacon.service.EventListHandler'),
+
+    ## Event - Student Marker
+    #webapp2.Route(r'/service/event/student',
+    #              handler='sosbeacon.service.EventStudentListHandler'),
+    #webapp2.Route(r'/service/event/student/<resource_id>',
+    #              handler='sosbeacon.service.EventStudentHandler'),
+    ## Event
+    #webapp2.Route(r'/service/event/send',
+    #             handler='sosbeacon.service.SendEventHandler'),
+    #webapp2.Route(r'/service/event/<resource_id>',
+    #               handler='sosbeacon.service.EventHandler'),
+    #webapp2.Route(r'/service/event<:/?>',
+    #            handler='sosbeacon.service.EventListHandler'),
 
     # Group
     webapp2.Route(r'/service/group/<resource_id:.+>',

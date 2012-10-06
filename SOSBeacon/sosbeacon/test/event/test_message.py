@@ -1,4 +1,5 @@
 
+import json
 import unittest
 
 from mock import Mock
@@ -619,8 +620,7 @@ class TestGetContactBroadcastTask(unittest.TestCase):
     expected task.
     """
 
-    @patch('google.appengine.api.taskqueue.Task', autospec=True)
-    def test_task_name(self, task_mock):
+    def test_task_name(self):
         """Ensure the resultant task name contains enough to be unique."""
         from sosbeacon.event.message import get_contact_broadcast_task
 
@@ -643,19 +643,16 @@ class TestGetContactBroadcastTask(unittest.TestCase):
             )
         }
 
-        get_contact_broadcast_task(
+        task = get_contact_broadcast_task(
             event_key, message_key, student_key, contact, batch_id)
 
-        task_name = task_mock.call_args[1]['name']
-        self.assertIn('STUDENTKEY', task_name)
-        self.assertNotIn('EVENTKEY', task_name)
-        self.assertIn('MESSAGEKEY', task_name)
-        self.assertIn('BATCHID', task_name)
-        self.assertIn('1234567890', task_name)
-        self.assertIn('johny@jones.com', task_name)
+        self.assertIn('STUDENTKEY', task.name)
+        self.assertNotIn('EVENTKEY', task.name)
+        self.assertIn('MESSAGEKEY', task.name)
+        self.assertIn('BATCHID', task.name)
+        self.assertNotIn('johny@jones.com', task.name)
 
-    @patch('google.appengine.api.taskqueue.Task', autospec=True)
-    def test_task_params(self, task_mock):
+    def test_task_params(self):
         """Ensure the resultant task parms contain all info."""
         from sosbeacon.event.message import get_contact_broadcast_task
 
@@ -678,7 +675,7 @@ class TestGetContactBroadcastTask(unittest.TestCase):
             )
         }
 
-        get_contact_broadcast_task(
+        task = get_contact_broadcast_task(
             event_key, message_key, student_key, contact, batch_id)
 
         check_params = {
@@ -686,12 +683,11 @@ class TestGetContactBroadcastTask(unittest.TestCase):
             'event': 'ANEVENTKEY',
             'message': 'SOMEMESSAGEKEY',
             'batch': 'THEBATCHID',
-            'contact': contact,
+            'contact': json.dumps(contact),
         }
-        self.assertEqual(check_params, task_mock.call_args[1]['params'])
+        self.assertEqual(check_params, task.extract_params())
 
-    @patch('google.appengine.api.taskqueue.Task', autospec=True)
-    def test_no_methods(self, task_mock):
+    def test_no_methods(self):
         """Ensure no task is returned when there are no contact methods."""
         #raise Exception("Make sure it doesn't send a task if no methods.")
         from sosbeacon.event.message import get_contact_broadcast_task
@@ -712,13 +708,12 @@ class TestGetContactBroadcastTask(unittest.TestCase):
             'methods': ()
         }
 
-        ret_value = get_contact_broadcast_task(
+        task = get_contact_broadcast_task(
             event_key, message_key, student_key, contact, batch_id)
 
-        self.assertIsNone(ret_value)
+        self.assertIsNone(task)
 
-    @patch('google.appengine.api.taskqueue.Task', autospec=True)
-    def test_missing_methods(self, task_mock):
+    def test_missing_methods(self):
         """Ensure there is no exception raised and no task is return when the
         methods key is missing.
         """

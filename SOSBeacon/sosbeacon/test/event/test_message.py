@@ -283,7 +283,7 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         batch_id = "BATCHID"
         iteration = 7
 
-        ret_value = get_group_broadcast_task(
+        get_group_broadcast_task(
             group_key, event_key, message_key, batch_id, iteration)
 
         task_name = task_mock.call_args[1]['name']
@@ -310,7 +310,7 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         batch_id = "THEBATCHID"
         iteration = 19
 
-        ret_value = get_group_broadcast_task(
+        get_group_broadcast_task(
             group_key, event_key, message_key, batch_id, iteration)
 
         check_params = {
@@ -343,7 +343,7 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         batch_id = "ABATCHID"
         iteration = 33
 
-        ret_value = get_group_broadcast_task(
+        get_group_broadcast_task(
             group_key, event_key, message_key, batch_id, iteration, cursor)
 
         check_params = {
@@ -502,7 +502,7 @@ class TestGetStudentBroadcastTask(unittest.TestCase):
 
         batch_id = "BATCHID"
 
-        ret_value = get_student_broadcast_task(
+        get_student_broadcast_task(
             student_key, event_key, message_key, batch_id)
 
         task_name = task_mock.call_args[1]['name']
@@ -527,7 +527,7 @@ class TestGetStudentBroadcastTask(unittest.TestCase):
 
         batch_id = "THEBATCHID"
 
-        ret_value = get_student_broadcast_task(
+        get_student_broadcast_task(
             student_key, event_key, message_key, batch_id)
 
         check_params = {

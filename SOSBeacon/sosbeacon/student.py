@@ -196,14 +196,14 @@ def _contact_from_args(name, email, voice=None, text=None):
             messages.extend(messages)
 
     if email and valid_email(email):
-        info['methods'].append({'type': 'email', 'value': email})
+        info['methods'].append({'type': 'e', 'value': email})
     else:
         messages.append("Invalid email address %s" % (email,))
 
     if voice:
-        _add_phone_number(voice, 'phone')
+        _add_phone_number(voice, 'p')
     if text:
-        _add_phone_number(text, 'text')
+        _add_phone_number(text, 't')
 
     return info, messages
 

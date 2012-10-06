@@ -99,11 +99,11 @@ class App.SOSBeacon.View.ContactMethodEdit extends Backbone.View
 
     render: =>
         icon = ''
-        if @model.get('type') == 'email'
+        if @model.get('type') == 'e'
             icon = 'envelope'
-        else if @model.get('type') == 'phone'
+        else if @model.get('type') == 'p'
             icon = 'volume-up'
-        else if @model.get('type') == 'text'
+        else if @model.get('type') == 't'
             icon = 'phone'
         else
             icon = ''

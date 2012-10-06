@@ -233,7 +233,7 @@ def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
 
     tasks = []
 
-    contacts = {}
+    #contacts = {}
     for contact in student.contacts:
         # TODO: Optimize task building with memcache markers to
         # avoid building tasks that already exist.
@@ -247,7 +247,7 @@ def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
         tasks.append(task)
 
         # TODO: WTF is this?
-        contacts[contact['t']] = contact
+        #contacts[contact['t']] = contact
 
     if tasks:
         insert_tasks(tasks, CONTACT_TX_QUEUE)
@@ -258,7 +258,7 @@ def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
     new_marker = StudentMarker(
         key=marker_key,
         name=student.name,
-        contacts=contacts,
+        contacts=student.contacts,
         last_broadcast=datetime.now()
     )
 

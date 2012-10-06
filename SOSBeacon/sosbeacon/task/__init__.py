@@ -225,6 +225,8 @@ class ContactTxHandler(webapp2.RequestHandler):
     create a method marker for each method.
     """
     def post(self):
+        import json
+
         from google.appengine.api import namespace_manager
 
         # batch_id is used so that we can force resend of notices for an event.
@@ -288,6 +290,7 @@ class ContactTxHandler(webapp2.RequestHandler):
         if not contact:
             logging.error('No contact given.')
             return
+        contact = json.loads(contact)
 
         broadcast_to_contact(event_key, message_key, student_key, contact,
                              batch_id)

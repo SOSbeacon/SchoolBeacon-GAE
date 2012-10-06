@@ -1,13 +1,22 @@
 queue:
-- name: event-up
-  mode: pull
 
-- name: event-updator
+# TX Queues
+- name: contact-tx
   rate: 100/s
 
 - name: group-tx
   rate: 100/s
 
-- name: contact-tx
+- name: method-tx
+  rate: 100/s
+
+- name: student-tx
+  rate: 100/s
+
+# Marker update / merge queues
+- name: contact-marker-update
+  rate: 100/s
+
+- name: contact-marker-merge
   rate: 100/s
 

@@ -14,7 +14,6 @@ EVENT_SENT_STATUS = 'se'
 
 event_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
-    'closed': voluptuous.boolean(),
     'title': basestring,
     'status': basestring,
     'date': basestring,
@@ -30,7 +29,6 @@ event_schema = {
 
 event_query_schema = {
     'flike_title': basestring,
-    'feq_closed': voluptuous.boolean(),
     'feq_groups': voluptuous.any('', voluptuous.ndbkey())
 }
 
@@ -46,7 +44,6 @@ class Event(EntityBase):
     _query_properties = {
         'title': RestQueryRule('title_', lambda x: x.lower() if x else ''),
         'groups': RestQueryRule('groups', lambda x: None if x == '' else x),
-        'closed': RestQueryRule('closed')
     }
 
     # Store the schema version, to aid in migrations.

@@ -1,4 +1,5 @@
 
+import json
 import unittest
 
 from mock import Mock
@@ -282,7 +283,7 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         batch_id = "BATCHID"
         iteration = 7
 
-        ret_value = get_group_broadcast_task(
+        get_group_broadcast_task(
             group_key, event_key, message_key, batch_id, iteration)
 
         task_name = task_mock.call_args[1]['name']
@@ -309,7 +310,7 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         batch_id = "THEBATCHID"
         iteration = 19
 
-        ret_value = get_group_broadcast_task(
+        get_group_broadcast_task(
             group_key, event_key, message_key, batch_id, iteration)
 
         check_params = {
@@ -342,7 +343,7 @@ class TestGetGroupBroadcastTask(unittest.TestCase):
         batch_id = "ABATCHID"
         iteration = 33
 
-        ret_value = get_group_broadcast_task(
+        get_group_broadcast_task(
             group_key, event_key, message_key, batch_id, iteration, cursor)
 
         check_params = {
@@ -363,10 +364,12 @@ class TestBroadcastToGroup(unittest.TestCase):
 
     @patch('sosbeacon.utils.insert_tasks', autospec=True)
     @patch('sosbeacon.event.message.get_group_broadcast_task', autospec=True)
-    @patch('sosbeacon.group.get_students', autospec=True)
-    def test_continuation(self, get_students_mock,
+    @patch('sosbeacon.group.get_student_keys', autospec=True)
+    def test_continuation(self, get_student_keys_mock,
                           get_group_broadcast_task_mock, insert_tasks_mock):
-        """Verify a continuation task is inserted if there are more students."""
+        """Verify a continuation task is inserted if there are more
+        students.
+        """
         from sosbeacon.event.message import GROUP_TX_QUEUE
         from sosbeacon.event.message import broadcast_to_group
 
@@ -375,7 +378,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         message_key = object()
         cursor = object()
 
-        get_students_mock.return_value = ((), cursor, True)
+        get_student_keys_mock.return_value = ((), cursor, True)
 
         continuation_marker = object()
         get_group_broadcast_task_mock.return_value = continuation_marker
@@ -384,7 +387,7 @@ class TestBroadcastToGroup(unittest.TestCase):
                            message_key=message_key,
                            batch_id='alpha', iteration=17, cursor=cursor)
 
-        get_students_mock.assert_called_once_with(group_key, cursor)
+        get_student_keys_mock.assert_called_once_with(group_key, cursor)
 
         get_group_broadcast_task_mock.assert_called_once_with(
             group_key, event_key, message_key, 'alpha', 18, cursor)
@@ -394,13 +397,12 @@ class TestBroadcastToGroup(unittest.TestCase):
 
     @patch('sosbeacon.utils.insert_tasks', autospec=True)
     @patch('sosbeacon.event.message.get_group_broadcast_task', autospec=True)
-    @patch('sosbeacon.group.get_students', autospec=True)
-    def test_no_continuation(self, get_students_mock,
+    @patch('sosbeacon.group.get_student_keys', autospec=True)
+    def test_no_continuation(self, get_student_keys_mock,
                              get_group_broadcast_task_mock, insert_tasks_mock):
         """Verify a continuation task is not inserted if there are not more
         students.
         """
-        from sosbeacon.event.message import GROUP_TX_QUEUE
         from sosbeacon.event.message import broadcast_to_group
 
         group_key = object()
@@ -408,7 +410,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         message_key = object()
         cursor = object()
 
-        get_students_mock.return_value = ((), cursor, False)
+        get_student_keys_mock.return_value = ((), cursor, False)
 
         continuation_marker = object()
         get_group_broadcast_task_mock.return_value = continuation_marker
@@ -417,16 +419,17 @@ class TestBroadcastToGroup(unittest.TestCase):
                            message_key=message_key,
                            batch_id='alpha', iteration=17, cursor=cursor)
 
-        get_students_mock.assert_called_once_with(group_key, cursor)
+        get_student_keys_mock.assert_called_once_with(group_key, cursor)
 
         self.assertEqual(get_group_broadcast_task_mock.call_count, 0)
         self.assertEqual(insert_tasks_mock.call_count, 0)
 
     @patch('sosbeacon.utils.insert_tasks', autospec=True)
-    @patch('sosbeacon.group.get_students', autospec=True)
+    @patch('sosbeacon.group.get_student_keys', autospec=True)
     @patch('sosbeacon.event.message.get_student_broadcast_task', autospec=True)
     def test_no_student_task_returned(self, get_student_broadcast_task_mock,
-                                      get_students_mock, insert_tasks_mock):
+                                      get_student_keys_mock,
+                                      insert_tasks_mock):
         """Verify a continuation task is not inserted if there are not more
         students.
         """
@@ -436,7 +439,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         event_key = object()
         message_key = object()
 
-        get_students_mock.return_value = ((object(),), None, False)
+        get_student_keys_mock.return_value = ((object(),), None, False)
 
         get_student_broadcast_task_mock.return_value = None
 
@@ -444,15 +447,15 @@ class TestBroadcastToGroup(unittest.TestCase):
                            message_key=message_key,
                            batch_id='alpha')
 
-        get_students_mock.assert_called_once_with(group_key, None)
+        get_student_keys_mock.assert_called_once_with(group_key, None)
 
         self.assertEqual(insert_tasks_mock.call_count, 0)
 
     @patch('sosbeacon.utils.insert_tasks', autospec=True)
-    @patch('sosbeacon.group.get_students', autospec=True)
+    @patch('sosbeacon.group.get_student_keys', autospec=True)
     @patch('sosbeacon.event.message.get_student_broadcast_task', autospec=True)
     def test_student_task_returned(self, get_student_broadcast_task_mock,
-                                   get_students_mock, insert_tasks_mock):
+                                   get_student_keys_mock, insert_tasks_mock):
         """Verify a continuation task is not inserted if there are not more
         students.
         """
@@ -463,7 +466,7 @@ class TestBroadcastToGroup(unittest.TestCase):
         event_key = object()
         message_key = object()
 
-        get_students_mock.return_value = ((object(),), None, False)
+        get_student_keys_mock.return_value = ((object(),), None, False)
 
         student_task = object()
         get_student_broadcast_task_mock.return_value = student_task
@@ -472,10 +475,10 @@ class TestBroadcastToGroup(unittest.TestCase):
                            message_key=message_key,
                            batch_id='alpha')
 
-        get_students_mock.assert_called_once_with(group_key, None)
+        get_student_keys_mock.assert_called_once_with(group_key, None)
 
         insert_tasks_mock.assert_called_once_with(
-            [student_task,], STUDENT_TX_QUEUE)
+            [student_task], STUDENT_TX_QUEUE)
 
 
 class TestGetStudentBroadcastTask(unittest.TestCase):
@@ -499,7 +502,7 @@ class TestGetStudentBroadcastTask(unittest.TestCase):
 
         batch_id = "BATCHID"
 
-        ret_value = get_student_broadcast_task(
+        get_student_broadcast_task(
             student_key, event_key, message_key, batch_id)
 
         task_name = task_mock.call_args[1]['name']
@@ -524,7 +527,7 @@ class TestGetStudentBroadcastTask(unittest.TestCase):
 
         batch_id = "THEBATCHID"
 
-        ret_value = get_student_broadcast_task(
+        get_student_broadcast_task(
             student_key, event_key, message_key, batch_id)
 
         check_params = {
@@ -617,8 +620,7 @@ class TestGetContactBroadcastTask(unittest.TestCase):
     expected task.
     """
 
-    @patch('google.appengine.api.taskqueue.Task', autospec=True)
-    def test_task_name(self, task_mock):
+    def test_task_name(self):
         """Ensure the resultant task name contains enough to be unique."""
         from sosbeacon.event.message import get_contact_broadcast_task
 
@@ -641,19 +643,57 @@ class TestGetContactBroadcastTask(unittest.TestCase):
             )
         }
 
-        get_contact_broadcast_task(
+        task = get_contact_broadcast_task(
             event_key, message_key, student_key, contact, batch_id)
 
-        task_name = task_mock.call_args[1]['name']
-        self.assertIn('STUDENTKEY', task_name)
-        self.assertNotIn('EVENTKEY', task_name)
-        self.assertIn('MESSAGEKEY', task_name)
-        self.assertIn('BATCHID', task_name)
-        self.assertIn('1234567890', task_name)
-        self.assertIn('johny@jones.com', task_name)
+        self.assertIn('STUDENTKEY', task.name)
+        self.assertNotIn('EVENTKEY', task.name)
+        self.assertIn('MESSAGEKEY', task.name)
+        self.assertIn('BATCHID', task.name)
+        self.assertNotIn('johny@jones.com', task.name)
 
-    @patch('google.appengine.api.taskqueue.Task', autospec=True)
-    def test_task_params(self, task_mock):
+    def test_methods_in_task_name(self):
+        """Ensure the resultant task name contains an encoded form of the
+        methods, so that the name is unique.
+        """
+        from sosbeacon.event.message import get_contact_broadcast_task
+
+        student_key = Mock()
+        student_key.urlsafe.return_value = "STUDENTKEY"
+
+        event_key = Mock()
+        event_key.urlsafe.return_value = "EVENTKEY"
+
+        message_key = Mock()
+        message_key.urlsafe.return_value = "MESSAGEKEY"
+
+        batch_id = "BATCHID"
+
+        contact_one = {
+            'name': 'Johny Jones',
+            'methods': (
+                {'type': 't', 'value': '1234567890'},
+                {'type': 'e', 'value': 'johny@jones.com'},
+            )
+        }
+
+        contact_two = {
+            'name': 'Johny Jones',
+            'methods': (
+                {'type': 't', 'value': '1234567890'},
+                {'type': 'e', 'value': 'jonny@jones.com'},
+            )
+        }
+
+        task_one = get_contact_broadcast_task(
+            event_key, message_key, student_key, contact_one, batch_id)
+
+        task_two = get_contact_broadcast_task(
+            event_key, message_key, student_key, contact_two, batch_id)
+
+        self.assertNotEqual(task_one.name, task_two.name)
+
+    def test_task_params(self):
         """Ensure the resultant task parms contain all info."""
         from sosbeacon.event.message import get_contact_broadcast_task
 
@@ -676,7 +716,7 @@ class TestGetContactBroadcastTask(unittest.TestCase):
             )
         }
 
-        get_contact_broadcast_task(
+        task = get_contact_broadcast_task(
             event_key, message_key, student_key, contact, batch_id)
 
         check_params = {
@@ -684,12 +724,11 @@ class TestGetContactBroadcastTask(unittest.TestCase):
             'event': 'ANEVENTKEY',
             'message': 'SOMEMESSAGEKEY',
             'batch': 'THEBATCHID',
-            'contact': contact,
+            'contact': json.dumps(contact),
         }
-        self.assertEqual(check_params, task_mock.call_args[1]['params'])
+        self.assertEqual(check_params, task.extract_params())
 
-    @patch('google.appengine.api.taskqueue.Task', autospec=True)
-    def test_no_methods(self, task_mock):
+    def test_no_methods(self):
         """Ensure no task is returned when there are no contact methods."""
         #raise Exception("Make sure it doesn't send a task if no methods.")
         from sosbeacon.event.message import get_contact_broadcast_task
@@ -710,13 +749,12 @@ class TestGetContactBroadcastTask(unittest.TestCase):
             'methods': ()
         }
 
-        ret_value = get_contact_broadcast_task(
+        task = get_contact_broadcast_task(
             event_key, message_key, student_key, contact, batch_id)
 
-        self.assertIsNone(ret_value)
+        self.assertIsNone(task)
 
-    @patch('google.appengine.api.taskqueue.Task', autospec=True)
-    def test_missing_methods(self, task_mock):
+    def test_missing_methods(self):
         """Ensure there is no exception raised and no task is return when the
         methods key is missing.
         """

@@ -34,38 +34,39 @@ from config import webapp_config
 url_map = [
     # Contact
     webapp2.Route(r'/service/contact/<resource_id:.+>',
-        handler='sosbeacon.service.ContactHandler'),
+                  handler='sosbeacon.service.ContactHandler'),
     webapp2.Route(r'/service/contact<:/?>',
-        handler='sosbeacon.service.ContactListHandler'),
+                  handler='sosbeacon.service.ContactListHandler'),
     # Student
     webapp2.Route(r'/service/student/<resource_id:.+>',
-        handler='sosbeacon.service.StudentHandler'),
+                  handler='sosbeacon.service.StudentHandler'),
     webapp2.Route(r'/service/student<:/?>',
-        handler='sosbeacon.service.StudentListHandler'),
-    # Event - Student Marker
-    webapp2.Route(r'/service/event/student',
-        handler='sosbeacon.service.EventStudentListHandler'),
-    webapp2.Route(r'/service/event/student/<resource_id>',
-        handler='sosbeacon.service.EventStudentHandler'),
-    # Event
-    webapp2.Route(r'/service/event/send',
-        handler='sosbeacon.service.SendEventHandler'),
-    webapp2.Route(r'/service/event/<resource_id>',
-        handler='sosbeacon.service.EventHandler'),
-    webapp2.Route(r'/service/event<:/?>',
-        handler='sosbeacon.service.EventListHandler'),
+                  handler='sosbeacon.service.StudentListHandler'),
+
+    ## Event - Student Marker
+    #webapp2.Route(r'/service/event/student',
+    #              handler='sosbeacon.service.EventStudentListHandler'),
+    #webapp2.Route(r'/service/event/student/<resource_id>',
+    #              handler='sosbeacon.service.EventStudentHandler'),
+    ## Event
+    #webapp2.Route(r'/service/event/send',
+    #             handler='sosbeacon.service.SendEventHandler'),
+    #webapp2.Route(r'/service/event/<resource_id>',
+    #               handler='sosbeacon.service.EventHandler'),
+    #webapp2.Route(r'/service/event<:/?>',
+    #            handler='sosbeacon.service.EventListHandler'),
 
     # Group
     webapp2.Route(r'/service/group/<resource_id:.+>',
-        handler='sosbeacon.service.GroupHandler'),
+                  handler='sosbeacon.service.GroupHandler'),
     webapp2.Route(r'/service/group<:/?>',
-        handler='sosbeacon.service.GroupListHandler'),
+                  handler='sosbeacon.service.GroupListHandler'),
 
     # School
     webapp2.Route(r'/service/school/<resource_id:.+>',
-        handler='sosbeacon.service.SchoolHandler'),
+                  handler='sosbeacon.service.SchoolHandler'),
     webapp2.Route(r'/service/school<:/?>',
-        handler='sosbeacon.service.SchoolListHandler'),
+                  handler='sosbeacon.service.SchoolListHandler'),
 ]
 
 app = webapp2.WSGIApplication(

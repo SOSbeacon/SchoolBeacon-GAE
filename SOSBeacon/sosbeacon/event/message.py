@@ -162,10 +162,10 @@ def broadcast_to_group(group_key, event_key, message_key, batch_id='',
     """Scan over people in the group, starting from cursor if provided,
     sending the broadcast to every contact.
     """
-    from sosbeacon.group import get_students
+    from sosbeacon.group import get_student_keys
     from sosbeacon.utils import insert_tasks
 
-    students, cursor, more = get_students(group_key, cursor)
+    students, cursor, more = get_student_keys(group_key, cursor)
 
     if more:
         continuation = get_group_broadcast_task(
@@ -279,6 +279,9 @@ def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
 def get_contact_broadcast_task(event_key, message_key, student_key, contact,
                                batch_id=''):
     """Get a task to broadcast a message to a contact."""
+    import hashlib
+    import json
+
     student_urlsafe = student_key.urlsafe()
     event_urlsafe = event_key.urlsafe()
     message_urlsafe = message_key.urlsafe()
@@ -298,7 +301,7 @@ def get_contact_broadcast_task(event_key, message_key, student_key, contact,
     if not methods:
         return
 
-    contact_ident = '|'.join(sorted(methods))
+    contact_ident = hashlib.sha1('|'.join(sorted(methods))).hexdigest()
 
     name = "tx-%s-%s-%s-%s" % (
         student_urlsafe, message_urlsafe, batch_id, contact_ident)
@@ -310,7 +313,7 @@ def get_contact_broadcast_task(event_key, message_key, student_key, contact,
             'event': event_urlsafe,
             'message': message_urlsafe,
             'batch': batch_id,
-            'contact': contact
+            'contact': json.dumps(contact)
         }
     )
 
@@ -411,7 +414,7 @@ def broadcast_sms(number, message, url):
     client = TwilioRestClient(settings.TWILIO_ACCOUNT,
                               settings.TWILIO_TOKEN)
 
-    sms_message = client.sms.messages.create(
+    client.sms.messages.create(
         to="+%s" % (number), from_="+14155992671", body=body)
 
 

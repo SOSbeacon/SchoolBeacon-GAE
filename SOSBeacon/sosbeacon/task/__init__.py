@@ -5,6 +5,8 @@ from google.appengine.ext import ndb
 import webapp2
 
 # NOTE: The Event model is imported here so the schema is loaded.
+from sosbeacon.event.event import EVENT_STATUS_CLOSED
+
 from sosbeacon.event.message import broadcast_to_contact
 from sosbeacon.event.message import broadcast_to_group
 from sosbeacon.event.message import broadcast_to_groups
@@ -41,7 +43,7 @@ class GroupsTxHandler(webapp2.RequestHandler):
             logging.error('Event %s not found!', event_key)
             return
 
-        if event.closed:
+        if event.status == EVENT_STATUS_CLOSED:
             logging.error('Event %s closed!', event_key)
             return
 
@@ -102,7 +104,7 @@ class GroupTxHandler(webapp2.RequestHandler):
             logging.error('Event %s not found!', event_key)
             return
 
-        if event.closed:
+        if event.status == EVENT_STATUS_CLOSED:
             logging.error('Event %s closed!', event_key)
             return
 
@@ -171,7 +173,7 @@ class StudentTxHandler(webapp2.RequestHandler):
             logging.error('Event %s not found!', event_key)
             return
 
-        if event.closed:
+        if event.status == EVENT_STATUS_CLOSED:
             logging.error('Event %s closed!', event_key)
             return
 
@@ -240,7 +242,7 @@ class ContactTxHandler(webapp2.RequestHandler):
             logging.error('Event %s not found!', event_key)
             return
 
-        if event.closed:
+        if event.status == EVENT_STATUS_CLOSED:
             logging.error('Event %s closed!', event_key)
             return
 
@@ -311,7 +313,7 @@ class MethodTxHandler(webapp2.RequestHandler):
             logging.error('Event %s not found!', event_key)
             return
 
-        if event.closed:
+        if event.status == EVENT_STATUS_CLOSED:
             logging.error('Event %s closed!', event_key)
             return
 
@@ -375,7 +377,7 @@ class UpdateContactMarkerHandler(webapp2.RequestHandler):
             logging.error('Event %s not found!', event_key)
             return
 
-        if event.closed:
+        if event.status == EVENT_STATUS_CLOSED:
             logging.error('Event %s closed!', event_key)
             return
 
@@ -441,7 +443,7 @@ class MergeContactMarkerHandler(webapp2.RequestHandler):
             logging.error('Event %s not found!', event_key)
             return
 
-        if event.closed:
+        if event.status == EVENT_STATUS_CLOSED:
             logging.error('Event %s closed!', event_key)
             return
 

@@ -19,6 +19,7 @@ group_query_schema = {
     'feq_active': voluptuous.boolean()
 }
 
+
 class Group(EntityBase):
     """Represents a group."""
 
@@ -66,7 +67,7 @@ class Group(EntityBase):
         return group
 
 
-def get_students(group_key, cursor=None, batch_size=50):
+def get_student_keys(group_key, cursor=None, batch_size=50):
     """Return the next batch of students in this group, insert continuation
     task if there are more to process for this batch.
 
@@ -80,5 +81,6 @@ def get_students(group_key, cursor=None, batch_size=50):
 
     start_cursor = ndb.Cursor(urlsafe=cursor)
 
-    return query.fetch_page(batch_size, start_cursor=start_cursor)
+    return query.fetch_page(
+        batch_size, start_cursor=start_cursor, keys_only=True)
 

@@ -366,22 +366,6 @@ class UpdateContactMarkerHandler(webapp2.RequestHandler):
     def post(self):
         from google.appengine.api import namespace_manager
 
-        event_urlsafe = self.request.get('event')
-        if not event_urlsafe:
-            logging.error('No event key given.')
-            return
-
-        # TODO: Use event id rather than key here for namespacing purposes?
-        event_key = ndb.Key(urlsafe=event_urlsafe)
-        event = event_key.get()
-        if not event:
-            logging.error('Event %s not found!', event_key)
-            return
-
-        if event.status == EVENT_STATUS_CLOSED:
-            logging.error('Event %s closed!', event_key)
-            return
-
         marker_urlsafe = self.request.get('marker')
         if not marker_urlsafe:
             logging.error('No marker key given.')
@@ -400,12 +384,6 @@ class UpdateContactMarkerHandler(webapp2.RequestHandler):
         marker = marker_key.get()
         if not marker:
             logging.error('Marker %s not found!', marker_key)
-            return
-
-        # We don't want to update the wrong marker.
-        if marker.event != event.key:
-            logging.error('Marker %s not belong to Event %s!',
-                          marker_key, event_key)
             return
 
         student_urlsafe = self.request.get('student')

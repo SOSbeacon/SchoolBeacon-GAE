@@ -659,14 +659,13 @@ class TestUpdateMarker(unittest.TestCase):
         marker_key.get.return_value = marker
 
         student_key = 'STUDENTKEY'
-        contact = {'id': '1'}
+        contact = {'name': 'jimmy'}
 
         update_marker(marker_key, student_key, contact.copy(), methods)
 
         self.assertIn(student_key, marker.students)
 
-        self.assertEqual({contact['id']: contact},
-                         marker.students[student_key])
+        self.assertEqual([contact.copy()], marker.students[student_key])
 
         self.assertTrue(marker_put_mock.called)
 
@@ -688,7 +687,7 @@ class TestUpdateMarker(unittest.TestCase):
 
         student_key = 'STUDENTKEY'
         student_contacts = {
-            'alpha': 'bravo'
+            'name': 'Joe Blow'
         }
 
         marker_key = mock.Mock(spec=ndb.Key)
@@ -697,20 +696,18 @@ class TestUpdateMarker(unittest.TestCase):
         marker = ContactMarker(
             key=marker_key,
             students={
-                student_key: student_contacts.copy()
+                student_key: [student_contacts.copy()]
             },
             methods=methods[:])
         marker_key.get.return_value = marker
 
-        contact = {'id': '1'}
+        contact = {'name': 'Some Dude'}
 
         update_marker(marker_key, student_key, contact.copy(), methods)
 
         self.assertIn(student_key, marker.students)
 
-        student_contacts[contact['id']] = contact.copy()
-
-        self.assertEqual(student_contacts, marker.students[student_key])
+        self.assertIn(contact.copy(), marker.students[student_key])
 
         self.assertTrue(marker_put_mock.called)
 

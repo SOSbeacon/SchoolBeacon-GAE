@@ -227,13 +227,13 @@ class App.SOSBeacon.View.StudentEditApp extends Backbone.View
         "click .view-button": "viewStudents"
 
     initialize: (id) =>
-        if id
+        if not id
+            @model = new App.SOSBeacon.Model.Student()
+        else
             @model = new App.SOSBeacon.Model.Student({key: id})
             @model.fetch({async: false})
             @model.initialize()
             @isNew = false
-        else
-            @model = new App.SOSBeacon.Model.Student()
 
         @editForm = new App.SOSBeacon.View.StudentEditForm(@model)
         App.SOSBeacon.Event.bind("model:save", @modelSaved, this)

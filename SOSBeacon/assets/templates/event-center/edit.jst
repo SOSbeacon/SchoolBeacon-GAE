@@ -1,69 +1,29 @@
 <form class="edit containter-fluid well form-horizontal standard-back">
   <div class="row-fluid">
-    <div id="editheadercontainer" class="modal-header">
-      <h3 id="editheader">Broadcast</h3>
-    </div>
-    <div class="modal-body broadcast-area">
+    <div class="event-center-area">
       <fieldset>
-        <div class="control-group">
-          <label for="type" class="control-label">Broadcast Type:</label>
-          <div class="controls">
-            <select id="type" name="type" class="type"></select>
-          </div>
-        </div>
-        <div class="control-group">
-          <label for="who_to_notify" class="control-label">Notify:</label>
-          <div class="controls">
-            <select id="who_to_notify" name="who_to_notify"
-                    class="who_to_notify"></select>
-          </div>
-        </div>
-        <div class="control-group">
-          <label for="response_wait_seconds" class="control-label">Resend Delay:</label>
-          <div class="controls">
-            <select id="response_wait_seconds" name="response_wait_seconds"
-                    class="response_wait_seconds"></select>
-          </div>
-        </div>
-        <div class="control-group">
-          <label for="active" class="control-label">Active:</label>
-          <div class="controls">
-            <input id="active" name="active" type="checkbox"
-                   <%- active ? "checked": "" %>
-                   autocomplete="off" class="active" />
-          </div>
-        </div>
         <div class="control-group">
           <label for="title" class="control-label">Title:</label>
           <div class="controls">
             <input id="title" name="title" type="text" value="<%- title %>" 
-                   autocomplete="off" class="title" placeholder="Title..." />
-          </div>
-        </div>
-        <div class="control-group">
-          <label for="summary" class="control-label">SMS Message:</label>
-          <div class="controls">
-            <textarea id="summary" name="summary"
-                      class="sms summary input-xlarge"
-                      placeholder="Brief broadcast summary...."><%- summary %></textarea>
-            <p class="sms-remain help-block">100 remain</p>
-          </div>
-        </div>
-        <div class="control-group">
-          <label for="detail" class="control-label">Email Message:</label>
-          <div class="controls">
-            <textarea id="detail" name="detail" class="detail input-xlarge"
-                      placeholder="Full broadcast detail...."><%- detail %></textarea>
+            autocomplete="off" class="title span6" placeholder="Title..." />
           </div>
         </div>
         <div class="control-group">
           <label class="control-label">Groups:</label>
           <div class="controls">
             <div class="control">
-              <select id="group-select" class="placholder input-large" multiple="multiple">
+              <select id="group-select" class="groups placholder input-large" multiple="multiple">
                 <option></option>
               </select>
             </div>
+          </div>
+        </div>
+        <div class="control-group">
+          <label for="content" class="control-label">Details:</label>
+          <div class="controls">
+            <textarea id="content" name="content" rows="100" class="content input-xlarge span10"
+                      placeholder="Full event detail...."><%- content %></textarea>
           </div>
         </div>
       </fieldset>

@@ -77,35 +77,53 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
     server_api: {}
 
 
-class App.SOSBeacon.View.EventCenterAddApp extends Backbone.View
+class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
     template: JST['event-center/itemheader']
     id: "sosbeaconapp"
     className: "top_view row-fluid"
     isNew: true
 
-    initialize: =>
-        @model = new App.SOSBeacon.Model.Event()
+    initialize: (id) =>
+        if not id
+            @model = new App.SOSBeacon.Model.Event()
+        else
+            @model = new App.SOSBeacon.Model.Event({key: id})
+            @model.fetch({async: false})
+            @model.initialize()
+            @isNew = false
 
-        @addForm = new App.SOSBeacon.View.EventCenterAddForm(@model)
+        @editForm = new App.SOSBeacon.View.EventCenterEditForm(@model)
         App.SOSBeacon.Event.bind("model:save", @modelSaved, this)
 
     modelSaved: () =>
+        #TODO: redirect to edit page
         console.log('saved')
+        console.log(@model)
 
     render: =>
         @$el.html(@template(@model.toJSON()))
-        @$el.append(@addForm.render().el)
+        @$el.append(@editForm.render().el)
+
+        @renderHeader()
 
         return this
+
+    renderHeader: () =>
+        header = @$("#editheader")
+
+        if @addMode
+            header.html("Add New #{header.text()}")
+        else
+            header.html("Edit #{header.text()}")
 
     onClose: () =>
         App.SOSBeacon.Event.unbind(null, null, this)
 
-        @addForm.close()
+        @editForm.close()
 
 
-class App.SOSBeacon.View.EventCenterAddForm extends Backbone.View
-    template: JST['event-center/add']
+class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
+    template: JST['event-center/edit']
     className: "row-fluid"
     id: "add_area"
 

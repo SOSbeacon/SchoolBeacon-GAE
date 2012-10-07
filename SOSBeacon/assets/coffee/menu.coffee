@@ -21,6 +21,7 @@ class App.SOSBeacon.Model.MenuItem extends Backbone.Model
             text: "",
             title: "",
             href: "",
+            icon: ""
         }
 
 
@@ -48,21 +49,25 @@ class App.SOSBeacon.View.Menu extends Backbone.View
                 text: 'Student',
                 title: 'student',
                 href: '#\/student'
+                icon: 'icon-user'
             },
             {
                 text: 'Group',
                 title: 'group',
                 href: '#\/group'
+                icon: 'icon-th'
             },
             {
                 text: 'Broadcast',
                 title: 'broadcast',
                 href: '#\/broadcast'
+                icon: 'icon-bullhorn'
             },
             {
                 text: 'Send Broadcast',
                 title: 'sendbroadcast',
                 href: '#\/broadcast/send'
+                icon: 'icon-share'
             },
         ]
         @collection = new App.SOSBeacon.Collection.MenuItems(items)

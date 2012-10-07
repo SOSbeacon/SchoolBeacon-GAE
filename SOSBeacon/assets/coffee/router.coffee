@@ -75,7 +75,7 @@ class App.SOSBeacon.Router extends Backbone.Router
         @swap(App.SOSBeacon.View.ImportStudentsApp)
 
     showEventCenter: () =>
-        console.log('event center')
+        @swap(App.SOSBeacon.View.EventCenterApp)
 
     navigate: (fragment, options) =>
         return App.Util.TrackChanges.routerNavigate(

@@ -5,7 +5,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
         return {
             key: null,
             active: true,
-            type: 'e',
+            event_type: 'e',
             who_to_notify: 'a',
             response_wait_seconds: 3600,
             title: "",
@@ -16,11 +16,16 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
             notice_sent_at: null,
             notice_sent_by: null
             modified: null
+            date: null
+            last_broadcast_date: null
+            student_count: 0
+            contact_count: 0
+            responded_count: 0
         }
 
     validators:
         active: new App.Util.Validate.bool(),
-        type: new App.Util.Validate.string(choices: ['e', 'n']),
+        event_type: new App.Util.Validate.string(choices: ['e', 'n']),
         who_to_notify: new App.Util.Validate.string(choices: ['a', 'p']),
         response_wait_seconds: new App.Util.Validate.integer(min: -1, max: 86400),
         title: new App.Util.Validate.string(len: {min: 1, max: 100}),
@@ -87,5 +92,64 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
 
     server_api: {}
 
+
+class App.SOSBeacon.View.EventCenterApp extends App.Skel.View.ModelApp
+    id: "sosbeaconapp"
+    template: JST['event-center/view']
+    modelType: App.SOSBeacon.Model.Event
+
+    initialize: =>
+        @collection = new App.SOSBeacon.Collection.EventList()
+        @listView = new App.SOSBeacon.View.EventCenterList(@collection)
+
+
+class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
+    template: JST['event-center/list']
+
+
+class App.SOSBeacon.View.EventCenterListHeader extends App.Skel.View.ListItemHeader
+    template: JST['event-center/listheader']
+
+
+class App.SOSBeacon.View.EventCenterList extends App.Skel.View.ListView
+    itemView: App.SOSBeacon.View.EventCenterListItem
+    headerView: App.SOSBeacon.View.EventCenterListHeader
+    gridFilters: null
+
+    initialize: (collection) =>
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Title'
+                type: 'text'
+                prop: 'flike_title'
+                default: false
+                control: App.Ui.Datagrid.InputFilter
+            }
+        ))
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Is Active'
+                type: 'checkbox'
+                prop: 'feq_active'
+                default: true
+                control: App.Ui.Datagrid.CheckboxFilter
+                default_value: true
+            }
+        ))
+
+        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
+            {
+                name: 'Group'
+                type: 'text'
+                prop: 'feq_groups'
+                default: false
+                control: App.SOSBeacon.View.GroupTypeahaedFilter
+            }
+        ))
+
+        super(collection)
 
 

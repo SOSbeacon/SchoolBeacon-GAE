@@ -43,7 +43,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
 
         if _.isEmpty(attrs.content)
             hasError = true
-            errors.summary = "Content must be provided."
+            errors.content = "Content must be provided."
 
         if _.isEmpty(attrs.groups)
             hasError = true
@@ -77,10 +77,26 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
     server_api: {}
 
 
+class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
+    template: JST['event-center/detail']
+    id: "sosbeaconapp"
+    className: "top_view row-fluid"
+
+    initialize: (id) =>
+        @model = new App.SOSBeacon.Model.Event({key: id})
+        @model.fetch({async: false})
+        @model.initialize()
+
+    render: =>
+        @$el.html(@template(@model.toJSON()))
+
+        return this
+
+
 class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
     template: JST['event-center/itemheader']
     id: "sosbeaconapp"
-    className: "top_view row-fluid"
+    className: "top_view container"
     isNew: true
 
     initialize: (id) =>
@@ -263,7 +279,8 @@ class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
             "/eventcenter/edit/#{@model.id}", {trigger: true})
 
     view: =>
-        console.log('switch to view')
+        App.SOSBeacon.router.navigate(
+            "/eventcenter/view/#{@model.id}", {trigger: true})
 
 class App.SOSBeacon.View.EventCenterListHeader extends App.Skel.View.ListItemHeader
     template: JST['event-center/listheader']

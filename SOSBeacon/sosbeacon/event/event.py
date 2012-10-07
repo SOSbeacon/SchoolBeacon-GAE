@@ -17,8 +17,8 @@ event_schema = {
     'title': basestring,
     'status': voluptuous.any('', EVENT_STATUS_DRAFT, EVENT_STATUS_CLOSED,
                              EVENT_STATUS_SENT),
-    'date': basestring,
-    'last_broadcast_date': basestring,
+    'date': voluptuous.any(None, basestring),
+    'last_broadcast_date': voluptuous.any(None, basestring),
     'groups': [voluptuous.ndbkey()],
     'type': voluptuous.any('e', 'n'),
     'counts': {
@@ -83,7 +83,7 @@ class Event(EntityBase):
             event = cls(namespace='_x_', school=unicode(school))
 
         event.title = data.get('title')
-        event.event_type = data.get('type')
+        event.event_type = data.get('event_type')
         event.date = data.get('date')
 
         status = data.get('status', EVENT_STATUS_DRAFT)
@@ -91,7 +91,12 @@ class Event(EntityBase):
             event.status = EVENT_STATUS_CLOSED
 
         event.content = data.get('content')
-        event.groups = data.get('groups')
+
+        for key in data.get('groups'):
+            if isinstance(key, basestring):
+                event.groups.append(ndb.Key(urlsafe=key))
+            else:
+                event.groups.append(key)
 
         return event
 

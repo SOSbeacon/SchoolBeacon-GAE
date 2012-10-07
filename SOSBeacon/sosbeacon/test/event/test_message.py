@@ -226,7 +226,7 @@ class TestBroadcastToGroups(unittest.TestCase):
         group_iter_mock.return_value = []
 
         group_key = Mock()
-        group_key.id = ALL_GROUPS_ID
+        group_key.id.return_value = ALL_GROUPS_ID
 
         event_key = Mock()
 
@@ -246,7 +246,7 @@ class TestBroadcastToGroups(unittest.TestCase):
         from sosbeacon.event.message import broadcast_to_groups
 
         group_key = Mock()
-        group_key.id = 'SomeGroup'
+        group_key.id.return_value = 'SomeGroup'
 
         event_key = Mock()
 
@@ -604,8 +604,8 @@ class TestBroadcastToStudent(unittest.TestCase):
         student_key = Mock()
         student_key.get.return_value.name = "Joe Blow"
         student_key.get.return_value.contacts = ()
-        student_key.id = 211
-        student_key.get.return_value.event.id = 919
+        student_key.id.return_value = 211
+        student_key.get.return_value.event.id.return_value = 919
 
         event_key = Mock()
         message_key = Mock()

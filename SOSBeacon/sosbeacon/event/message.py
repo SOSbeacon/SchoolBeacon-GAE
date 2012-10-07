@@ -116,7 +116,7 @@ def broadcast_to_groups(group_keys, event_key, message_key, batch_id):
     from sosbeacon.group import Group
     from sosbeacon.utils import insert_tasks
 
-    if len(group_keys) == 1 and group_keys[0].id == ALL_GROUPS_ID:
+    if len(group_keys) == 1 and group_keys[0].id() == ALL_GROUPS_ID:
         group_keys = Group.query().order(Group.key).iter(keys_only=True)
 
     tasks = []
@@ -233,7 +233,7 @@ def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
 
     tasks = []
 
-    contacts = {}
+    #contacts = {}
     for contact in student.contacts:
         # TODO: Optimize task building with memcache markers to
         # avoid building tasks that already exist.
@@ -247,18 +247,18 @@ def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
         tasks.append(task)
 
         # TODO: WTF is this?
-        contacts[contact['t']] = contact
+        #contacts[contact['t']] = contact
 
     if tasks:
         insert_tasks(tasks, CONTACT_TX_QUEUE)
 
     marker_key = ndb.Key(
-        StudentMarker, "%s:%s" % (student_key.id, message.event.id))
+        StudentMarker, "%s:%s" % (student_key.id(), message.event.id()))
 
     new_marker = StudentMarker(
         key=marker_key,
         name=student.name,
-        contacts=contacts,
+        contacts=student.contacts,
         last_broadcast=datetime.now()
     )
 
@@ -347,8 +347,8 @@ def broadcast_to_contact(event_key, message_key, student_key, contact,
 
     method_tasks = []
     for method in methods:
-        method_tasks = get_method_broadcast_task(
-            event_key, message_key, short_id, method, batch_id)
+        method_tasks.append(get_method_broadcast_task(
+            event_key, message_key, short_id, method, batch_id))
 
     insert_tasks(method_tasks, METHOD_TX_QUEUE)
 
@@ -425,7 +425,8 @@ def broadcast_email(address, message, url):
     logging.info('Sending notice to %s via mail api.', address)
 
     email_message = mail.EmailMessage(sender="SBeacon <clifforloff@gmail.com>",
-                                      subject=message.title)
+                                      subject='A Message from SBeacon')
+    #                                  subject=message.title)
 
     email_message.to = address
 

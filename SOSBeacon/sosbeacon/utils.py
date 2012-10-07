@@ -9,13 +9,16 @@ ALPHABET = string.ascii_letters + string.digits + '-_$'
 ALPHABET_REVERSE = dict((c, i) for (i, c) in enumerate(ALPHABET))
 BASE = len(ALPHABET)
 
+
 def number_encode(number):
     s = []
     while True:
         number, r = divmod(number, BASE)
         s.append(ALPHABET[r])
-        if not number: break
+        if not number:
+            break
     return ''.join(reversed(s))
+
 
 def number_decode(encoded):
     number = 0
@@ -71,7 +74,9 @@ def insert_tasks(tasks, queue_name=None):
     try:
         taskqueue.Queue(name=queue_name).add(tasks)
         return batch_count
-    except (taskqueue.TombstonedTaskError, taskqueue.TaskAlreadyExistsError):
+    except (taskqueue.TombstonedTaskError,
+            taskqueue.TaskAlreadyExistsError,
+            taskqueue.BadTaskStateError):
         if batch_count <= 1:
             return 0
 

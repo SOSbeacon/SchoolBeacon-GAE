@@ -1,24 +1,30 @@
 <td>
-  <%- active %>
+  <%- date %>
 </td>
 <td>
   <%- title %>
 </td>
 <td>
-  <%- summary %>
+  <%- status %>
 </td>
 <td>
-  <%- notice_sent ? notice_sent: "No" %>
+  <%- group_list %>
 </td>
 <td>
-  <%- notice_sent_by ? notice_sent_by.username: "" %>
+  <%- responded_count %>
 </td>
 <td>
-  <%- notice_sent_at ? notice_sent_at: "" %>
+  <% student_count + contact_count - responded_count %>
+</td>
+<td>
+  <%- last_broadcast_date %>
 </td>
 <td>
   <div class="grid-row btn-toolbar">
     <div class="grid-buttons btn-group">
+      <button class="view-button btn">
+        <i class="icon-eye-open"></i> View
+      </button>
       <button class="edit-button btn">
         <i class="icon-pencil"></i> Edit
       </button>

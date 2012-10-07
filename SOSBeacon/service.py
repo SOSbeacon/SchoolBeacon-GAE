@@ -51,10 +51,10 @@ url_map = [
     ## Event
     #webapp2.Route(r'/service/event/send',
     #             handler='sosbeacon.service.SendEventHandler'),
-    #webapp2.Route(r'/service/event/<resource_id>',
-    #               handler='sosbeacon.service.EventHandler'),
-    #webapp2.Route(r'/service/event<:/?>',
-    #            handler='sosbeacon.service.EventListHandler'),
+    webapp2.Route(r'/service/event/<resource_id>',
+                   handler='sosbeacon.service.EventHandler'),
+    webapp2.Route(r'/service/event<:/?>',
+                handler='sosbeacon.service.EventListHandler'),
 
     # Group
     webapp2.Route(r'/service/group/<resource_id:.+>',

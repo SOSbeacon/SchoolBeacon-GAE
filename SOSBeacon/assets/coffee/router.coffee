@@ -30,6 +30,7 @@ class App.SOSBeacon.Router extends Backbone.Router
         "broadcast/send": "showSendBroadcast"
         "broadcast/view/:id": "showViewBroadcast"
         "eventcenter": "showEventCenter"
+        "eventcenter/new": "addEventCenter"
 
     initialize: (data) ->
         @menu = new App.SOSBeacon.View.Menu()
@@ -76,6 +77,9 @@ class App.SOSBeacon.Router extends Backbone.Router
 
     showEventCenter: () =>
         @swap(App.SOSBeacon.View.EventCenterApp)
+
+    addEventCenter: () =>
+        @swap(App.SOSBeacon.View.EventCenterAddApp)
 
     navigate: (fragment, options) =>
         return App.Util.TrackChanges.routerNavigate(

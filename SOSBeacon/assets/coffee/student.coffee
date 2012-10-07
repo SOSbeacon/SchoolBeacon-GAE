@@ -140,7 +140,6 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         App.Util.Form.hideAlert()
 
     removeContact: (contactEdit) =>
-        App.Util.TrackChanges.changed()
         # Remove group from model.
         @model.contacts.remove(contactEdit.model)
 

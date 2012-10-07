@@ -4,62 +4,46 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
     defaults: ->
         return {
             key: null,
-            active: true,
             event_type: 'e',
-            who_to_notify: 'a',
-            response_wait_seconds: 3600,
             title: "",
-            summary: "",
-            detail: "",
+            content: "",
             groups: [],
-            notice_sent: false,
-            notice_sent_at: null,
-            notice_sent_by: null
             modified: null
             date: null
             last_broadcast_date: null
             student_count: 0
             contact_count: 0
             responded_count: 0
+            status: ""
         }
 
     validators:
-        active: new App.Util.Validate.bool(),
-        event_type: new App.Util.Validate.string(choices: ['e', 'n']),
-        who_to_notify: new App.Util.Validate.string(choices: ['a', 'p']),
-        response_wait_seconds: new App.Util.Validate.integer(min: -1, max: 86400),
         title: new App.Util.Validate.string(len: {min: 1, max: 100}),
-        summary: new App.Util.Validate.string(len: {min: 1, max: 100}),
-        detail: new App.Util.Validate.string(len: {min: 1, max: 1048576}),
+        content: new App.Util.Validate.string(len: {min: 1, max: 10000}),
 
     initialize: () ->
         @groups = new App.SOSBeacon.Collection.GroupList()
+
+        @loadGroups()
+
+    loadGroups: =>
         groups = @get('groups')
-        if not _.isEmpty(groups)
+        if groups and not _.isEmpty(groups)
             url = @groups.url + '/' + groups.join()
-            @groups.fetch({url: url})
-        return this
+            @groups.fetch({url: url, async: false})
 
     validate: (attrs) =>
         hasError = false
         errors = {}
 
         # TODO: This could be more robust.
-        if not _.isFinite(attrs.response_wait_seconds)
-            hasError = true
-            errors.response_wait_seconds = "Invalid value for response wait seconds."
-
         if _.isEmpty(attrs.title)
             hasError = true
             errors.title = "Missing title."
 
-        if _.isEmpty(attrs.summary)
+        if _.isEmpty(attrs.content)
             hasError = true
-            errors.summary = "A brief summary must be provided."
-
-        if _.isEmpty(attrs.detail)
-            hasError = true
-            errors.detail = "A detailed description is required."
+            errors.summary = "Content must be provided."
 
         if _.isEmpty(attrs.groups)
             hasError = true
@@ -93,18 +77,156 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
     server_api: {}
 
 
+class App.SOSBeacon.View.EventCenterAddApp extends Backbone.View
+    template: JST['event-center/itemheader']
+    id: "sosbeaconapp"
+    className: "top_view row-fluid"
+    isNew: true
+
+    initialize: =>
+        @model = new App.SOSBeacon.Model.Event()
+
+        @addForm = new App.SOSBeacon.View.EventCenterAddForm(@model)
+        App.SOSBeacon.Event.bind("model:save", @modelSaved, this)
+
+    modelSaved: () =>
+        console.log('saved')
+
+    render: =>
+        @$el.html(@template(@model.toJSON()))
+        @$el.append(@addForm.render().el)
+
+        return this
+
+    onClose: () =>
+        App.SOSBeacon.Event.unbind(null, null, this)
+
+        @addForm.close()
+
+
+class App.SOSBeacon.View.EventCenterAddForm extends Backbone.View
+    template: JST['event-center/add']
+    className: "row-fluid"
+    id: "add_area"
+
+    propertyMap:
+        title: "input.title"
+        groups: "select.groups"
+        content: "textarea.content"
+
+    events:
+        "change": "change"
+        "submit form": "save"
+        "keypress .edit": "updateOnEnter"
+
+    initialize: (model) =>
+        App.Util.TrackChanges.track(this)
+
+        @model = model
+
+        @validator = new App.Util.FormValidator(this,
+            propertyMap: @propertyMap,
+            validatorMap: @model.validators
+        )
+
+        @model.bind('error', App.Util.Form.displayValidationErrors)
+
+    render: =>
+        @$el.html(@template(@model.toJSON()))
+
+        @renderGroups()
+
+        @$("#title").focus()
+
+        return this
+
+    renderGroups: () =>
+        allGroups = new App.SOSBeacon.Collection.GroupList()
+        allGroups.fetch(async: false)
+        allGroups.each((group, i) =>
+            @$("#group-select").append(
+                $("<option></option>")
+                    .attr('value', group.get('key'))
+                    .html(group.get('name'))
+            )
+        )
+
+        @$("#group-select").val(@model.get('groups')).select2({
+            placeholder: "Select a group...",
+            openOnEnter: false,
+        })
+
+        @$("input.select2-input").css('width', '100%')
+
+    change: (event) =>
+        App.Util.Form.hideAlert()
+
+    save: (e) =>
+        if e
+            e.preventDefault()
+
+        groupIds = @$("#group-select").val()
+        if not groupIds
+            groupIds = []
+
+        @model.save(
+            title: @$('input.title').val()
+            groups: groupIds
+            content: $.trim(@$('textarea.content').val())
+        )
+
+        if @model.isValid()
+            App.Util.Form.hideAlert()
+            App.Util.Form.showAlert(
+                "Successs!", "Save successful", "alert-success")
+
+            App.SOSBeacon.Event.trigger('model:save', @model, this)
+            App.Util.TrackChanges.clear(this)
+
+        return false
+
+    updateOnEnter: (e) =>
+        focusItem = $("*:focus")
+
+        if e.keyCode == 13
+            @save()
+
+            return false
+
+    onClose: () =>
+        App.Util.TrackChanges.stop(this)
+
+
 class App.SOSBeacon.View.EventCenterApp extends App.Skel.View.ModelApp
     id: "sosbeaconapp"
     template: JST['event-center/view']
     modelType: App.SOSBeacon.Model.Event
 
+    events:
+        "click .add-button": "add"
+
     initialize: =>
         @collection = new App.SOSBeacon.Collection.EventList()
         @listView = new App.SOSBeacon.View.EventCenterList(@collection)
 
+    add: =>
+        App.SOSBeacon.router.navigate("/eventcenter/new", {trigger: true})
+
 
 class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
     template: JST['event-center/list']
+
+    render: =>
+        model_props = @model.toJSON()
+        group_links = []
+        _.each(@model.groups.models, (acs) =>
+            #TODO: convert to links
+            #group_links.push("&nbsp;<a href=''>#{acs.get('name')}</a>")
+            group_links.push(" #{acs.get('name')}")
+        )
+        model_props['group_list'] = group_links
+        @$el.html(@template(model_props))
+        return this
 
 
 class App.SOSBeacon.View.EventCenterListHeader extends App.Skel.View.ListItemHeader
@@ -126,17 +248,6 @@ class App.SOSBeacon.View.EventCenterList extends App.Skel.View.ListView
                 prop: 'flike_title'
                 default: false
                 control: App.Ui.Datagrid.InputFilter
-            }
-        ))
-
-        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
-            {
-                name: 'Is Active'
-                type: 'checkbox'
-                prop: 'feq_active'
-                default: true
-                control: App.Ui.Datagrid.CheckboxFilter
-                default_value: true
             }
         ))
 

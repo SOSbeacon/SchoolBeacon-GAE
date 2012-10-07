@@ -83,7 +83,7 @@ class Event(EntityBase):
             event = cls(namespace='_x_', school=unicode(school))
 
         event.title = data.get('title')
-        event.event_type = data.get('type')
+        event.event_type = data.get('event_type')
         event.date = data.get('date')
 
         status = data.get('status', EVENT_STATUS_DRAFT)
@@ -91,7 +91,7 @@ class Event(EntityBase):
             event.status = EVENT_STATUS_CLOSED
 
         event.content = data.get('content')
-        event.groups = data.get('groups')
+        event.groups = [ndb.Key(urlsafe=key) for key in data.get('groups')]
 
         return event
 

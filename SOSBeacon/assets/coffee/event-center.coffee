@@ -86,6 +86,7 @@ class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
     initialize: (id) =>
         if not id
             @model = new App.SOSBeacon.Model.Event()
+            @isNew = true
         else
             @model = new App.SOSBeacon.Model.Event({key: id})
             @model.fetch({async: false})
@@ -95,10 +96,10 @@ class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
         @editForm = new App.SOSBeacon.View.EventCenterEditForm(@model)
         App.SOSBeacon.Event.bind("model:save", @modelSaved, this)
 
-    modelSaved: () =>
-        #TODO: redirect to edit page
-        console.log('saved')
-        console.log(@model)
+    modelSaved: (model) =>
+        #TODO: navigate to view page
+        Backbone.history.navigate(
+            "/eventcenter/edit/#{model.id}")
 
     render: =>
         @$el.html(@template(@model.toJSON()))
@@ -125,7 +126,6 @@ class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
 class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
     template: JST['event-center/edit']
     className: "row-fluid"
-    id: "add_area"
 
     propertyMap:
         title: "input.title"
@@ -187,19 +187,19 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
         if not groupIds
             groupIds = []
 
-        @model.save(
-            title: @$('input.title').val()
-            groups: groupIds
-            content: $.trim(@$('textarea.content').val())
+        @model.save({
+                title: @$('input.title').val()
+                groups: groupIds
+                content: $.trim(@$('textarea.content').val())
+            },
+            success: (model) =>
+                App.Util.Form.hideAlert()
+                App.Util.Form.showAlert(
+                    "Successs!", "Save successful", "alert-success")
+
+                App.Util.TrackChanges.clear(this)
+                App.SOSBeacon.Event.trigger('model:save', @model, this)
         )
-
-        if @model.isValid()
-            App.Util.Form.hideAlert()
-            App.Util.Form.showAlert(
-                "Successs!", "Save successful", "alert-success")
-
-            App.SOSBeacon.Event.trigger('model:save', @model, this)
-            App.Util.TrackChanges.clear(this)
 
         return false
 

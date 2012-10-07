@@ -177,8 +177,8 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
             App.Util.Form.showAlert(
                 "Successs!", "Save successful", "alert-success")
 
-            App.SOSBeacon.Event.trigger('model:save', @model, this)
             App.Util.TrackChanges.clear(this)
+            App.SOSBeacon.Event.trigger('model:save', @model, this)
 
         return false
 

@@ -69,6 +69,12 @@ class App.SOSBeacon.View.Menu extends Backbone.View
                 href: '#\/broadcast/send'
                 icon: 'icon-share'
             },
+            {
+                text: 'Event Center',
+                title: 'eventcenter',
+                href: '#\/eventcenter'
+                icon: 'icon-cog'
+            },
         ]
         @collection = new App.SOSBeacon.Collection.MenuItems(items)
         @collection.bind('change', @render, this)

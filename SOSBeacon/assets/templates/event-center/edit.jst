@@ -1,0 +1,37 @@
+<form class="edit containter-fluid well form-horizontal standard-back">
+  <div class="row-fluid">
+    <div class="event-center-area">
+      <fieldset>
+        <div class="control-group">
+          <label for="title" class="control-label">Title:</label>
+          <div class="controls">
+            <input id="title" name="title" type="text" value="<%- title %>" 
+            autocomplete="off" class="title span6" placeholder="Title..." />
+          </div>
+        </div>
+        <div class="control-group">
+          <label class="control-label">Groups:</label>
+          <div class="controls">
+            <div class="control">
+              <select id="group-select" class="groups placholder input-large" multiple="multiple">
+                <option></option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="control-group">
+          <label for="content" class="control-label">Details:</label>
+          <div class="controls">
+            <textarea id="content" name="content" rows="100" class="content input-xlarge span10"
+                      placeholder="Full event detail...."><%- content %></textarea>
+          </div>
+        </div>
+      </fieldset>
+    </div>
+    <div class="modal-footer form-actions">
+      <button class="save btn btn-primary">
+        <i class="icon-ok icon-white"></i> Save
+      </button>
+    </div>
+  </div>
+</form>

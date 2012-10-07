@@ -116,7 +116,7 @@ def broadcast_to_groups(group_keys, event_key, message_key, batch_id):
     from sosbeacon.group import Group
     from sosbeacon.utils import insert_tasks
 
-    if len(group_keys) == 1 and group_keys[0].id == ALL_GROUPS_ID:
+    if len(group_keys) == 1 and group_keys[0].id() == ALL_GROUPS_ID:
         group_keys = Group.query().order(Group.key).iter(keys_only=True)
 
     tasks = []
@@ -253,7 +253,7 @@ def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
         insert_tasks(tasks, CONTACT_TX_QUEUE)
 
     marker_key = ndb.Key(
-        StudentMarker, "%s:%s" % (student_key.id, message.event.id))
+        StudentMarker, "%s:%s" % (student_key.id(), message.event.id()))
 
     new_marker = StudentMarker(
         key=marker_key,

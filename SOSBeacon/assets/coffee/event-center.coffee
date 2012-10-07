@@ -215,10 +215,9 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
         App.Util.TrackChanges.stop(this)
 
 
-class App.SOSBeacon.View.EventCenterApp extends App.Skel.View.ModelApp
+class App.SOSBeacon.View.EventCenterApp extends Backbone.View
     id: "sosbeaconapp"
     template: JST['event-center/view']
-    modelType: App.SOSBeacon.Model.Event
 
     events:
         "click .add-button": "add"
@@ -227,12 +226,25 @@ class App.SOSBeacon.View.EventCenterApp extends App.Skel.View.ModelApp
         @collection = new App.SOSBeacon.Collection.EventList()
         @listView = new App.SOSBeacon.View.EventCenterList(@collection)
 
+    render: =>
+        @$el.html(@template())
+        @$el.append(@listView.render().el)
+
+        $("#add_new").focus()
+
+        return this
+
     add: =>
         App.SOSBeacon.router.navigate("/eventcenter/new", {trigger: true})
 
 
 class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
     template: JST['event-center/list']
+
+    events:
+        "click .view-button": "view"
+        "click .edit-button": "edit"
+        "click .remove-button": "delete"
 
     render: =>
         model_props = @model.toJSON()
@@ -246,6 +258,12 @@ class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
         @$el.html(@template(model_props))
         return this
 
+    edit: =>
+        App.SOSBeacon.router.navigate(
+            "/eventcenter/edit/#{@model.id}", {trigger: true})
+
+    view: =>
+        console.log('switch to view')
 
 class App.SOSBeacon.View.EventCenterListHeader extends App.Skel.View.ListItemHeader
     template: JST['event-center/listheader']

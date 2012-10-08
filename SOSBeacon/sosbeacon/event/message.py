@@ -27,7 +27,9 @@ message_schema = {
     'type': basestring,
     'message': {
         'message': basestring,
-        'sms': basestring
+        'sms': basestring,
+        'title': basestring,
+        'email': basestring
     }
 }
 
@@ -83,7 +85,7 @@ class Message(EntityBase):
             assert ['body'] == message_data.keys(), "Invalid comment payload."
 
         if message_type == 'b':
-            assert ['sms', 'email'] == message_data.keys(),\
+            assert ['sms', 'email', 'title'] == message_data.keys(),\
                 "Invalid broadcast payload."
 
             # TODO: Ensure user is an admin.

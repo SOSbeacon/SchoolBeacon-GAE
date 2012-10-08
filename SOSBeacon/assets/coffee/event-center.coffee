@@ -80,9 +80,14 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
 class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
     template: JST['event-center/detail']
     id: "sosbeaconapp"
-    className: "top_view row-fluid"
+    className: "top_view row-fluid event-center-details"
+
+    events:
+        "click .event-add-comment": "addComment"
 
     initialize: (id) =>
+        @messageView = null
+
         @model = new App.SOSBeacon.Model.Event({key: id})
         @model.fetch({async: false})
         @model.initialize()
@@ -91,6 +96,17 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @$el.html(@template(@model.toJSON()))
 
         return this
+
+    addComment: =>
+        if not @messageView
+            @messageView = new App.SOSBeacon.View.AddMessage({event: @model})
+
+        @$("#event-center-message").append(@messageView.render().el)
+
+    onClose: =>
+        if @messageView
+            @messageView.close()
+
 
 
 class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View

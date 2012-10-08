@@ -49,6 +49,28 @@ class PersonListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             query_schema=person_query_schema)
 
 
+class MessageHandler(rest_handler.RestApiHandler, ProcessMixin):
+
+    def __init__(self, request, response):
+        from sosbeacon.event.message import Message
+        from sosbeacon.event.message import message_schema
+
+        super(MessageHandler, self).__init__(
+            Message, message_schema, request, response)
+
+
+class MessageListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+
+    def __init__(self, request, response):
+        from sosbeacon.event.message import Message
+        from sosbeacon.event.message import message_schema
+        from sosbeacon.event.message import message_query_schema
+
+        super(MessageListHandler, self).__init__(
+            Message, message_schema, request, response,
+            query_schema=message_query_schema)
+
+
 class StudentHandler(rest_handler.RestApiHandler, ProcessMixin):
 
     def __init__(self, request, response):

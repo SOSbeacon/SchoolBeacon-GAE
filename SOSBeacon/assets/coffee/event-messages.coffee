@@ -99,11 +99,11 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
         model = new App.SOSBeacon.Model.Message()
         model.save(
             message: {
-                sms: @$('textarea#add-sms-box').val()
-                title: @$('textarea#add-title-box').val()
+                sms: @$('textarea#add-sms-box').val(),
+                title: @$('input#add-title-box').val(),
                 email: @$('textarea#add-email-box').val()
-            }
-            type: 'b' #b for broadcast
+            },
+            type: 'b', #b for broadcast
             event: @event.id
         )
 

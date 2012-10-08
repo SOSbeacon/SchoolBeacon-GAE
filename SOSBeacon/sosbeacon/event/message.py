@@ -23,7 +23,7 @@ METHOD_TX_QUEUE = "method-tx"
 message_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'event': voluptuous.ndbkey(),
-    'timestamp': basestring,
+    'timestamp': voluptuous.any(None, datetime, ''),
     'type': basestring,
     'message': {
         'message': basestring,
@@ -100,8 +100,8 @@ class Message(EntityBase):
         message = self._default_dict()
         message["version"] = self.version_
 
-        message['event'] = self.event
-        message['timestamp'] = self.timestamp
+        message['event'] = self.event.urlsafe()
+        message['added'] = self.timestamp.strftime('%Y-%m-%d %H:%M')
         message['type'] = self.message_type
         message['message'] = self.message
 

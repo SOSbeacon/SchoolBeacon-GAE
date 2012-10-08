@@ -56,6 +56,12 @@ url_map = [
     webapp2.Route(r'/service/event<:/?>',
                 handler='sosbeacon.service.EventListHandler'),
 
+    #Message
+    webapp2.Route(r'/service/message/<resource_id>',
+                   handler='sosbeacon.service.MessageHandler'),
+    webapp2.Route(r'/service/message<:/?>',
+                handler='sosbeacon.service.MessageListHandler'),
+
     # Group
     webapp2.Route(r'/service/group/<resource_id:.+>',
                   handler='sosbeacon.service.GroupHandler'),

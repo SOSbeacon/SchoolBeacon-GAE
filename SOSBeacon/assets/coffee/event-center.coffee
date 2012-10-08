@@ -84,6 +84,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
     events:
         "click .event-add-comment": "addComment"
+        "click .event-add-broadcast": "addBroadcast"
 
     initialize: (id) =>
         @messageView = null
@@ -100,6 +101,12 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
     addComment: =>
         if not @messageView
             @messageView = new App.SOSBeacon.View.AddMessage({event: @model})
+
+        @$("#event-center-message").append(@messageView.render().el)
+
+    addBroadcast: =>
+        if not @messageView
+            @messageView = new App.SOSBeacon.View.AddBroadcast({event: @model})
 
         @$("#event-center-message").append(@messageView.render().el)
 

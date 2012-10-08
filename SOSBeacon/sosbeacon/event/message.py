@@ -8,6 +8,7 @@ import voluptuous
 
 from skel.datastore import EntityBase
 
+GROUPS_TX_ENDPOINT = '/task/event/tx/start'
 GROUP_TX_ENDPOINT = '/task/event/tx/group'
 GROUP_TX_QUEUE = "group-tx"
 
@@ -58,13 +59,13 @@ class Message(EntityBase):
         if key:
             message = key.get()
 
+        event_key = data.get('event')
+        if not event_key:
+            # TODO: Raise some other error type here?
+            raise Exception("Event key is required.")
+
         if not message:
             from google.appengine.api import namespace_manager
-
-            event_key = data.get('event')
-            if not event_key:
-                # TODO: Raise some other error type here?
-                raise Exception("Event key is required.")
 
             event = event_key.get()
             if not event:
@@ -89,7 +90,7 @@ class Message(EntityBase):
                 "Invalid broadcast payload."
 
             # TODO: Ensure user is an admin.
-            # TODO: Initiate send.
+            broadcast_message(event_key, message.key)
 
         message.message = message_data
 
@@ -108,6 +109,25 @@ class Message(EntityBase):
         message['message'] = self.message
 
         return message
+
+
+def broadcast_message(event_key, message_key, batch_id=""):
+    """Insert a task to initiate the broadcast."""
+    event_urlsafe = event_key.urlsafe()
+    message_urlsafe = message_key.urlsafe()
+
+    name = "tx-s-%s-%s" % (message_urlsafe, batch_id)
+    task = taskqueue.Task(
+        url=GROUPS_TX_ENDPOINT,
+        name=name,
+        params={
+            'event': event_urlsafe,
+            'message': message_urlsafe,
+            'batch': batch_id
+        },
+        countdown=2  # TODO: Need something better than this for sure.
+    )
+    taskqueue.Queue(name=GROUP_TX_QUEUE).add(task)
 
 
 def broadcast_to_groups(group_keys, event_key, message_key, batch_id):

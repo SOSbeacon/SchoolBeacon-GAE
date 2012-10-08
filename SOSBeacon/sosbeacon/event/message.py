@@ -76,7 +76,9 @@ class Message(EntityBase):
                 # TODO: Raise some other error type here?
                 raise Exception("Security violation!")
 
-            message = cls(event=event.key)
+            key_id = "%s:%s" % (event_key.id(),
+                                cls.allocate_ids(size=1, parent=event_key)[0])
+            message = cls(id=key_id, event=event.key)
 
         message_type = data.get('type')
         message.message_type = message_type

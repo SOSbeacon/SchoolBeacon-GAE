@@ -98,18 +98,20 @@ class App.SOSBeacon.View.ContactMethodEdit extends Backbone.View
         @model.bind('destroy', @remove, this)
 
     render: =>
-        icon = ''
-        if @model.get('type') == 'e'
-            icon = 'envelope'
-        else if @model.get('type') == 'p'
-            icon = 'volume-up'
-        else if @model.get('type') == 't'
-            icon = 'phone'
-        else
-            icon = ''
-
         obj_json = @model.toJSON()
-        obj_json.icon = icon
+        if @model.get('type') == 'e'
+            obj_json.icon = 'envelope'
+            obj_json.type_name = 'email'
+        else if @model.get('type') == 'p'
+            obj_json.icon = 'volume-up'
+            obj_json.type_name = 'phone'
+        else if @model.get('type') == 't'
+            obj_json.icon = 'phone'
+            obj_json.type_name = 'text'
+        else
+            obj_json.icon = ''
+            obj_json.type_name = ''
+
         @$el.html(@template(obj_json))
         return this
 

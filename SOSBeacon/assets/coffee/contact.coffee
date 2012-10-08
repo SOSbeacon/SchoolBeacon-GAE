@@ -133,7 +133,7 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
         return this
 
     render_methods: =>
-        for method in ['e', 'p', 't']
+        for method in ['e', 't', 'p']
             # get the method if it exists
             contact_method = @model.methods.find((m) ->
                 return m.get('type') == method

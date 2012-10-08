@@ -21,6 +21,7 @@ class App.SOSAdmin.Model.MenuItem extends Backbone.Model
             text: "",
             title: "",
             href: "",
+            icon: ""
         }
 
 
@@ -47,7 +48,8 @@ class App.SOSAdmin.View.Menu extends Backbone.View
             {
                 text: 'Schools',
                 title: 'schools',
-                href: '#\/schools'
+                href: '#\/schools',
+                icon: "icon-book"
             }
         ]
         @collection = new App.SOSAdmin.Collection.MenuItems(items)

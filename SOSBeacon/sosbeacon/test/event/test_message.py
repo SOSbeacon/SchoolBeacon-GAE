@@ -116,6 +116,7 @@ class TestMessageModel(unittest.TestCase):
             'type': 'b',
             'message': {
                 'sms': 'Your SMS message here.',
+                'title': 'The email subject goes here.',
                 'email': 'The email message here.'
             }
         }
@@ -125,6 +126,8 @@ class TestMessageModel(unittest.TestCase):
         self.assertEqual('b', message.message_type)
         self.assertEqual(
             message_dict['message']['sms'], message.message['sms'])
+        self.assertEqual(
+            message_dict['message']['title'], message.message['title'])
         self.assertEqual(
             message_dict['message']['email'], message.message['email'])
 

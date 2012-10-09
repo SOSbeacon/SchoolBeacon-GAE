@@ -5,6 +5,7 @@ import voluptuous
 
 from skel.datastore import EntityBase
 
+from sosbeacon.utils import get_latest_datetime
 
 marker_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
@@ -44,16 +45,16 @@ class StudentMarker(EntityBase):
 
         last_broadcast = max(self.last_broadcast, other.last_broadcast)
 
-        for contact_key, new_contact in other.contacts.iteritems():
-            contact = self.contacts.get(contact_key)
-            if contact:
-                contact['acked'] = max(contact['acked'], new_contact['acked'])
+        #for contact_key, new_contact in other.contacts.iteritems():
+        #    contact = self.contacts.get(contact_key)
+        #    if contact:
+        #        contact['acked'] = max(contact['acked'], new_contact['acked'])
 
-                last_sent = max(contact['sent'], new_contact['sent'])
-                contact['sent'] = last_sent
-                last_broadcast = max(last_sent, last_broadcast)
+        #        last_sent = max(contact['sent'], new_contact['sent'])
+        #        contact['sent'] = last_sent
+        #        last_broadcast = max(last_sent, last_broadcast)
 
-            self.contacts[contact_key] = contact
+        #    self.contacts[contact_key] = contact
 
         self.last_broadcast = last_broadcast
 

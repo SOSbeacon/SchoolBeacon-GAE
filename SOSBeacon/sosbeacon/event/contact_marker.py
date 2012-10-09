@@ -1,4 +1,6 @@
 
+import json
+
 from google.appengine.ext import ndb
 
 import voluptuous
@@ -199,7 +201,7 @@ def insert_update_marker_task(marker_key, student_key,
             'marker': marker_urlsafe,
             'student': student_urlsafe,
             'contact': contact,
-            'methods': search_methods
+            'methods': json.dumps(list(search_methods))
         }
     )
 
@@ -236,7 +238,7 @@ def insert_merge_task(event_key, search_methods):
         url=MARKER_MERGE_ENDPOINT,
         params={
             'event': event_urlsafe,
-            'methods': search_methods
+            'methods': json.dumps(list(search_methods))
         }
     )
 

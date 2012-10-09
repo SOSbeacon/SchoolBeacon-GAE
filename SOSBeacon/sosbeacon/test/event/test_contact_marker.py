@@ -624,7 +624,9 @@ class TestUpdateMarker(unittest.TestCase):
         marker = ContactMarker(key=marker_key, students={}, methods=methods[:])
         marker_key.get.return_value = marker
 
-        student_key = 'STUDENTKEY'
+        student_key = mock.Mock(spec=ndb.Key)
+        student_key.id.return_value = "STUDENTKEY"
+
         contact = {'id': 1}
 
         new_methods = ['abc', '123', '456']
@@ -658,14 +660,16 @@ class TestUpdateMarker(unittest.TestCase):
         marker = ContactMarker(key=marker_key, students={}, methods=methods[:])
         marker_key.get.return_value = marker
 
-        student_key = 'STUDENTKEY'
+        student_key = mock.Mock(spec=ndb.Key)
+        student_key.id.return_value = "STUDENTKEY"
+
         contact = {'name': 'jimmy'}
 
         update_marker(marker_key, student_key, contact.copy(), methods)
 
-        self.assertIn(student_key, marker.students)
+        self.assertIn(student_key.id(), marker.students)
 
-        self.assertEqual([contact.copy()], marker.students[student_key])
+        self.assertEqual([contact.copy()], marker.students[student_key.id()])
 
         self.assertTrue(marker_put_mock.called)
 
@@ -685,7 +689,9 @@ class TestUpdateMarker(unittest.TestCase):
 
         methods = ['abc']
 
-        student_key = 'STUDENTKEY'
+        student_key = mock.Mock(spec=ndb.Key)
+        student_key.id.return_value = "STUDENTKEY"
+
         student_contacts = {
             'name': 'Joe Blow'
         }
@@ -696,7 +702,7 @@ class TestUpdateMarker(unittest.TestCase):
         marker = ContactMarker(
             key=marker_key,
             students={
-                student_key: [student_contacts.copy()]
+                student_key.id(): [student_contacts.copy()]
             },
             methods=methods[:])
         marker_key.get.return_value = marker
@@ -705,9 +711,9 @@ class TestUpdateMarker(unittest.TestCase):
 
         update_marker(marker_key, student_key, contact.copy(), methods)
 
-        self.assertIn(student_key, marker.students)
+        self.assertIn(student_key.id(), marker.students)
 
-        self.assertIn(contact.copy(), marker.students[student_key])
+        self.assertIn(contact.copy(), marker.students[student_key.id()])
 
         self.assertTrue(marker_put_mock.called)
 

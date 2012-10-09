@@ -169,12 +169,12 @@ def create_or_update_marker(event_key, student_key, contact, search_methods):
     if not marker:
         # TODO: What needs set?
         short_id = str(ContactMarker.allocate_ids(size=1, parent=event_key)[0])
-        key_id = "%s:%s" % (event_key.id, short_id)
+        key_id = "%s:%s" % (event_key.id(), short_id)
         marker = ContactMarker(
             id=key_id,
             event=event_key,
             name=contact.get('name'),
-            students={student_key.id(): [contact]},
+            students={str(student_key.id()): [contact]},
             short_id=short_id,
             methods=search_methods)
         marker.put()
@@ -215,7 +215,7 @@ def update_marker(marker_key, student_key, contact, methods):
 
     marker.methods = list(set(marker.methods) | set(methods))
 
-    student_contacts = marker.students.setdefault(student_key, [])
+    student_contacts = marker.students.setdefault(str(student_key.id()), [])
 
     # TODO: Fix this.
     if contact not in student_contacts:

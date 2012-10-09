@@ -93,13 +93,28 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @model.fetch({async: false})
         @model.initialize()
 
+        App.SOSBeacon.Event.bind("message:add", @messageAdd, this)
+        #App.SOSBeacon.Event.bind("message:edit", @messageEdit, this)
+
     render: =>
         @$el.html(@template(@model.toJSON()))
 
-        @messageListView = new App.SOSBeacon.View.MessageList(@model)
+        @collection = new App.SOSBeacon.Collection.MessageList()
+        _.extend(@collection.server_api, {
+            'feq_event': @model.id
+            'orderBy': 'timestamp'
+            'orderDirection': 'desc'
+        })
+
+        @collection.fetch()
+
+        @messageListView = new App.SOSBeacon.View.MessageList(@collection)
         @$("#event-center-message").append(@messageListView.render().el)
 
         return this
+
+    messageAdd: (message) =>
+        @collection.add(message, {at: 0})
 
     addComment: =>
         if not @messageView
@@ -114,6 +129,8 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @$(".message-entry").append(@messageView.render().el)
 
     onClose: =>
+        App.SOSBeacon.Event.unbind(null, null, this)
+
         if @messageView
             @messageView.close()
 

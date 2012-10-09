@@ -92,6 +92,17 @@ indexes:
   - name: a
   - name: n_
 
+- kind: Message
+  properties:
+  - name: e
+  - name: ts
+
+- kind: Message
+  properties:
+  - name: e
+  - name: ts
+    direction: desc
+
 - kind: Student
   properties:
   - name: g

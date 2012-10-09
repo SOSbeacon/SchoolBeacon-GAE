@@ -1,3 +1,9 @@
-<%- message.body %>
+<% if (type == "c") { %>
+  <%- message.body %>
+<% } else { %>
+  <%- message.sms %>
+  <%- message.title %>
+  <%- message.email %>
+  <% } %>
 <br />
 <%- type %>

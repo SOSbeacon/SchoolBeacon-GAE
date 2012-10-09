@@ -78,6 +78,10 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
             event: @event.id
         )
 
+        App.SOSBeacon.Event.trigger("message:add", model, this)
+
+        @close()
+
 
 class App.SOSBeacon.View.AddBroadcast extends Backbone.View
     template: JST['event-center/add-broadcast']
@@ -107,23 +111,19 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
             event: @event.id
         )
 
+        App.SOSBeacon.Event.trigger("message:add", model, this)
+
+        @close()
+
 
 class App.SOSBeacon.View.MessageList extends Backbone.View
     id: "view-message-area"
 
-    initialize: (event) =>
-        @event = event
-
-        @collection = new App.SOSBeacon.Collection.MessageList()
-        @collection.bind('add', @addOne, this)
+    initialize: (collection) =>
+        @collection = collection
+        @collection.bind('add', @insertOne, this)
         @collection.bind('reset', @reset, this)
         @collection.bind('all', @show, this)
-
-        _.extend(@collection.server_api, {
-            'feq_event': @event.id
-        })
-
-        @collection.fetch()
 
     render: =>
         return this
@@ -131,6 +131,10 @@ class App.SOSBeacon.View.MessageList extends Backbone.View
     addOne: (object) =>
         view = new App.SOSBeacon.View.MessageListItem({model: object})
         @$el.append(view.render().el)
+
+     insertOne: (object) =>
+        view = new App.SOSBeacon.View.MessageListItem({model: object})
+        @$el.prepend(view.render().el)
     
     addAll: =>
         @collection.each(@addOne)

@@ -250,11 +250,13 @@ def merge_markers(event_key, search_methods):
 
     markers = find_markers_for_methods(event_key, search_methods)
 
+    first_marker = None
     marker_map = {}
     # Organize markers by place holder
     place_holder_map = {}
     acknowledged = set()
     for marker in markers:
+        first_marker = first_marker or marker  # TODO: Find a better way.
         marker_map[marker.key] = marker
         place_holder_map.setdefault(marker.place_holder, []).append(marker)
         if marker.acknowledged:
@@ -276,7 +278,7 @@ def merge_markers(event_key, search_methods):
     elif acknowledged:
         base_marker = marker_map[acknowledged.pop()]
     else:
-        base_marker = markers[0]
+        base_marker = first_marker
 
     for marker in markers:
         if marker == base_marker:

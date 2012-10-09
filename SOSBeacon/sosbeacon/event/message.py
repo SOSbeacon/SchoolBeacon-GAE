@@ -8,6 +8,7 @@ import voluptuous
 
 from skel.datastore import EntityBase
 
+GROUPS_TX_ENDPOINT = '/task/event/tx/start'
 GROUP_TX_ENDPOINT = '/task/event/tx/group'
 GROUP_TX_QUEUE = "group-tx"
 
@@ -27,7 +28,9 @@ message_schema = {
     'type': basestring,
     'message': {
         'message': basestring,
-        'sms': basestring
+        'sms': basestring,
+        'title': basestring,
+        'email': basestring
     }
 }
 
@@ -56,13 +59,13 @@ class Message(EntityBase):
         if key:
             message = key.get()
 
+        event_key = data.get('event')
+        if not event_key:
+            # TODO: Raise some other error type here?
+            raise Exception("Event key is required.")
+
         if not message:
             from google.appengine.api import namespace_manager
-
-            event_key = data.get('event')
-            if not event_key:
-                # TODO: Raise some other error type here?
-                raise Exception("Event key is required.")
 
             event = event_key.get()
             if not event:
@@ -73,7 +76,9 @@ class Message(EntityBase):
                 # TODO: Raise some other error type here?
                 raise Exception("Security violation!")
 
-            message = cls(event=event.key)
+            key_id = "%s:%s" % (event_key.id(),
+                                cls.allocate_ids(size=1, parent=event_key)[0])
+            message = cls(id=key_id, event=event.key)
 
         message_type = data.get('type')
         message.message_type = message_type
@@ -83,11 +88,11 @@ class Message(EntityBase):
             assert ['body'] == message_data.keys(), "Invalid comment payload."
 
         if message_type == 'b':
-            assert ['sms', 'email'] == message_data.keys(),\
+            assert ['sms', 'email', 'title'] == message_data.keys(),\
                 "Invalid broadcast payload."
 
             # TODO: Ensure user is an admin.
-            # TODO: Initiate send.
+            broadcast_message(event_key, message.key)
 
         message.message = message_data
 
@@ -106,6 +111,25 @@ class Message(EntityBase):
         message['message'] = self.message
 
         return message
+
+
+def broadcast_message(event_key, message_key, batch_id=""):
+    """Insert a task to initiate the broadcast."""
+    event_urlsafe = event_key.urlsafe()
+    message_urlsafe = message_key.urlsafe()
+
+    name = "tx-s-%s-%s" % (message_urlsafe, batch_id)
+    task = taskqueue.Task(
+        url=GROUPS_TX_ENDPOINT,
+        name=name,
+        params={
+            'event': event_urlsafe,
+            'message': message_urlsafe,
+            'batch': batch_id
+        },
+        countdown=2  # TODO: Need something better than this for sure.
+    )
+    taskqueue.Queue(name=GROUP_TX_QUEUE).add(task)
 
 
 def broadcast_to_groups(group_keys, event_key, message_key, batch_id):

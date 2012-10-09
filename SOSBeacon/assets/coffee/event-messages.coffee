@@ -79,6 +79,35 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
         )
 
 
+class App.SOSBeacon.View.AddBroadcast extends Backbone.View
+    template: JST['event-center/add-broadcast']
+    id: "add-message-area"
+
+    events:
+        "click .event-submit-broadcast": "saveBroadcast"
+        "click .event-cancel-broadcast": "close"
+
+    initialize: (options) =>
+        @event = options.event
+
+    render: () =>
+        @$el.html(@template())
+
+        return this
+
+    saveBroadcast: =>
+        model = new App.SOSBeacon.Model.Message()
+        model.save(
+            message: {
+                sms: @$('textarea#add-sms-box').val(),
+                title: @$('input#add-title-box').val(),
+                email: @$('textarea#add-email-box').val()
+            },
+            type: 'b', #b for broadcast
+            event: @event.id
+        )
+
+
 class App.SOSBeacon.Model.MessageType extends Backbone.Model
     idAttribute: 'type'
     defaults: ->

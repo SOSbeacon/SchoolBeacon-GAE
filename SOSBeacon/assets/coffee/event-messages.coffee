@@ -34,7 +34,7 @@ class App.SOSBeacon.Collection.MessageList extends Backbone.Paginator.requestPag
     paginator_core: {
         type: 'GET',
         dataType: 'json'
-        url: '/service/event'
+        url: '/service/message'
     }
 
     paginator_ui: {
@@ -106,6 +106,50 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
             type: 'b', #b for broadcast
             event: @event.id
         )
+
+
+class App.SOSBeacon.View.MessageList extends Backbone.View
+    id: "view-message-area"
+
+    initialize: (event) =>
+        @event = event
+
+        @collection = new App.SOSBeacon.Collection.MessageList()
+        @collection.bind('add', @addOne, this)
+        @collection.bind('reset', @reset, this)
+        @collection.bind('all', @show, this)
+
+        _.extend(@collection.server_api, {
+            'feq_event': @event.id
+        })
+
+        @collection.fetch()
+
+    render: =>
+        return this
+
+    addOne: (object) =>
+        view = new App.SOSBeacon.View.MessageListItem({model: object})
+        @$el.append(view.render().el)
+    
+    addAll: =>
+        @collection.each(@addOne)
+
+    reset: =>
+        @$(".listitems").html('')
+        @addAll()
+
+
+class App.SOSBeacon.View.MessageListItem extends Backbone.View
+    template: JST['event-center/message-list-item']
+
+    initialize: =>
+        @model.bind('change', @render, this)
+        @model.bind('destroy', @remove, this)
+
+    render: =>
+        @$el.html(@template(@model.toJSON()))
+        return this
 
 
 class App.SOSBeacon.Model.MessageType extends Backbone.Model

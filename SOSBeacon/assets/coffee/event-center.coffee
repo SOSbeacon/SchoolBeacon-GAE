@@ -96,24 +96,28 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
     render: =>
         @$el.html(@template(@model.toJSON()))
 
+        @messageListView = new App.SOSBeacon.View.MessageList(@model)
+        @$("#event-center-message").append(@messageListView.render().el)
+
         return this
 
     addComment: =>
         if not @messageView
             @messageView = new App.SOSBeacon.View.AddMessage({event: @model})
 
-        @$("#event-center-message").append(@messageView.render().el)
+        @$(".message-entry").append(@messageView.render().el)
 
     addBroadcast: =>
         if not @messageView
             @messageView = new App.SOSBeacon.View.AddBroadcast({event: @model})
 
-        @$("#event-center-message").append(@messageView.render().el)
+        @$(".message-entry").append(@messageView.render().el)
 
     onClose: =>
         if @messageView
             @messageView.close()
 
+        @messageListView.close()
 
 
 class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View

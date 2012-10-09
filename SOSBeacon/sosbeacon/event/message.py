@@ -140,6 +140,9 @@ def broadcast_to_groups(group_keys, event_key, message_key, batch_id):
     from sosbeacon.group import Group
     from sosbeacon.utils import insert_tasks
 
+    # This is done to dedupe the group list, for better resilience.
+    group_keys = list(set(group_keys))
+
     if len(group_keys) == 1 and group_keys[0].id() == ALL_GROUPS_ID:
         group_keys = Group.query().order(Group.key).iter(keys_only=True)
 

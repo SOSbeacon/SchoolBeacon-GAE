@@ -51,12 +51,15 @@ class TestMessageModel(unittest.TestCase):
             Exception, "Security violation",
             Message.from_dict, {'event': event_key})
 
-    def test_from_dict_comment_payload(self):
-        """Ensure comment message payload matches expected type."""
+    @patch('sosbeacon.event.message.Message.allocate_ids')
+    def test_from_dict_comment_payload(self, message_alloc_ids_mock):
+        """Ensure message with comment payload and type works OK."""
         from google.appengine.api import namespace_manager
 
         from sosbeacon.event.event import Event
         from sosbeacon.event.message import Message
+
+        message_alloc_ids_mock.return_value = 1, 1
 
         event = Event(school=unicode(namespace_manager.get_namespace()))
         event_key = Mock()
@@ -76,12 +79,17 @@ class TestMessageModel(unittest.TestCase):
         self.assertEqual(
             message_dict['message']['body'], message.message['body'])
 
-    def test_from_dict_bad_comment_payload(self):
-        """Ensure comment message payload matches expected type."""
+    @patch('sosbeacon.event.message.Message.allocate_ids')
+    def test_from_dict_bad_comment_payload(self, message_alloc_ids_mock):
+        """Ensure broadcast message payload with comment type raises an
+        exception.
+        """
         from google.appengine.api import namespace_manager
 
         from sosbeacon.event.event import Event
         from sosbeacon.event.message import Message
+
+        message_alloc_ids_mock.return_value = 1, 1
 
         event = Event(school=unicode(namespace_manager.get_namespace()))
         event_key = Mock()
@@ -100,12 +108,17 @@ class TestMessageModel(unittest.TestCase):
             AssertionError, "Invalid comment payload",
             Message.from_dict, message_dict)
 
-    def test_from_dict_broadcast_payload(self):
-        """Ensure comment message payload matches expected type."""
+    @patch('sosbeacon.event.message.Message.allocate_ids')
+    @patch('google.appengine.api.taskqueue.Queue.add')
+    def test_from_dict_broadcast_payload(self, message_alloc_ids_mock,
+                                         queue_add_mock):
+        """Ensure broadcast message with correct payload and type works."""
         from google.appengine.api import namespace_manager
 
         from sosbeacon.event.event import Event
         from sosbeacon.event.message import Message
+
+        message_alloc_ids_mock.return_value = 1, 1
 
         event = Event(school=unicode(namespace_manager.get_namespace()))
         event_key = Mock()
@@ -116,6 +129,7 @@ class TestMessageModel(unittest.TestCase):
             'type': 'b',
             'message': {
                 'sms': 'Your SMS message here.',
+                'title': 'The email subject goes here.',
                 'email': 'The email message here.'
             }
         }
@@ -126,14 +140,19 @@ class TestMessageModel(unittest.TestCase):
         self.assertEqual(
             message_dict['message']['sms'], message.message['sms'])
         self.assertEqual(
+            message_dict['message']['title'], message.message['title'])
+        self.assertEqual(
             message_dict['message']['email'], message.message['email'])
 
-    def test_from_dict_bad_broadcast_payload(self):
+    @patch('sosbeacon.event.message.Message.allocate_ids')
+    def test_from_dict_bad_broadcast_payload(self, message_alloc_ids_mock):
         """Ensure comment message payload matches expected type."""
         from google.appengine.api import namespace_manager
 
         from sosbeacon.event.event import Event
         from sosbeacon.event.message import Message
+
+        message_alloc_ids_mock.return_value = 1, 1
 
         event = Event(school=unicode(namespace_manager.get_namespace()))
         event_key = Mock()

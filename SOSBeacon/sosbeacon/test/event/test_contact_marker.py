@@ -572,6 +572,8 @@ class TestInsertUpdateMarkerTask(unittest.TestCase):
     @mock.patch('google.appengine.api.taskqueue.Queue.add', autospec=True)
     def test_task_params(self, queue_add_mock, task_mock):
         """Ensure the update marker task name contains enough to be unique."""
+        import json
+
         from sosbeacon.event.contact_marker import insert_update_marker_task
 
         marker_key = mock.Mock()
@@ -590,7 +592,7 @@ class TestInsertUpdateMarkerTask(unittest.TestCase):
             'marker': 'MARKERKEY',
             'student': 'STUDENTKEY',
             'contact': contact.copy(),
-            'methods': search_methods[:]
+            'methods': json.dumps(search_methods[:])
         }
 
         self.assertEqual(check_params, task_mock.call_args[1]['params'])
@@ -624,7 +626,9 @@ class TestUpdateMarker(unittest.TestCase):
         marker = ContactMarker(key=marker_key, students={}, methods=methods[:])
         marker_key.get.return_value = marker
 
-        student_key = 'STUDENTKEY'
+        student_key = mock.Mock(spec=ndb.Key)
+        student_key.id.return_value = "STUDENTKEY"
+
         contact = {'id': 1}
 
         new_methods = ['abc', '123', '456']
@@ -658,14 +662,16 @@ class TestUpdateMarker(unittest.TestCase):
         marker = ContactMarker(key=marker_key, students={}, methods=methods[:])
         marker_key.get.return_value = marker
 
-        student_key = 'STUDENTKEY'
+        student_key = mock.Mock(spec=ndb.Key)
+        student_key.id.return_value = "STUDENTKEY"
+
         contact = {'name': 'jimmy'}
 
         update_marker(marker_key, student_key, contact.copy(), methods)
 
-        self.assertIn(student_key, marker.students)
+        self.assertIn(student_key.id(), marker.students)
 
-        self.assertEqual([contact.copy()], marker.students[student_key])
+        self.assertEqual([contact.copy()], marker.students[student_key.id()])
 
         self.assertTrue(marker_put_mock.called)
 
@@ -685,7 +691,9 @@ class TestUpdateMarker(unittest.TestCase):
 
         methods = ['abc']
 
-        student_key = 'STUDENTKEY'
+        student_key = mock.Mock(spec=ndb.Key)
+        student_key.id.return_value = "STUDENTKEY"
+
         student_contacts = {
             'name': 'Joe Blow'
         }
@@ -696,7 +704,7 @@ class TestUpdateMarker(unittest.TestCase):
         marker = ContactMarker(
             key=marker_key,
             students={
-                student_key: [student_contacts.copy()]
+                student_key.id(): [student_contacts.copy()]
             },
             methods=methods[:])
         marker_key.get.return_value = marker
@@ -705,9 +713,9 @@ class TestUpdateMarker(unittest.TestCase):
 
         update_marker(marker_key, student_key, contact.copy(), methods)
 
-        self.assertIn(student_key, marker.students)
+        self.assertIn(student_key.id(), marker.students)
 
-        self.assertIn(contact.copy(), marker.students[student_key])
+        self.assertIn(contact.copy(), marker.students[student_key.id()])
 
         self.assertTrue(marker_put_mock.called)
 
@@ -723,6 +731,8 @@ class TestInsertMergeTask(unittest.TestCase):
     @mock.patch('google.appengine.api.taskqueue.Queue.add', autospec=True)
     def test_task_params(self, queue_add_mock, task_mock):
         """Ensure the marker merge task name contains enough to be unique."""
+        import json
+
         from sosbeacon.event.contact_marker import insert_merge_task
 
         event_key = mock.Mock()
@@ -734,7 +744,7 @@ class TestInsertMergeTask(unittest.TestCase):
 
         check_params = {
             'event': 'EVENTKEY',
-            'methods': search_methods[:]
+            'methods': json.dumps(search_methods[:])
         }
 
         self.assertEqual(check_params, task_mock.call_args[1]['params'])

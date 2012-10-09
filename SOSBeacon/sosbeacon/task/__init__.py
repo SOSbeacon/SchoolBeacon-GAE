@@ -364,6 +364,8 @@ class MethodTxHandler(webapp2.RequestHandler):
 class UpdateContactMarkerHandler(webapp2.RequestHandler):
     """Merge a contact's info into the contact marker."""
     def post(self):
+        import json
+
         from google.appengine.api import namespace_manager
 
         marker_urlsafe = self.request.get('marker')
@@ -403,6 +405,7 @@ class UpdateContactMarkerHandler(webapp2.RequestHandler):
         if not methods:
             logging.error('No methods given.')
             return
+        methods = json.loads(methods)
 
         update_marker(marker_key, student_key, contact, methods)
 
@@ -410,6 +413,8 @@ class UpdateContactMarkerHandler(webapp2.RequestHandler):
 class MergeContactMarkerHandler(webapp2.RequestHandler):
     """Merge a contact's info into the contact marker."""
     def post(self):
+        import json
+
         event_urlsafe = self.request.get('event')
         if not event_urlsafe:
             logging.error('No event key given.')
@@ -430,6 +435,7 @@ class MergeContactMarkerHandler(webapp2.RequestHandler):
         if not methods:
             logging.error('No methods given.')
             return
+        methods = json.loads(methods)
 
         merge_markers(event_key, methods)
 

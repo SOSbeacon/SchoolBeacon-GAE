@@ -1,4 +1,6 @@
 
+import json
+
 from google.appengine.ext import ndb
 
 import voluptuous
@@ -169,12 +171,12 @@ def create_or_update_marker(event_key, student_key, contact, search_methods):
     if not marker:
         # TODO: What needs set?
         short_id = str(ContactMarker.allocate_ids(size=1, parent=event_key)[0])
-        key_id = "%s:%s" % (event_key.id, short_id)
+        key_id = "%s:%s" % (event_key.id(), short_id)
         marker = ContactMarker(
             id=key_id,
             event=event_key,
             name=contact.get('name'),
-            students={student_key.id(): [contact]},
+            students={str(student_key.id()): [contact]},
             short_id=short_id,
             methods=search_methods)
         marker.put()
@@ -199,7 +201,7 @@ def insert_update_marker_task(marker_key, student_key,
             'marker': marker_urlsafe,
             'student': student_urlsafe,
             'contact': contact,
-            'methods': search_methods
+            'methods': json.dumps(list(search_methods))
         }
     )
 
@@ -215,7 +217,7 @@ def update_marker(marker_key, student_key, contact, methods):
 
     marker.methods = list(set(marker.methods) | set(methods))
 
-    student_contacts = marker.students.setdefault(student_key, [])
+    student_contacts = marker.students.setdefault(str(student_key.id()), [])
 
     # TODO: Fix this.
     if contact not in student_contacts:
@@ -236,7 +238,7 @@ def insert_merge_task(event_key, search_methods):
         url=MARKER_MERGE_ENDPOINT,
         params={
             'event': event_urlsafe,
-            'methods': search_methods
+            'methods': json.dumps(list(search_methods))
         }
     )
 
@@ -248,11 +250,13 @@ def merge_markers(event_key, search_methods):
 
     markers = find_markers_for_methods(event_key, search_methods)
 
+    first_marker = None
     marker_map = {}
     # Organize markers by place holder
     place_holder_map = {}
     acknowledged = set()
     for marker in markers:
+        first_marker = first_marker or marker  # TODO: Find a better way.
         marker_map[marker.key] = marker
         place_holder_map.setdefault(marker.place_holder, []).append(marker)
         if marker.acknowledged:
@@ -274,7 +278,7 @@ def merge_markers(event_key, search_methods):
     elif acknowledged:
         base_marker = marker_map[acknowledged.pop()]
     else:
-        base_marker = markers[0]
+        base_marker = first_marker
 
     for marker in markers:
         if marker == base_marker:

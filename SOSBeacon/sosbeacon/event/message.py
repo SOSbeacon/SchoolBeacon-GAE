@@ -448,32 +448,40 @@ def broadcast_sms(number, message, url):
 
 def broadcast_email(address, message, url):
     """Send an email to a given email address."""
-    from google.appengine.api import mail
 
     logging.info('Sending notice to %s via mail api.', address)
 
-    email_message = mail.EmailMessage(sender="SBeacon <clifforloff@gmail.com>",
-                                      subject=message.message['title'])
+    #sender = "SBeacon <noreply@sosbeacon.org>"
+    sender = "noreply@sosbeacon.org"
+    subject = message.message['title']
 
-    email_message.to = address
+    body = "%s\n\n%s" % (message.message['email'], url)
+    # App Engine Built In Email
+    #from google.appengine.api import mail
+    #email_message = mail.EmailMessage(sender=sender,
+    #                                  subject=subject)
 
-    email_message.body = "%s\n\n%s" % (message.message['message'], url)
+    #email_message.to = address
 
-    email_message.send()
+    #email_message.body = body
 
-    #TODO: enable sendgrid integration
+    #email_message.send()
+
     #TODO: it might make sense to group emails as we can add more than one to
     # address per email sent
-    # import sendgrid
-    # s = sendgrid.Sendgrid(settings.SENDGRID_ACCOUNT,
-    #                       settings.SENDGRID_PASSWORD,
-    #                       secure=True)
-    # body = "%s\n\n%s" % (message.message['message'], url)
-    # message = sendgrid.Message(
-    #     "SBeacon <clifforloff@gmail.com>",
-    #     title,
-    #     "plain body",
-    #     body)
-    # message.add_to(address)
-    # s.web.send(message)
+    import sendgrid
+
+    import settings
+
+    s = sendgrid.Sendgrid(settings.SENDGRID_ACCOUNT,
+                          settings.SENDGRID_PASSWORD,
+                          secure=True)
+
+    message = sendgrid.Message(
+        sender,
+        subject,
+        body)
+        # html body)
+    message.add_to(address)
+    s.web.send(message)
 

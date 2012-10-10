@@ -61,7 +61,7 @@ def _bundle_skel(app_path, env, debug=False):
         path.join(JS_LIB_PATH, 'select2.js'),
         path.join(JS_LIB_PATH, 'prettify.js'),
         path.join(JS_LIB_PATH, 'wysihtml5-0.3.0.js'),
-        path.join(JS_LIB_PATH, 'bootstrap-wysihtml5-0.0.2.js'),
+        path.join(JS_LIB_PATH, 'bootstrap-wysihtml5.js'),
     )
 
     #TOOD: add require so we can simplify this
@@ -98,7 +98,7 @@ def _bundle_3rd_party_css(app_path, env, debug=False):
                 path.join('css', 'select2.css'),
                 path.join('css', 'prettify.css'),
                 path.join('css', 'wysiwyg-color.css'),
-                path.join('css', 'bootstrap-wysihtml5-0.0.2.css'),
+                path.join('css', 'bootstrap-wysihtml5.css'),
                 output=path.join(app_path, 'css', 'lib.css')
             )
     else:
@@ -107,7 +107,7 @@ def _bundle_3rd_party_css(app_path, env, debug=False):
                 path.join('css', 'select2.css'),
                 path.join('css', 'prettify.css'),
                 path.join('css', 'wysiwyg-color.css'),
-                path.join('css', 'bootstrap-wysihtml5-0.0.2.css'),
+                path.join('css', 'bootstrap-wysihtml.css'),
                 output=path.join(app_path, 'css', 'lib.css')
             )
 

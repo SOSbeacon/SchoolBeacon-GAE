@@ -181,6 +181,9 @@ class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
     className: "top_view container"
     isNew: true
 
+    events:
+        "click .view-button": "view"
+
     initialize: (id) =>
         if not id
             @model = new App.SOSBeacon.Model.Event()
@@ -205,6 +208,9 @@ class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
 
         @renderHeader()
 
+        try
+            @$("#content").wysihtml5()
+
         return this
 
     renderHeader: () =>
@@ -214,6 +220,9 @@ class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
             header.html("Add New #{header.text()}")
         else
             header.html("Edit #{header.text()}")
+
+    view: =>
+        App.SOSBeacon.router.navigate("/eventcenter", {trigger: true})
 
     onClose: () =>
         App.SOSBeacon.Event.unbind(null, null, this)
@@ -244,6 +253,9 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
             propertyMap: @propertyMap,
             validatorMap: @model.validators
         )
+
+        #TODO: build a way in our FormValidator to handle not wiring all hooks
+        delete @events['blur textarea.content']
 
         @model.bind('error', App.Util.Form.displayValidationErrors)
 

@@ -334,6 +334,10 @@ class App.Util.TrackChanges
         @changes = {}
 
     @triggerExit: (event) =>
+        #this is very ugly
+        if event.target.href == "javascript:;" or event.target.tagName = "I"
+            return true
+
         if not @hasChanges
             return true
 

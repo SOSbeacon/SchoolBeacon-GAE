@@ -1,4 +1,5 @@
 
+import copy
 import unittest
 
 import mock
@@ -189,75 +190,161 @@ class TestContactMarkerMerge(unittest.TestCase):
         left = ContactMarker()
         right = ContactMarker()
         left.merge(right)
-        self.assertEqual([], left.students)
+        self.assertIsNone(left.students)
 
     def test_merge_students_with_no_students(self):
         """Ensure merging students with no students."""
         from sosbeacon.event.contact_marker import ContactMarker
 
-        students = [
-            ('123312', 'Sam Smith', 123432),
-            ('312130', 'John Jones', 312123),
-            ('544312', 'Billy Bob', 348223)
-        ]
+        students = {
+            '123': [{
+                'name': 'Sam Smith',
+                'methods': ['123432', 'me@earth.com']
+            }],
+            '345': [{
+                'name': 'Josh Jones',
+                'methods': ['443241', 'josh@jones.com']
+            }],
+            '231': [{
+                'name': 'Betty Boop',
+                'methods': ['321133', 'betty@earth.com']
+            }],
+        }
 
-        left = ContactMarker(students=students)
+        left = ContactMarker(students=copy.deepcopy(students))
         right = ContactMarker()
         left.merge(right)
-        self.assertEqual(sorted(students), sorted(left.students))
+        self.assertEqual(students, left.students)
 
     def test_merge_no_students_with_students(self):
         """Ensure merging no students with students."""
         from sosbeacon.event.contact_marker import ContactMarker
 
-        students = [
-            ('123312', 'Sam Smith', 123432),
-            ('312130', 'John Jones', 312123),
-            ('544312', 'Billy Bob', 348223)
-        ]
+        students = {
+            '123': [{
+                'name': 'Sam Smith',
+                'methods': ['123432', 'me@earth.com']
+            }],
+            '345': [{
+                'name': 'Josh Jones',
+                'methods': ['443241', 'josh@jones.com']
+            }],
+            '231': [{
+                'name': 'Betty Boop',
+                'methods': ['321133', 'betty@earth.com']
+            }],
+        }
 
         left = ContactMarker()
-        right = ContactMarker(students=students)
+        right = ContactMarker(students=copy.deepcopy(students))
         left.merge(right)
-        self.assertEqual(sorted(students), sorted(left.students))
+        self.assertEqual(students, left.students)
 
     def test_merge_students(self):
         """Ensure merging students."""
         from sosbeacon.event.contact_marker import ContactMarker
 
-        students_1 = [
-            ('123312', 'Sam Smith', 123432),
-            ('312130', 'John Jones', 312123),
-            ('544312', 'Billy Bob', 348223)
-        ]
+        students_1 = {
+            '123': [{
+                'name': 'Sam Smith',
+                'methods': ['123432', 'me@earth.com']
+            }],
+            '345': [{
+                'name': 'Josh Jones',
+                'methods': ['443241', 'josh@jones.com']
+            }],
+            '231': [{
+                'name': 'Betty Boop',
+                'methods': ['321133', 'betty@earth.com']
+            }],
+        }
 
-        students_2 = [
-            ('848423', 'Frank Frankton', 953342),
-        ]
+        students_2 = {
+            'ABC': [{
+                'name': 'Julie James',
+                'methods': ['5433423', 'julie@some.com']
+            }],
+        }
 
-        left = ContactMarker(students=students_1)
-        right = ContactMarker(students=students_2)
+        left = ContactMarker(students=copy.deepcopy(students_1))
+        right = ContactMarker(students=copy.deepcopy(students_2))
         left.merge(right)
-        self.assertEqual(sorted(students_1 + students_2),
-                         sorted(left.students))
+
+        students_1.update(students_2)
+
+        self.assertEqual(students_1, left.students)
 
     def test_merge_overlapping_students(self):
         """Ensure merging students with overlaps."""
         from sosbeacon.event.contact_marker import ContactMarker
 
-        base_students = [
-            ('312130', 'John Jones', 312123),
-            ('544312', 'Billy Bob', 348223)
-        ]
+        base_students = {
+            '123': [{
+                'name': 'Sam Smith',
+                'methods': ['123432', 'me@earth.com']
+            }],
+            '345': [{
+                'name': 'Josh Jones',
+                'methods': ['443241', 'josh@jones.com']
+            }]
+        }
 
-        students_1 = base_students + [('123312', 'Sam Smith', 123432)]
-        students_2 = base_students + [('848423', 'Frank Frankton', 953342)]
+        students_1 = {
+            '231': [{
+                'name': 'Betty Boop',
+                'methods': ['321133', 'betty@earth.com']
+            }],
+        }
+        students_1.update(base_students)
 
-        left = ContactMarker(students=students_1)
-        right = ContactMarker(students=students_2)
+        students_2 = {
+            'ABC': [{
+                'name': 'Julie James',
+                'methods': ['5433423', 'julie@some.com']
+            }],
+        }
+        students_2.update(base_students)
+
+        left = ContactMarker(students=copy.deepcopy(students_1))
+        right = ContactMarker(students=copy.deepcopy(students_2))
         left.merge(right)
-        self.assertEqual(sorted(set(students_1 + students_2)),
-                         sorted(left.students))
+
+        students_1.update(students_2)
+        self.assertEqual(students_1, left.students)
+
+    def test_merge_overlapping_students_incomplete_contacts(self):
+        """Ensure merging students with overlaps with different contacts."""
+        from sosbeacon.event.contact_marker import ContactMarker
+
+        students_1 = {
+            '123': [{
+                'name': 'Billy Bob',
+                'methods': ['324321', 'billy@bob.com']
+            }],
+            '345': [{
+                'name': 'Josh Jones',
+                'methods': ['443241', 'josh@jones.com']
+            }]
+        }
+
+        students_2 = {
+            '123': [{
+                'name': 'Sam Smith',
+                'methods': ['123432', 'me@earth.com']
+            }],
+            '345': [{
+                'name': 'Jenny Benny',
+                'methods': ['234232', 'jenny@jones.com']
+            }]
+        }
+
+        left = ContactMarker(students=copy.deepcopy(students_1))
+        right = ContactMarker(students=copy.deepcopy(students_2))
+        left.merge(right)
+
+        for key in students_1:
+            students_1[key].extend(students_2[key])
+        self.assertEqual(students_1, left.students)
 
     def test_merge_methods_with_no_methods(self):
         """Ensure merging methods with no methods preserves methods."""

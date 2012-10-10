@@ -58,7 +58,7 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
 
     events:
         "click .event-submit-comment": "saveComment"
-        "click .event-cancel-comment": "close"
+        "click .event-cancel-comment": "hide"
 
     initialize: (options) =>
         @event = options.event
@@ -67,6 +67,9 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
         @$el.html(@template())
 
         return this
+
+    hide: () =>
+        @$el.html('')
 
     saveComment: =>
         model = new App.SOSBeacon.Model.Message()
@@ -80,7 +83,7 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
 
         App.SOSBeacon.Event.trigger("message:add", model, this)
 
-        @close()
+        @hide()
 
 
 class App.SOSBeacon.View.AddBroadcast extends Backbone.View
@@ -89,7 +92,7 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
 
     events:
         "click .event-submit-broadcast": "saveBroadcast"
-        "click .event-cancel-broadcast": "close"
+        "click .event-cancel-broadcast": "hide"
 
     initialize: (options) =>
         @event = options.event
@@ -98,6 +101,9 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
         @$el.html(@template())
 
         return this
+
+    hide: () =>
+        @$el.html('')
 
     saveBroadcast: =>
         model = new App.SOSBeacon.Model.Message()
@@ -113,7 +119,7 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
 
         App.SOSBeacon.Event.trigger("message:add", model, this)
 
-        @close()
+        @hide()
 
 
 class App.SOSBeacon.View.MessageList extends Backbone.View

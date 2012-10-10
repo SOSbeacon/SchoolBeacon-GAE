@@ -70,14 +70,19 @@ class ContactMarker(EntityBase):
 
         self.name = self.name or other.name
 
-        students = set()
-        if self.students:
-            students |= set(self.students)
+        if not self.students:
+            self.students = other.students
+        elif other.students:
+            for student, contacts in other.students.iteritems():
+                if student not in self.students:
+                    self.students[student] = contacts
+                    continue
 
-        if other.students:
-            students |= set(other.students)
-
-        self.students = list(students)
+                base_contacts = self.students[student]
+                for contact in contacts:
+                    if contact not in base_contacts:
+                        base_contacts.append(contact)
+                        continue
 
         methods = set()
         if self.methods:

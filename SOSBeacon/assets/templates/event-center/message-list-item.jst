@@ -1,9 +1,20 @@
+<div class="header row-fluid">
+  <div class="comment-author">A user</div>
+  <div class="comment-meta">- <%- modified %>, wrote</div>
+</div>
 <% if (type == "c") { %>
-  <%- message.body %>
+  <div class="message-content">
+  <%= message.body %>
 <% } else { %>
-  <%- message.sms %>
-  <%- message.title %>
-  <%- message.email %>
+  <div class="message-broadcast">
+    <div class="broadcast-sms">
+      <h5>SMS:</h5><%= message.sms %>
+    </div>
+    <div class="broadcast-title">
+      <h5>Title:</h5><%- message.title %>
+    </div>
+    <div class="broadcast-email">
+      <h5>Email:</h5><%= message.email %>
+    </div>J
   <% } %>
-<br />
-<%- type %>
+</div>

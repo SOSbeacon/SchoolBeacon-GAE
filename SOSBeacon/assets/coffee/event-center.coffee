@@ -88,6 +88,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
     initialize: (id) =>
         @messageView = null
+        @broadcastView = null
 
         @model = new App.SOSBeacon.Model.Event({key: id})
         @model.fetch({async: false})
@@ -117,22 +118,31 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @collection.add(message, {at: 0})
 
     addComment: =>
+        if @broadcastView
+            @broadcastView.hide()
+
         if not @messageView
             @messageView = new App.SOSBeacon.View.AddMessage({event: @model})
 
         @$(".message-entry").append(@messageView.render().el)
 
     addBroadcast: =>
-        if not @messageView
-            @messageView = new App.SOSBeacon.View.AddBroadcast({event: @model})
+        if @messageView
+            @messageView.hide()
 
-        @$(".message-entry").append(@messageView.render().el)
+        if not @broadcastView
+            @broadcastView = new App.SOSBeacon.View.AddBroadcast({event: @model})
+
+        @$(".message-entry").append(@broadcastView.render().el)
 
     onClose: =>
         App.SOSBeacon.Event.unbind(null, null, this)
 
         if @messageView
             @messageView.close()
+
+        if @broadcastView
+            @broadcastView.close()
 
         @messageListView.close()
 
@@ -158,8 +168,8 @@ class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
 
     modelSaved: (model) =>
         #TODO: navigate to view page
-        Backbone.history.navigate(
-            "/eventcenter/edit/#{model.id}")
+        App.SOSBeacon.router.navigate(
+            "/eventcenter/view/#{model.id}", {trigger: true})
 
     render: =>
         @$el.html(@template(@model.toJSON()))
@@ -266,7 +276,7 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
     updateOnEnter: (e) =>
         focusItem = $("*:focus")
 
-        if e.keyCode == 13
+        if e.keyCode == 13 and focusItem.attr('id') != 'content'
             @save()
 
             return false

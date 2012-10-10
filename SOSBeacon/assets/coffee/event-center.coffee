@@ -87,6 +87,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         "click .event-add-broadcast": "addBroadcast"
 
     initialize: (id) =>
+        @groupViews = []
         @messageView = null
         @broadcastView = null
 
@@ -100,6 +101,12 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
     render: =>
         @$el.html(@template(@model.toJSON()))
 
+        @renderGroups()
+        @renderMessages()
+
+        return this
+
+    renderMessages: =>
         @collection = new App.SOSBeacon.Collection.MessageList()
         _.extend(@collection.server_api, {
             'feq_event': @model.id
@@ -112,7 +119,13 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @messageListView = new App.SOSBeacon.View.MessageList(@collection)
         @$("#event-center-message").append(@messageListView.render().el)
 
-        return this
+    renderGroups: =>
+        groupEl = @$('.event-groups')
+        _.each(@model.groups.models, (group) =>
+            groupView = new App.SOSBeacon.View.EventGroup(group)
+            groupEl.append(groupView.render().el)
+            @groupViews.push(groupView)
+        )
 
     messageAdd: (message) =>
         @collection.add(message, {at: 0})
@@ -144,7 +157,20 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         if @broadcastView
             @broadcastView.close()
 
+        for view in @groupViews
+            view.close()
+
         @messageListView.close()
+
+
+class App.SOSBeacon.View.EventGroup extends Backbone.View
+
+    initialize: (model) =>
+        @model = model
+
+    render: =>
+        @$el.html("#{@model.get('name')} <br />")
+        return this
 
 
 class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View

@@ -32,7 +32,7 @@ body {
 }
 #sosbeaconapp {
   margin-top: 70px;
-  background: #FCFCFC;
+  /*background: #FCFCFC;*/
 
   .add-button {
     float: right;
@@ -410,6 +410,18 @@ ul.contacts {
 }
 
 .event-center-details {
+  .event-detail {
+    .title, .header, .event-groups, .event-content, .event-status {
+      margin-bottom: 10px;
+      span {
+        font-weight: bold;
+      }
+    }
+    .event-content, .event-meta {
+      padding: 5px;
+    }
+  }
+
   #add-message-area {
     textarea {
       height: 150px;

@@ -66,6 +66,9 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
     render: () =>
         @$el.html(@template())
 
+        try
+            @$("textarea#add-message-box").wysihtml5()
+
         return this
 
     hide: () =>
@@ -93,12 +96,16 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
     events:
         "click .event-submit-broadcast": "saveBroadcast"
         "click .event-cancel-broadcast": "hide"
+        "keyup textarea#add-sms-box": "smsUpdated"
 
     initialize: (options) =>
         @event = options.event
 
     render: () =>
         @$el.html(@template())
+
+        try
+            @$("textarea#add-email-box").wysihtml5()
 
         return this
 
@@ -120,6 +127,11 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
         App.SOSBeacon.Event.trigger("message:add", model, this)
 
         @hide()
+
+    smsUpdated: =>
+        smsMessage = @$('textarea#add-sms-box').val()
+        remaining = 100 - smsMessage.length
+        @$('span.sms-remain').text("#{remaining} characters remaining.")
 
 
 class App.SOSBeacon.View.MessageList extends Backbone.View

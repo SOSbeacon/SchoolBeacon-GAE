@@ -5,9 +5,15 @@
   <%- title %>
 </td>
 <td>
-  <%- status %>
+  <% if (status == "dr") { %>
+  Draft
+  <% } else if (status == "se" ) { %>
+  Sent
+  <% } else { %>
+  Closed
+  <% } %>
 </td>
-<td>
+<td width="100px">
   <%- group_list %>
 </td>
 <td>
@@ -17,7 +23,11 @@
   <% student_count + contact_count - responded_count %>
 </td>
 <td>
-  <%- last_broadcast_date %>
+  <% if (last_broadcast_date != null) { %>
+    <%- last_broadcast_date %>
+  <% } else { %>
+    No Broadcast Sent
+  <% } %>
 </td>
 <td>
   <div class="grid-row btn-toolbar">

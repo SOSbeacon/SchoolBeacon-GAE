@@ -1,16 +1,32 @@
-<div class="span8">
-  <h2><i class="icon-share"></i> Event</h2>
-  <div>
+<div class="span8 event-detail">
+  <h2 class="header"><i class="icon-share"></i> Event</h2>
+  <div class="title">
     <h3><%- title %></h3>
   </div>
-  <div>
-    <%- date %> <%- status %>
+  <div class="standard-back event-meta">
+    <div class="event-status">
+      <% if (date != null) { %>
+      <span>Date:</span> <%- date %> 
+        <% } %>
+        <span>Status:</span>
+      <% if (status == "dr") { %>
+        Draft
+      <% } else if (status == "se" ) { %>
+        Sent
+      <% } else { %>
+        Closed
+      <% } %>
+      </div>
+    <div class="event-groups">
+      <div>
+        <span>Groups</span>
+      </div>
+    </div>
   </div>
-  <div>
-    <%- groups %>
-  </div>
-  <div>
-    <h4>Details</h4>
+  <div class="event-content standard-back">
+    <div>
+      <span>Details</span>
+    </div>
     <%= content %>
   </div>
 </div>

@@ -136,7 +136,11 @@ class App.SOSBeacon.View.MessageList extends Backbone.View
 
     addOne: (object) =>
         view = new App.SOSBeacon.View.MessageListItem({model: object})
-        @$el.append(view.render().el)
+        item = view.render().el
+        if object.get('type') == 'b'
+            $(item).attr('class', 'view-message-broadcast')
+
+        @$el.append(item)
 
      insertOne: (object) =>
         view = new App.SOSBeacon.View.MessageListItem({model: object})
@@ -152,6 +156,7 @@ class App.SOSBeacon.View.MessageList extends Backbone.View
 
 class App.SOSBeacon.View.MessageListItem extends Backbone.View
     template: JST['event-center/message-list-item']
+    className: "view-message-item"
 
     initialize: =>
         @model.bind('change', @render, this)

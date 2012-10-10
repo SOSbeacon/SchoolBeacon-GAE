@@ -480,8 +480,8 @@ def broadcast_email(address, message, url):
     message = sendgrid.Message(
         sender,
         subject,
+        message.message['sms'],
         body)
-        # html body)
     message.add_to(address)
     s.web.send(message)
 

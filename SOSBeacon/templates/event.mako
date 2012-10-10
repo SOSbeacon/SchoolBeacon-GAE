@@ -14,7 +14,7 @@
     </div>
     <div class="row-fluid">
       <div class="span1"><strong>Details:</strong></div>
-      <div class="span11">${event.detail}</div>
+      <div class="span11">${event.content}</div>
     </div>
   </div>
 </div>

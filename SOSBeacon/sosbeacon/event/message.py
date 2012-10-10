@@ -246,6 +246,7 @@ def get_student_broadcast_task(student_key, event_key, message_key,
 def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
     """Send broadcast to each of the student's contacts."""
     from sosbeacon.event.student_marker import StudentMarker
+    from sosbeacon.student import Student  # Needed to load the entity.
     from sosbeacon.utils import insert_tasks
 
     student = student_key.get()

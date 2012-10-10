@@ -123,6 +123,8 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         groupEl = @$('.event-groups')
         _.each(@model.groups.models, (group) =>
             groupView = new App.SOSBeacon.View.EventGroup(group)
+            #TODO: move view creaton out
+            #https://github.com/EzoxSystems/SOSbeacon/pull/102/files#r1808979
             groupEl.append(groupView.render().el)
             @groupViews.push(groupView)
         )

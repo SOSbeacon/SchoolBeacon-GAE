@@ -165,21 +165,21 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         if not _.isEmpty(badContacts)
             return false
 
-        @model.save(
+        @model.save({
             name: @$('input.name').val()
             identifier: @$('input.identifier').val()
             groups: groupIds
             notes: $.trim(@$('textarea.notes').val())
+            },
+            success: (model) =>
+                if @model.isValid()
+                    App.Util.Form.hideAlert()
+                    App.Util.Form.showAlert(
+                        "Successs!", "Save successful", "alert-success")
+
+                    App.Util.TrackChanges.clear(this)
+                    App.SOSBeacon.Event.trigger('model:save', @model, this)
         )
-
-        if @model.isValid()
-            App.Util.Form.hideAlert()
-            App.Util.Form.showAlert(
-                "Successs!", "Save successful", "alert-success")
-
-            App.Util.TrackChanges.clear(this)
-            App.SOSBeacon.Event.trigger('model:save', @model, this)
-
         return false
 
     addContact: () =>
@@ -238,13 +238,11 @@ class App.SOSBeacon.View.StudentEditApp extends Backbone.View
         @editForm = new App.SOSBeacon.View.StudentEditForm(@model)
         App.SOSBeacon.Event.bind("model:save", @modelSaved, this)
 
-    modelSaved: () =>
+    modelSaved: (model) =>
         if @isNew
-            @model = new App.SOSBeacon.Model.Student()
-            @editForm.initialize(@model)
-            @editForm.$("form").each(() ->
-                @reset()
-            )
+            @isNew = false
+            Backbone.history.navigate(
+                "/student/edit/#{model.id}")
 
     render: () =>
         @$el.html(@template(@model.toJSON()))

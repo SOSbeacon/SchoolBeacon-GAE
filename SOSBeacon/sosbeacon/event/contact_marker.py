@@ -235,12 +235,15 @@ def update_marker(marker_key, student_key, contact, methods):
 
 def insert_merge_task(event_key, search_methods):
     """Insert a task to merge contact markers for the given search_methods."""
+    import random
+
     from google.appengine.api import taskqueue
 
     event_urlsafe = event_key.urlsafe()
 
     task = taskqueue.Task(
         url=MARKER_MERGE_ENDPOINT,
+        countdown=random.randint(5, 190),
         params={
             'event': event_urlsafe,
             'methods': json.dumps(list(search_methods))

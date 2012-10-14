@@ -400,6 +400,7 @@ class UpdateContactMarkerHandler(webapp2.RequestHandler):
         if not contact:
             logging.error('No contact given.')
             return
+        contact = json.loads(contact)
 
         methods = self.request.get('methods')
         if not methods:

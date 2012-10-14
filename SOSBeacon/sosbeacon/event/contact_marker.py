@@ -205,7 +205,7 @@ def insert_update_marker_task(marker_key, student_key,
         params={
             'marker': marker_urlsafe,
             'student': student_urlsafe,
-            'contact': contact,
+            'contact': json.dumps(contact),
             'methods': json.dumps(list(search_methods))
         }
     )

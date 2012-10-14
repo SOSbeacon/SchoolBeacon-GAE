@@ -678,7 +678,7 @@ class TestInsertUpdateMarkerTask(unittest.TestCase):
         check_params = {
             'marker': 'MARKERKEY',
             'student': 'STUDENTKEY',
-            'contact': contact.copy(),
+            'contact': json.dumps(contact.copy()),
             'methods': json.dumps(search_methods[:])
         }
 

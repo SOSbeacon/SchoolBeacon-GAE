@@ -10,7 +10,8 @@ class App.SOSBeacon.Model.Message extends Backbone.Model
             modified: '',
             timestamp: null,
             user: null,
-            user_name: ""
+            user_name: "",
+            is_admin: false
         }
 
     validators:

@@ -54,7 +54,6 @@ def _bundle_app_coffee(app, env, debug=False):
         path.join(COFFEE_PATH, 'contact.coffee'),
         path.join(COFFEE_PATH, 'group.coffee'),
         path.join(COFFEE_PATH, 'student.coffee'),
-        path.join(COFFEE_PATH, 'event.coffee'),
         path.join(COFFEE_PATH, 'event_view.coffee'),
         path.join(COFFEE_PATH, 'group_students.coffee'),
         path.join(COFFEE_PATH, 'menu.coffee'),

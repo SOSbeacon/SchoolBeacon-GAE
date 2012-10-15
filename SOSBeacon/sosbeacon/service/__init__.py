@@ -2,14 +2,21 @@ import datetime
 import json
 import logging
 
+
+from google.appengine.ext import ndb
+
 import webapp2
+from webapp2_extras import sessions
 
 from skel.rest_api import handler as rest_handler
+
+from sosbeacon.event.contact_marker import ContactMarker
+from sosbeacon.user import User
 
 
 class ProcessMixin(object):
 
-    def process(self, resource_id=None, *arg, **kwrgs):
+    def process(self, resource_id=None, *args, **kwargs):
         from voluptuous import Schema
 
         obj = json.loads(self.request.body)
@@ -49,7 +56,44 @@ class PersonListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             query_schema=person_query_schema)
 
 
-class MessageHandler(rest_handler.RestApiHandler, ProcessMixin):
+def process_messages(request, schema, entity):
+    from voluptuous import Schema
+
+    obj = json.loads(request.body)
+    schema = Schema(schema, extra=True)
+
+    try:
+        obj = schema(obj)
+    except:
+        logging.exception('validation failed')
+        logging.info(obj)
+
+    message = entity.from_dict(obj)
+
+    session_store = sessions.get_store()
+    session = session_store.get_session()
+
+    #get the user and add them to the message
+    if "cm" in session:
+        cm_id = session["cm"]
+        cm_key = ndb.Key(
+            ContactMarker, cm_id, namespace="_%s" % (session.get('n')))
+        cm = cm_key.get()
+        if cm:
+            message.user_name = cm.name
+    else:
+        user_id = session.get('u')
+        if user_id:
+            message.user = ndb.Key(User, user_id)
+            user = message.user.get()
+            if user:
+                message.user_name = user.name
+
+    message.put()
+    return message
+
+
+class MessageHandler(rest_handler.RestApiHandler):
 
     def __init__(self, request, response):
         from sosbeacon.event.message import Message
@@ -58,8 +102,12 @@ class MessageHandler(rest_handler.RestApiHandler, ProcessMixin):
         super(MessageHandler, self).__init__(
             Message, message_schema, request, response)
 
+    def process(self, resource_id, *args, **kwargs):
+        message = process_messages(self.request, self.schema, self.entity)
+        self.write_json_response(message.to_dict())
 
-class MessageListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+
+class MessageListHandler(rest_handler.RestApiListHandler):
 
     def __init__(self, request, response):
         from sosbeacon.event.message import Message
@@ -69,6 +117,10 @@ class MessageListHandler(rest_handler.RestApiListHandler, ProcessMixin):
         super(MessageListHandler, self).__init__(
             Message, message_schema, request, response,
             query_schema=message_query_schema)
+
+    def process(self, resource_id, *args, **kwargs):
+        message = process_messages(self.request, self.schema, self.entity)
+        self.write_json_response(message.to_dict())
 
 
 class StudentHandler(rest_handler.RestApiHandler, ProcessMixin):

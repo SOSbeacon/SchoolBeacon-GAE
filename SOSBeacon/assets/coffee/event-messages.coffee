@@ -7,8 +7,10 @@ class App.SOSBeacon.Model.Message extends Backbone.Model
             event: null,
             type: "",
             message: {},
-            modified: ''
-            timestamp: null
+            modified: '',
+            timestamp: null,
+            user: null,
+            user_name: ""
         }
 
     validators:
@@ -149,8 +151,6 @@ class App.SOSBeacon.View.MessageList extends Backbone.View
     addOne: (object) =>
         view = new App.SOSBeacon.View.MessageListItem({model: object})
         item = view.render().el
-        if object.get('type') == 'b'
-            $(item).attr('class', 'view-message-broadcast')
 
         @$el.append(item)
 
@@ -242,7 +242,7 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
             type: 'c' #c for comment
             event: @eventId
         }, success: =>
-            location.reload()
+            #location.reload()
         )
 
     renderMessages: =>

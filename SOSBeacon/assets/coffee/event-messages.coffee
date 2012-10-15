@@ -242,7 +242,7 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
             type: 'c' #c for comment
             event: @eventId
         }, success: =>
-            #location.reload()
+            location.reload()
         )
 
     renderMessages: =>

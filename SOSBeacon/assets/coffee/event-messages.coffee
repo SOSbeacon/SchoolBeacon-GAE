@@ -197,3 +197,65 @@ App.SOSBeacon.eventTypes = new App.SOSBeacon.Collection.MessageType([
     {type: 'b', label: "Broadcast"},
 ])
 
+
+class App.SOSBeacon.View.MessageListApp extends Backbone.View
+    template: JST['event-center/event-messages']
+
+    events:
+        "click .event-submit-comment": "saveComment"
+        "keypress .edit": "updateOnEnter"
+
+    initialize: (id) =>
+        @eventId = id
+
+        @loadMessages()
+
+    loadMessages: =>
+        @messages = new App.SOSBeacon.Collection.MessageList()
+        _.extend(@messages.server_api, {
+            'feq_event': @eventId
+            'orderBy': 'timestamp'
+            'orderDirection': 'asc'
+            'limit': 200
+        })
+
+        @messages.fetch()
+
+    render: =>
+        @$el.html(@template())
+
+        @renderMessages()
+
+        try
+            @$("textarea#add-message-box").wysihtml5({"image": false})
+
+        return this
+
+    saveComment: =>
+        @$('button.event-submit-comment').attr("disabled", "disabled")
+
+        model = new App.SOSBeacon.Model.Message()
+        model.save({
+            message: {
+                body: @$('textarea#add-message-box').val()
+            }
+            type: 'c' #c for comment
+            event: @eventId
+        }, success: =>
+            location.reload()
+        )
+
+    renderMessages: =>
+        @messageListView = new App.SOSBeacon.View.MessageList(@messages)
+        @$("#event-message-list").append(@messageListView.render().el)
+
+    updateOnEnter: (e) =>
+        focusItem = $("*:focus")
+
+        if e.keyCode == 13
+            @saveComment()
+
+            return false
+
+    onClose: () =>
+        @messageListView.close()

@@ -122,11 +122,10 @@ class Message(EntityBase):
 
         message['user_name'] = self.user_name or ''
         message['user'] = None
-        message['is_admin'] = False
+        message['is_admin'] = self.is_admin
 
         if self.user:
             message['user'] = self.user.urlsafe()
-            message['is_admin'] = True
 
         return message
 

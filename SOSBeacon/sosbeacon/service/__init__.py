@@ -82,6 +82,7 @@ def process_messages(request, schema, entity):
         if cm:
             message.user_name = cm.name
     else:
+        message.is_admin = True
         user_id = session.get('u')
         if user_id:
             message.user = ndb.Key(User, user_id)

@@ -138,7 +138,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
             @broadcastView.hide()
 
         if not @messageView
-            @messageView = new App.SOSBeacon.View.AddMessage({event: @model})
+            @messageView = new App.SOSBeacon.View.EditMessage({event: @model})
 
         @$(".message-entry").append(@messageView.render().el)
 

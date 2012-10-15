@@ -55,7 +55,7 @@ class App.SOSBeacon.Collection.MessageList extends Backbone.Paginator.requestPag
     server_api: {}
 
 
-class App.SOSBeacon.View.AddMessage extends Backbone.View
+class App.SOSBeacon.View.EditMessage extends Backbone.View
     template: JST['event-center/add-message']
     id: "add-message-area"
 
@@ -65,9 +65,17 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
 
     initialize: (options) =>
         @event = options.event
+        if options.message?
+            @message = options.message
+        else
+            @message = new App.SOSBeacon.Model.Message({
+                message: {
+                    message: ''
+                }
+            })
 
     render: () =>
-        @$el.html(@template())
+        @$el.html(@template(@message.toJSON()))
 
         try
             @$("textarea#add-message-box").wysihtml5()
@@ -78,8 +86,7 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
         @$el.html('')
 
     saveComment: =>
-        model = new App.SOSBeacon.Model.Message()
-        model.save(
+        @message.save(
             message: {
                 body: @$('textarea#add-message-box').val()
             }
@@ -87,7 +94,7 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
             event: @event.id
         )
 
-        App.SOSBeacon.Event.trigger("message:add", model, this)
+        App.SOSBeacon.Event.trigger("message:add", @message, this)
 
         @hide()
 
@@ -171,6 +178,10 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
     template: JST['event-center/message-list-item']
     className: "view-message-item"
 
+    events:
+        #"click #message-item-button-edit": "editMessage"
+        "click #message-item-button-remove": "removeMessage"
+
     initialize: =>
         @model.bind('change', @render, this)
         @model.bind('destroy', @remove, this)
@@ -178,6 +189,22 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
     render: =>
         @$el.html(@template(@model.toJSON()))
         return this
+
+    #TODO: get the edit message interface working.
+    #editMessage: =>
+        #if @model.type == "c"
+            #@messageView = new App.SOSBeacon.View.EditMessage({
+                #message: @model
+            #})
+            #@$(".message-entry").append(@messageView.render().el)
+
+        #else
+            #"edit broadcast"
+
+    removeMessage: =>
+        proceed = confirm('Are you sure you want to delete?  This can not be undone.')
+        if proceed
+            @model.destroy()
 
 
 class App.SOSBeacon.Model.MessageType extends Backbone.Model

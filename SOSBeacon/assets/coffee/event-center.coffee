@@ -85,6 +85,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
     events:
         "click .event-add-comment": "addComment"
         "click .event-add-broadcast": "addBroadcast"
+        "click #edit-event-button": "editEvent"
 
     initialize: (id) =>
         @groupViews = []
@@ -149,6 +150,11 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
             @broadcastView = new App.SOSBeacon.View.AddBroadcast({event: @model})
 
         @$(".message-entry").append(@broadcastView.render().el)
+
+    editEvent: =>
+        App.SOSBeacon.router.navigate(
+            "/eventcenter/edit/#{@model.id}", {trigger: true})
+
 
     onClose: =>
         App.SOSBeacon.Event.unbind(null, null, this)

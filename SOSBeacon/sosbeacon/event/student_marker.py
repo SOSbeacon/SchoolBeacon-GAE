@@ -43,35 +43,53 @@ class StudentMarker(EntityBase):
         """Merge this StudentMarker entity with another StudentMarker."""
         self.name = self.name or other.name
 
-        last_broadcast = max(self.last_broadcast, other.last_broadcast)
+        self.last_broadcast = get_latest_datetime(self.last_broadcast,
+                                                  other.last_broadcast)
 
-        #for contact_key, new_contact in other.contacts.iteritems():
-        #    contact = self.contacts.get(contact_key)
-        #    if contact:
-        #        contact['acked'] = max(contact['acked'], new_contact['acked'])
+        if not other.contacts:
+            # All other info comes from contacts, so if there's no change bail.
+            return self
 
-        #        last_sent = max(contact['sent'], new_contact['sent'])
-        #        contact['sent'] = last_sent
-        #        last_broadcast = max(last_sent, last_broadcast)
+        if not self.contacts:
+            self.contacts = []
 
-        #    self.contacts[contact_key] = contact
+        for contact in other.contacts:
+            new_acked = contact.pop('acked', None)
+            new_acked_at = contact.pop('acked_at', None)
+            new_sent = contact.pop('sent', None)
 
-        self.last_broadcast = last_broadcast
+            try:
+                original_index = self.contacts.index(contact)
+            except ValueError:
+                original_index = 0
 
-        self.acknowledged = max(self.acknowledged, other.acknowledged)
+            if not original_index:
+                # New contact
+                self.contacts.append(contact)
 
-        self.acknowledged_at = get_latest_datetime(
-            self.acknowledged_at, other.acknowledged_at)
+            else:
+                # Existing contact
+                original = self.contacts[original_index]
+                original['acked'] = max(original.get('acked'), new_acked)
+                original['acked_at'] = max(original.get('acked_at'),
+                                           new_acked_at)
+                original['sent'] = max(original.get('sent'), new_sent)
+                contact = original
 
-        self.all_acknowledged = max(
-            self.all_acknowledged, other.all_acknowledged)
+            # Update overall information.
+            self.acknowledged = max(self.acknowledged,
+                                    contact.get('acked'))
+            self.acknowledged_at = max(self.acknowledged_at,
+                                       contact.get('acked_at'))
 
-        self.all_acknowledged_at = get_latest_datetime(
-            self.all_acknowledged_at, other.acknowledged_at)
+            self.all_acknowledged = min(self.all_acknowledged,
+                                        contact.get('acked'))
 
-        if not self.all_acknowledged:
-            self.all_acknowledged = all(
-                [contact.get('acked') for contact in self.contacts])
+            self.all_acknowledged_at = None if not self.all_acknowledged else max(
+                self.all_acknowledged_at, contact.get('acked_at'))
+
+            self.last_broadcast = max(self.last_broadcast,
+                                      contact.get('sent'))
 
         return self
 
@@ -84,7 +102,5 @@ class StudentMarker(EntityBase):
         marker['acknowledged'] = self.acknowledged
         marker['last_viewed_date'] = self.last_viewed_date
 
-        marker['students'] = [student for student, name, voice in self.students]
 
         return marker
-

@@ -51,45 +51,41 @@ class StudentMarker(EntityBase):
             return self
 
         if not self.contacts:
-            self.contacts = []
+            self.contacts = {}
 
-        for contact in other.contacts:
-            new_acked = contact.pop('acked', None)
-            new_acked_at = contact.pop('acked_at', None)
-            new_sent = contact.pop('sent', None)
+        for new_hash, new_contact in other.contacts.iteritems():
 
-            try:
-                original_index = self.contacts.index(contact)
-            except ValueError:
-                original_index = 0
-
-            if not original_index:
+            contact = self.contacts.get(new_hash)
+            if not contact:
                 # New contact
-                self.contacts.append(contact)
-
+                self.contacts[new_hash] = new_contact
+                contact = new_contact
             else:
-                # Existing contact
-                original = self.contacts[original_index]
-                original['acked'] = max(original.get('acked'), new_acked)
-                original['acked_at'] = max(original.get('acked_at'),
-                                           new_acked_at)
-                original['sent'] = max(original.get('sent'), new_sent)
-                contact = original
+                # Update existing contact.
+                contact['acked'] = max(contact.get('acked'),
+                                       new_contact.get('acked'))
+
+                contact['acked_at'] = max(contact.get('acked_at'),
+                                          new_contact.get('acked_at'))
+
+                contact['sent'] = max(contact.get('sent'),
+                                      new_contact.get('sent'))
 
             # Update overall information.
             self.acknowledged = max(self.acknowledged,
                                     contact.get('acked'))
+
             self.acknowledged_at = max(self.acknowledged_at,
                                        contact.get('acked_at'))
 
-            self.all_acknowledged = min(self.all_acknowledged,
-                                        contact.get('acked'))
+            #self.all_acknowledged = min(self.all_acknowledged,
+            #                            contact.get('acked'))
 
-            self.all_acknowledged_at = None if not self.all_acknowledged else max(
-                self.all_acknowledged_at, contact.get('acked_at'))
+            #self.all_acknowledged_at = None if not self.all_acknowledged else max(
+            #    self.all_acknowledged_at, contact.get('acked_at'))
 
-            self.last_broadcast = max(self.last_broadcast,
-                                      contact.get('sent'))
+            #self.last_broadcast = max(self.last_broadcast,
+            #                          contact.get('sent'))
 
         return self
 
@@ -100,8 +96,8 @@ class StudentMarker(EntityBase):
         marker["version"] = self.version_
         marker['name'] = self.name
         marker['acknowledged'] = self.acknowledged
+        marker['all_acknowledged'] = self.acknowledged
         marker['last_viewed_date'] = self.last_viewed_date
-
 
         return marker
 

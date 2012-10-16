@@ -139,21 +139,22 @@ class TestStudentMarkerMerge(unittest.TestCase):
     def test_contacts_with_no_contacts(self):
         """Ensure merging contacts with no contacts."""
         from sosbeacon.event.student_marker import StudentMarker
+        from sosbeacon.event.student_marker import build_contact_map
 
-        contacts = [
+        contacts = build_contact_map([
             {
                 'name': 'Sam Smith',
-                'methods': ['123432', 'me@earth.com']
+                'methods': [{'value': '123432'}, {'value': 'me@earth.com'}]
             },
             {
                 'name': 'Josh Jones',
-                'methods': ['443241', 'josh@jones.com']
+                'methods': [{'value': '443241'}, {'value': 'josh@jones.com'}]
             },
             {
                 'name': 'Betty Boop',
-                'methods': ['321133', 'betty@earth.com']
+                'methods': [{'value': '321133'}, {'value': 'betty@earth.com'}]
             }
-        ]
+        ])
 
         left = StudentMarker(contacts=copy.deepcopy(contacts))
         right = StudentMarker()
@@ -162,77 +163,142 @@ class TestStudentMarkerMerge(unittest.TestCase):
 
     def test_merge_no_contacts_with_contacts(self):
         """Ensure merging no contacts with contacts."""
-        from datetime import datetime
-
         from sosbeacon.event.student_marker import StudentMarker
+        from sosbeacon.event.student_marker import build_contact_map
 
-        contacts = [
+        contacts = build_contact_map([
             {
                 'name': 'Sam Smith',
-                'methods': ['123432', 'me@earth.com'],
+                'methods': [{'value': '123432'}, {'value': 'me@earth.com'}],
                 'acked': True
             },
             {
                 'name': 'Josh Jones',
-                'methods': ['443241', 'josh@jones.com'],
-                'acked_at': datetime.now()
+                'methods': [{'value': '443241'}, {'value': 'josh@jones.com'}],
+                'acked_at': 123432
             },
             {
                 'name': 'Betty Boop',
-                'methods': ['321133', 'betty@earth.com'],
-                'sent': datetime.now()
+                'methods': [{'value': '321133'}, {'value': 'betty@earth.com'}],
+                'sent': 23423
             }
-        ]
+        ])
 
         left = StudentMarker()
         right = StudentMarker(contacts=copy.deepcopy(contacts))
         left.merge(right)
         self.assertEqual(contacts, left.contacts)
 
-    @unittest.skip('not there yet')
-    def test_merge_overlapping_contacts_incomplete_contacts(self):
-        """Ensure merging contacts with overlaps with different contacts."""
+    def test_merge_overlapping_contacts(self):
+        """Ensure merging overlapping contacts."""
         from sosbeacon.event.student_marker import StudentMarker
+        from sosbeacon.event.student_marker import build_contact_map
 
-        contacts_a = [
+        contacts = build_contact_map([
             {
                 'name': 'Sam Smith',
-                'methods': ['123432', 'me@earth.com']
+                'methods': [{'value': '123432'}, {'value': 'me@earth.com'}]
             },
             {
                 'name': 'Josh Jones',
-                'methods': ['443241', 'josh@jones.com']
+                'methods': [{'value': '443241'}, {'value': 'josh@jones.com'}]
             },
             {
                 'name': 'Betty Boop',
-                'methods': ['321133', 'betty@earth.com']
+                'methods': [{'value': '321133'}, {'value': 'betty@earth.com'}]
             }
-        ]
+        ])
 
-        contacts_b = [
-            {
-                'name': 'Sam Smith',
-                'methods': ['123432', 'me@earth.com']
-            },
-            {
-                'name': 'Josh Jones',
-                'methods': ['443241', 'josh@jones.com']
-            },
-            {
-                'name': 'Betty Boop',
-                'methods': ['321133', 'betty@earth.com']
-            }
-        ]
-
-        left = StudentMarker(contacts=copy.deepcopy(contacts_a))
-        right = StudentMarker(contacts=copy.deepcopy(contacts_b))
+        left = StudentMarker(contacts=copy.deepcopy(contacts))
+        right = StudentMarker(contacts=copy.deepcopy(contacts))
         left.merge(right)
 
-        for key in contacts_a:
-            contacts_a[key].extend(contacts_b[key])
-        self.assertEqual(contacts_a, left.contacts)
+        for contact in contacts.values():
+            contact['acked'] = None
+            contact['acked_at'] = None
+            contact['sent'] = None
 
+        self.assertEqual(contacts, left.contacts)
 
+    def test_merge_new_ack_info(self):
+        """Ensure merging ack info into contacts works."""
+        from sosbeacon.event.student_marker import StudentMarker
+        from sosbeacon.event.student_marker import build_contact_map
+
+        contacts = build_contact_map([
+            {
+                'name': 'Sam Smith',
+                'methods': [{'value': '123432'}, {'value': 'me@earth.com'}]
+            },
+            {
+                'name': 'Josh Jones',
+                'methods': [{'value': '443241'}, {'value': 'josh@jones.com'}]
+            },
+            {
+                'name': 'Betty Boop',
+                'methods': [{'value': '321133'}, {'value': 'betty@earth.com'}]
+            }
+        ])
+
+        new_acked_contact = build_contact_map([
+            {
+                'name': 'Sam Smith',
+                'methods': [{'value': '123432'}, {'value': 'me@earth.com'}],
+                'acked': True,
+                'acked_at': 1234231,
+                'sent': 232311,
+            }
+        ])
+
+        left = StudentMarker(contacts=copy.deepcopy(contacts))
+        right = StudentMarker(contacts=copy.deepcopy(new_acked_contact))
+        left.merge(right)
+
+        contacts.update(new_acked_contact)
+
+        self.assertEqual(contacts, left.contacts)
+        self.assertEqual(True, left.acknowledged)
+        self.assertEqual(1234231, left.acknowledged_at)
+
+    def test_merge_contacts_into_ack_info(self):
+        """Ensure merging contact list into ack info works."""
+        from sosbeacon.event.student_marker import StudentMarker
+        from sosbeacon.event.student_marker import build_contact_map
+
+        contacts = build_contact_map([
+            {
+                'name': 'Sam Smith',
+                'methods': [{'value': '123432'}, {'value': 'me@earth.com'}]
+            },
+            {
+                'name': 'Josh Jones',
+                'methods': [{'value': '443241'}, {'value': 'josh@jones.com'}]
+            },
+            {
+                'name': 'Betty Boop',
+                'methods': [{'value': '321133'}, {'value': 'betty@earth.com'}]
+            }
+        ])
+
+        acked_contact = build_contact_map([
+            {
+                'name': 'Sam Smith',
+                'methods': [{'value': '123432'}, {'value': 'me@earth.com'}],
+                'acked': True,
+                'acked_at': 1234231,
+                'sent': 232311,
+            }
+        ])
+
+        left = StudentMarker(contacts=copy.deepcopy(acked_contact))
+        right = StudentMarker(contacts=copy.deepcopy(contacts))
+        left.merge(right)
+
+        contacts.update(acked_contact)
+
+        self.assertEqual(contacts, left.contacts)
+        self.assertEqual(True, left.acknowledged)
+        self.assertEqual(1234231, left.acknowledged_at)
 
 
 class TestBuildContactMap(unittest.TestCase):

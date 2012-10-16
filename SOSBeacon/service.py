@@ -52,15 +52,15 @@ url_map = [
     #webapp2.Route(r'/service/event/send',
     #             handler='sosbeacon.service.SendEventHandler'),
     webapp2.Route(r'/service/event/<resource_id>',
-                   handler='sosbeacon.service.EventHandler'),
+                  handler='sosbeacon.service.EventHandler'),
     webapp2.Route(r'/service/event<:/?>',
-                handler='sosbeacon.service.EventListHandler'),
+                  handler='sosbeacon.service.EventListHandler'),
 
     #Message
     webapp2.Route(r'/service/message/<resource_id>',
-                   handler='sosbeacon.service.MessageHandler'),
+                  handler='sosbeacon.service.MessageHandler'),
     webapp2.Route(r'/service/message<:/?>',
-                handler='sosbeacon.service.MessageListHandler'),
+                  handler='sosbeacon.service.MessageListHandler'),
 
     # Group
     webapp2.Route(r'/service/group/<resource_id:.+>',
@@ -73,6 +73,10 @@ url_map = [
                   handler='sosbeacon.service.SchoolHandler'),
     webapp2.Route(r'/service/school<:/?>',
                   handler='sosbeacon.service.SchoolListHandler'),
+
+    # Contact marker
+    webapp2.Route(r'/service/contact_marker<:/?>',
+                  handler='sosbeacon.service.ContactMarkerListHandler'),
 ]
 
 app = webapp2.WSGIApplication(

@@ -48,6 +48,7 @@ def _bundle_app_coffee(app, env, debug=False):
     scripts = (
         path.join(COFFEE_PATH, 'request_paginator.coffee'),
         path.join(COFFEE_PATH, 'app.coffee'),
+        path.join(COFFEE_PATH, 'responders.coffee'),
         path.join(COFFEE_PATH, 'contact-method.coffee'),
         path.join(COFFEE_PATH, 'event-messages.coffee'),
         path.join(COFFEE_PATH, 'event-center.coffee'),

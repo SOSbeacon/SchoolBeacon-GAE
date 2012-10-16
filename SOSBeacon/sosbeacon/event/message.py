@@ -26,7 +26,7 @@ message_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'event': voluptuous.ndbkey(),
     'user': voluptuous.any(None, voluptuous.ndbkey(), ''),
-    'suer_name': basestring,
+    'user_name': basestring,
     'timestamp': voluptuous.any(None, datetime, ''),
     'type': basestring,
     'message': {
@@ -122,11 +122,10 @@ class Message(EntityBase):
 
         message['user_name'] = self.user_name or ''
         message['user'] = None
-        message['is_admin'] = False
+        message['is_admin'] = self.is_admin
 
         if self.user:
             message['user'] = self.user.urlsafe()
-            message['is_admin'] = True
 
         return message
 

@@ -139,9 +139,9 @@ class TestStudentMarkerMerge(unittest.TestCase):
     def test_contacts_with_no_contacts(self):
         """Ensure merging contacts with no contacts."""
         from sosbeacon.event.student_marker import StudentMarker
-        from sosbeacon.event.student_marker import build_contact_map
+        from sosbeacon.event.student_marker import _build_contact_map
 
-        contacts = build_contact_map([
+        contacts = _build_contact_map([
             {
                 'name': 'Sam Smith',
                 'methods': [{'value': '123432'}, {'value': 'me@earth.com'}]
@@ -164,9 +164,9 @@ class TestStudentMarkerMerge(unittest.TestCase):
     def test_merge_no_contacts_with_contacts(self):
         """Ensure merging no contacts with contacts."""
         from sosbeacon.event.student_marker import StudentMarker
-        from sosbeacon.event.student_marker import build_contact_map
+        from sosbeacon.event.student_marker import _build_contact_map
 
-        contacts = build_contact_map([
+        contacts = _build_contact_map([
             {
                 'name': 'Sam Smith',
                 'methods': [{'value': '123432'}, {'value': 'me@earth.com'}],
@@ -192,9 +192,9 @@ class TestStudentMarkerMerge(unittest.TestCase):
     def test_merge_overlapping_contacts(self):
         """Ensure merging overlapping contacts."""
         from sosbeacon.event.student_marker import StudentMarker
-        from sosbeacon.event.student_marker import build_contact_map
+        from sosbeacon.event.student_marker import _build_contact_map
 
-        contacts = build_contact_map([
+        contacts = _build_contact_map([
             {
                 'name': 'Sam Smith',
                 'methods': [{'value': '123432'}, {'value': 'me@earth.com'}]
@@ -223,9 +223,9 @@ class TestStudentMarkerMerge(unittest.TestCase):
     def test_merge_new_ack_info(self):
         """Ensure merging ack info into contacts works."""
         from sosbeacon.event.student_marker import StudentMarker
-        from sosbeacon.event.student_marker import build_contact_map
+        from sosbeacon.event.student_marker import _build_contact_map
 
-        contacts = build_contact_map([
+        contacts = _build_contact_map([
             {
                 'name': 'Sam Smith',
                 'methods': [{'value': '123432'}, {'value': 'me@earth.com'}]
@@ -240,7 +240,7 @@ class TestStudentMarkerMerge(unittest.TestCase):
             }
         ])
 
-        new_acked_contact = build_contact_map([
+        new_acked_contact = _build_contact_map([
             {
                 'name': 'Sam Smith',
                 'methods': [{'value': '123432'}, {'value': 'me@earth.com'}],
@@ -263,9 +263,9 @@ class TestStudentMarkerMerge(unittest.TestCase):
     def test_merge_contacts_into_ack_info(self):
         """Ensure merging contact list into ack info works."""
         from sosbeacon.event.student_marker import StudentMarker
-        from sosbeacon.event.student_marker import build_contact_map
+        from sosbeacon.event.student_marker import _build_contact_map
 
-        contacts = build_contact_map([
+        contacts = _build_contact_map([
             {
                 'name': 'Sam Smith',
                 'methods': [{'value': '123432'}, {'value': 'me@earth.com'}]
@@ -280,7 +280,7 @@ class TestStudentMarkerMerge(unittest.TestCase):
             }
         ])
 
-        acked_contact = build_contact_map([
+        acked_contact = _build_contact_map([
             {
                 'name': 'Sam Smith',
                 'methods': [{'value': '123432'}, {'value': 'me@earth.com'}],
@@ -302,15 +302,15 @@ class TestStudentMarkerMerge(unittest.TestCase):
 
 
 class TestBuildContactMap(unittest.TestCase):
-    """Test that build_contact_map functions as expected."""
+    """Test that _build_contact_map functions as expected."""
 
     def test_no_contacts(self):
         """Ensure building map of no contacts doesn't blow up."""
-        from sosbeacon.event.student_marker import build_contact_map
+        from sosbeacon.event.student_marker import _build_contact_map
 
         contacts = []
 
-        contact_map = build_contact_map(contacts[:])
+        contact_map = _build_contact_map(contacts[:])
 
         self.assertEqual({}, contact_map)
 
@@ -319,11 +319,11 @@ class TestBuildContactMap(unittest.TestCase):
         import copy
 
         from sosbeacon.event.student_marker import _hash_contact
-        from sosbeacon.event.student_marker import build_contact_map
+        from sosbeacon.event.student_marker import _build_contact_map
 
         contacts = [{'name': 'joe', 'methods': [{'value': 123}]}]
 
-        contact_map = build_contact_map(copy.deepcopy(contacts))
+        contact_map = _build_contact_map(copy.deepcopy(contacts))
 
         contact_hash = _hash_contact(contacts[0])
 
@@ -334,12 +334,12 @@ class TestBuildContactMap(unittest.TestCase):
         import copy
 
         from sosbeacon.event.student_marker import _hash_contact
-        from sosbeacon.event.student_marker import build_contact_map
+        from sosbeacon.event.student_marker import _build_contact_map
 
         contacts = [{'name': 'joe', 'methods': [{'value': 123}]},
                     {'name': 'jim', 'methods': [{'value': 'asd'}]}]
 
-        contact_map = build_contact_map(copy.deepcopy(contacts))
+        contact_map = _build_contact_map(copy.deepcopy(contacts))
 
         good_map = {
             _hash_contact(contacts[0]): contacts[0],
@@ -353,12 +353,12 @@ class TestBuildContactMap(unittest.TestCase):
         import copy
 
         from sosbeacon.event.student_marker import _hash_contact
-        from sosbeacon.event.student_marker import build_contact_map
+        from sosbeacon.event.student_marker import _build_contact_map
 
         contacts = [{'name': 'joe', 'methods': [{'value': 123}]},
                     {'name': 'joe', 'methods': [{'value': 123}]}]
 
-        contact_map = build_contact_map(copy.deepcopy(contacts))
+        contact_map = _build_contact_map(copy.deepcopy(contacts))
 
         good_map = {
             _hash_contact(contacts[0]): contacts[0],

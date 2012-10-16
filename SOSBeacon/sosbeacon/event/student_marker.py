@@ -102,7 +102,38 @@ class StudentMarker(EntityBase):
         return marker
 
 
-def build_contact_map(contacts):
+def create_or_update_marker(event_key, student):
+    """Create a StudentMarker if one doesn't exist, otherwise update the
+    last_broadcast timestamp if one does.
+    """
+    from datetime import datetime
+
+    marker_key = ndb.Key(
+        StudentMarker, "%s:%s" % (event_key.id(), student.key.id()))
+
+    new_marker = StudentMarker(
+        key=marker_key,
+        name=student.name,
+        contacts=_build_contact_map(student.contacts[:])
+    )
+
+    @ndb.transactional
+    def txn(new_marker):
+        marker = new_marker.key.get()
+
+        if marker:
+            marker.merge(new_marker)
+        else:
+            marker = new_marker
+
+        marker.last_broadcast = datetime.now()
+
+        marker.put()
+
+    txn(new_marker)
+
+
+def _build_contact_map(contacts):
     """Take a list of contacts and convert them to a map, using the hash of
     the contact as the key.
     """

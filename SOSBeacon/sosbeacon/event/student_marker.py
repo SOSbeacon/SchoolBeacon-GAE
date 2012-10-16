@@ -104,3 +104,17 @@ class StudentMarker(EntityBase):
 
 
         return marker
+
+def _hash_contact(contact):
+    """Take a contact dict and return a hash for that contact."""
+    import hashlib
+
+    tokens = [unicode(contact.get('name'))]
+    methods = contact.get('methods')
+    if methods:
+        tokens.extend(unicode(method.get('value')) for method in methods)
+
+    tokens.sort()
+
+    return hashlib.sha1('|'.join(tokens)).hexdigest()
+

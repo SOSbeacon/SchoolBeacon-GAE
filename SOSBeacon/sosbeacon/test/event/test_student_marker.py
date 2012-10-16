@@ -232,3 +232,82 @@ class TestStudentMarkerMerge(unittest.TestCase):
             contacts_a[key].extend(contacts_b[key])
         self.assertEqual(contacts_a, left.contacts)
 
+
+class TestHashContact(unittest.TestCase):
+    """Test that hash_contact functions as expected."""
+
+    def test_no_name_or_methods(self):
+        """Ensure hashing with no name or methods works."""
+        import hashlib
+
+        from sosbeacon.event.student_marker import _hash_contact
+
+        contact = {}
+
+        hashed = _hash_contact(contact)
+
+        check_hash = hashlib.sha1(unicode(None)).hexdigest()
+
+        self.assertEqual(check_hash, hashed)
+
+    def test_name_with_no_methods(self):
+        """Ensure hashing name with no methods works."""
+        import hashlib
+
+        from sosbeacon.event.student_marker import _hash_contact
+
+        contact = {'name': 'jimmy'}
+
+        hashed = _hash_contact(contact)
+
+        check_hash = hashlib.sha1(unicode('jimmy')).hexdigest()
+
+        self.assertEqual(check_hash, hashed)
+
+    def test_no_name_with_methods(self):
+        """Ensure hashing with no name but with methods works."""
+        import hashlib
+
+        from sosbeacon.event.student_marker import _hash_contact
+
+        contact = {'methods': [{'value': 1}, {'value': 2}, {'value': 3}]}
+
+        hashed = _hash_contact(contact)
+
+        check_hash = hashlib.sha1(unicode('1|2|3|None')).hexdigest()
+
+        self.assertEqual(check_hash, hashed)
+
+    def test_name_with_methods(self):
+        """Ensure hashing with name and methods works."""
+        import hashlib
+
+        from sosbeacon.event.student_marker import _hash_contact
+
+        contact = {'name': 'frank',
+                   'methods': [{'value': 1}, {'value': 2}, {'value': 3}]}
+
+        hashed = _hash_contact(contact)
+
+        check_hash = hashlib.sha1(unicode('1|2|3|frank')).hexdigest()
+
+        self.assertEqual(check_hash, hashed)
+
+    def test_email_method(self):
+        """Ensure hashing with name and methods works."""
+        import hashlib
+
+        from sosbeacon.event.student_marker import _hash_contact
+
+        contact = {'name': 'jim jones',
+                   'methods': [{'value': 'jim@jones.com'},
+                               {'value': 2},
+                               {'value': 3}]}
+
+        hashed = _hash_contact(contact)
+
+        check_hash = hashlib.sha1(
+            unicode('2|3|jim jones|jim@jones.com')).hexdigest()
+
+        self.assertEqual(check_hash, hashed)
+

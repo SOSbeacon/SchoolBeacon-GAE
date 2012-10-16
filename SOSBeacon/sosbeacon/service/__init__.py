@@ -304,3 +304,14 @@ class SendEventHandler(webapp2.RequestHandler):
             )
 
         mark_as_sent()
+
+
+class ContactMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+
+    def __init__(self, request=None, response=None):
+        from sosbeacon.event.contact_marker import marker_schema
+        from sosbeacon.event.contact_marker import marker_query_schema
+
+        super(ContactMarkerListHandler, self).__init__(
+            ContactMarker, marker_schema, request, response,
+            query_schema=marker_query_schema)

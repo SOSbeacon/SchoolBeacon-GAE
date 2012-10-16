@@ -94,6 +94,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @broadcastView = null
         @respondedView = null
         @nonRespondedView = null
+        @noStudentsView = null
 
         @model = new App.SOSBeacon.Model.Event({key: id})
         @model.fetch({async: false})
@@ -164,17 +165,22 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         el = $(e.target)
         href = el.attr('href')
         if href == "#responded" and not @respondedView
-            console.log('load responded')
+            @respondedView = new App.SOSBeacon.View.ContactMarkerList(
+                new App.SOSBeacon.Collection.ContactMarkerList, true)
+            @$("#responded").append(@respondedView.render().el)
         else if href == "#not-responded" and not @nonRespondedView
-            console.log('load not responded')
+            @nonRespondedView = new App.SOSBeacon.View.ContactMarkerList(
+                new App.SOSBeacon.Collection.ContactMarkerList, false)
+            @$("#not-responded").append(@nonRespondedView.render().el)
+        #TODO: no students view
 
         el.tab('show')
 
     onClose: =>
         App.SOSBeacon.Event.unbind(null, null, this)
 
-        for view in [
-            @messageView, @broadcastView, @respondedView, @nonRespondedView]
+        for view in [@messageView, @broadcastView, @respondedView,
+                     @nonRespondedView, @noStudentsView]
             if view
                 view.close()
 
@@ -394,6 +400,7 @@ class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
     view: =>
         App.SOSBeacon.router.navigate(
             "/eventcenter/view/#{@model.id}", {trigger: true})
+
 
 class App.SOSBeacon.View.EventCenterListHeader extends App.Skel.View.ListItemHeader
     template: JST['event-center/listheader']

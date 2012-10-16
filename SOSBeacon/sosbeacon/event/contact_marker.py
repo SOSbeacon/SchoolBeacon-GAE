@@ -26,7 +26,8 @@ marker_schema = {
 
 marker_query_schema = {
     'feq_acknowledged': voluptuous.boolean(),
-    'fan_key': voluptuous.ndbkey()
+    'fan_key': voluptuous.ndbkey(),
+    'name': basestring
 }
 
 
@@ -103,9 +104,7 @@ class ContactMarker(EntityBase):
         marker['name'] = self.name
         marker['acknowledged'] = self.acknowledged
         marker['last_viewed_date'] = self.last_viewed_date
-
-        marker['students'] = [
-            student for student, name, voice in self.students]
+        marker['students'] = self.students.keys()
 
         return marker
 

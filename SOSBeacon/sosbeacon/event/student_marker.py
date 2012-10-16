@@ -105,6 +105,19 @@ class StudentMarker(EntityBase):
 
         return marker
 
+
+def build_contact_map(contacts):
+    """Take a list of contacts and convert them to a map, using the hash of
+    the contact as the key.
+    """
+    contact_map = {}
+    for contact in contacts:
+        contact_hash = _hash_contact(contact)
+        contact_map[contact_hash] = contact
+
+    return contact_map
+
+
 def _hash_contact(contact):
     """Take a contact dict and return a hash for that contact."""
     import hashlib

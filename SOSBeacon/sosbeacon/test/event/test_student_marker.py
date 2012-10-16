@@ -233,6 +233,74 @@ class TestStudentMarkerMerge(unittest.TestCase):
         self.assertEqual(contacts_a, left.contacts)
 
 
+
+
+class TestBuildContactMap(unittest.TestCase):
+    """Test that build_contact_map functions as expected."""
+
+    def test_no_contacts(self):
+        """Ensure building map of no contacts doesn't blow up."""
+        from sosbeacon.event.student_marker import build_contact_map
+
+        contacts = []
+
+        contact_map = build_contact_map(contacts[:])
+
+        self.assertEqual({}, contact_map)
+
+    def test_one_contact(self):
+        """Ensure building map of one contact works."""
+        import copy
+
+        from sosbeacon.event.student_marker import _hash_contact
+        from sosbeacon.event.student_marker import build_contact_map
+
+        contacts = [{'name': 'joe', 'methods': [{'value': 123}]}]
+
+        contact_map = build_contact_map(copy.deepcopy(contacts))
+
+        contact_hash = _hash_contact(contacts[0])
+
+        self.assertEqual({contact_hash: contacts[0]}, contact_map)
+
+    def test_two_contacts(self):
+        """Ensure building map of two contacts works."""
+        import copy
+
+        from sosbeacon.event.student_marker import _hash_contact
+        from sosbeacon.event.student_marker import build_contact_map
+
+        contacts = [{'name': 'joe', 'methods': [{'value': 123}]},
+                    {'name': 'jim', 'methods': [{'value': 'asd'}]}]
+
+        contact_map = build_contact_map(copy.deepcopy(contacts))
+
+        good_map = {
+            _hash_contact(contacts[0]): contacts[0],
+            _hash_contact(contacts[1]): contacts[1],
+        }
+
+        self.assertEqual(good_map, contact_map)
+
+    def test_duplicate_contacts(self):
+        """Ensure building map from list with duplicate contacts works."""
+        import copy
+
+        from sosbeacon.event.student_marker import _hash_contact
+        from sosbeacon.event.student_marker import build_contact_map
+
+        contacts = [{'name': 'joe', 'methods': [{'value': 123}]},
+                    {'name': 'joe', 'methods': [{'value': 123}]}]
+
+        contact_map = build_contact_map(copy.deepcopy(contacts))
+
+        good_map = {
+            _hash_contact(contacts[0]): contacts[0],
+        }
+
+        self.assertEqual(good_map, contact_map)
+
+
 class TestHashContact(unittest.TestCase):
     """Test that hash_contact functions as expected."""
 

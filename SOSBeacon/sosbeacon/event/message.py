@@ -26,7 +26,7 @@ message_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'event': voluptuous.ndbkey(),
     'user': voluptuous.any(None, voluptuous.ndbkey(), ''),
-    'suer_name': basestring,
+    'user_name': basestring,
     'timestamp': voluptuous.any(None, datetime, ''),
     'type': basestring,
     'message': {

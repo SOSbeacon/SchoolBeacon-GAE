@@ -86,11 +86,14 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         "click .event-add-comment": "addComment"
         "click .event-add-broadcast": "addBroadcast"
         "click #edit-event-button": "editEvent"
+        "click #details-tabs a": "triggerTab"
 
     initialize: (id) =>
         @groupViews = []
         @messageView = null
         @broadcastView = null
+        @respondedView = null
+        @nonRespondedView = null
 
         @model = new App.SOSBeacon.Model.Event({key: id})
         @model.fetch({async: false})
@@ -104,6 +107,8 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         @renderGroups()
         @renderMessages()
+
+        $('#details-tabs a[href="#details"]').tab('show')
 
         return this
 
@@ -155,15 +160,23 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         App.SOSBeacon.router.navigate(
             "/eventcenter/edit/#{@model.id}", {trigger: true})
 
+    triggerTab: (e) =>
+        el = $(e.target)
+        href = el.attr('href')
+        if href == "#responded" and not @respondedView
+            console.log('load responded')
+        else if href == "#not-responded" and not @nonRespondedView
+            console.log('load not responded')
+
+        el.tab('show')
 
     onClose: =>
         App.SOSBeacon.Event.unbind(null, null, this)
 
-        if @messageView
-            @messageView.close()
-
-        if @broadcastView
-            @broadcastView.close()
+        for view in [
+            @messageView, @broadcastView, @respondedView, @nonRespondedView]
+            if view
+                view.close()
 
         for view in @groupViews
             view.close()

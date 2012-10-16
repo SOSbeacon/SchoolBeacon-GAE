@@ -12,27 +12,45 @@
     <div class="event-status">
       <% if (date != null) { %>
       <span>Date:</span> <%- date %> 
-        <% } %>
-        <span>Status:</span>
-      <% if (status == "dr") { %>
-        Draft
-      <% } else if (status == "se" ) { %>
-        Sent
-      <% } else { %>
-        Closed
       <% } %>
-      </div>
+      <span>Status:</span>
+      <% if (status == "dr") { %>
+      Draft
+      <% } else if (status == "se" ) { %>
+      Sent
+      <% } else { %>
+      Closed
+      <% } %>
+    </div>
     <div class="event-groups">
       <div>
         <span>Groups</span>
       </div>
     </div>
   </div>
-  <div class="event-content standard-back">
-    <div>
-      <span>Details</span>
+  <ul id="details-tabs" class="nav nav-tabs" date-tabs="tabs">
+    <li class="active" data-toggle="tab">
+      <a href="#details">Details</a>
+    </li>
+    <li data-toggle="tab">
+      <a href="#responded">Responded</a>
+    </li>
+    <li data-toggle="tab">
+      <a href="#not-responded">Not Responded</a>
+    </li>
+  </ul>
+  <div class="tab-content">
+    <div class="tab-pane active" id="details">
+      <div class="event-content">
+        <%= content %>
+      </div>
     </div>
-    <%= content %>
+    <div class="tab-pane" id="responded">
+      responded
+    </div>
+    <div class="tab-pane" id="not-responded">
+      not-responded
+    </div>
   </div>
 </div>
 <div id="event-center-message" class="span4">

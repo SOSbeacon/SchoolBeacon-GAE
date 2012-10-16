@@ -186,9 +186,9 @@ class SchoolListHandler(rest_handler.RestApiListHandler, ProcessMixin):
         from sosbeacon.school import school_query_schema
 
         super(SchoolListHandler, self).__init__(
-              School, school_schema, request, response,
-              query_schema=school_query_schema,
-              query_options={'namespace': '_x_'})
+            School, school_schema, request, response,
+            query_schema=school_query_schema,
+            query_options={'namespace': '_x_'})
 
 
 class EventHandler(rest_handler.RestApiHandler):
@@ -269,6 +269,7 @@ class EventStudentHandler(rest_handler.RestApiHandler):
         self.error(405)
         return
 
+
 class SendEventHandler(webapp2.RequestHandler):
     def post(self):
         from google.appengine.api import taskqueue
@@ -303,4 +304,3 @@ class SendEventHandler(webapp2.RequestHandler):
             )
 
         mark_as_sent()
-

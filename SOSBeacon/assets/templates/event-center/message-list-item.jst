@@ -1,20 +1,46 @@
-<div class="header row-fluid">
-  <div class="comment-author">A user</div>
-  <div class="comment-meta">- <%- modified %>, wrote</div>
-</div>
 <% if (type == "c") { %>
-  <div class="message-content">
-  <%= message.body %>
-<% } else { %>
-  <div class="message-broadcast">
-    <div class="broadcast-sms">
-      <h5>SMS:</h5><%= message.sms %>
-    </div>
-    <div class="broadcast-title">
-      <h5>Title:</h5><%- message.title %>
-    </div>
-    <div class="broadcast-email">
-      <h5>Email:</h5><%= message.email %>
-    </div>
+  <% if (is_admin == true) { %>
+    <div class="message-item-admin">
+  <% } else { %>
+    <div class="message-item-comment">
   <% } %>
+<% } else { %>
+  <div class="message-item-broadcast">
+<% } %>
+<div class="message-item">
+  <div class="message-item-buttons btn-group">
+    <!--<button id="message-item-button-edit" class="btn btn-mini">-->
+      <!--<i class="icon-edit"></i>-->
+    <!--</button>-->
+    <button id="message-item-button-remove" class="btn btn-mini">
+      <i class="icon-trash"></i>
+    </button>
+  </div>
+  <div class="header row-fluid">
+    <div class="comment-author">
+      <% if (user_name == null) { %>
+      Guest
+      <% } else { %>
+      <%- user_name %>
+      <% } %>
+    </div>
+    <div class="comment-meta">- <%- modified %>, wrote</div>
+  </div>
+  <% if (type == "c") { %>
+  <div class="message-content">
+    <%= message.body %>
+    <% } else { %>
+    <div class="message-broadcast">
+      <div class="broadcast-sms">
+        <h5>SMS:</h5><%= message.sms %>
+      </div>
+      <div class="broadcast-title">
+        <h5>Title:</h5><%- message.title %>
+      </div>
+      <div class="broadcast-email">
+        <h5>Email:</h5><%= message.email %>
+      </div>
+      <% } %>
+    </div>
+  </div>
 </div>

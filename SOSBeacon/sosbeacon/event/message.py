@@ -8,6 +8,7 @@ import voluptuous
 
 from skel.datastore import EntityBase
 
+
 GROUPS_TX_ENDPOINT = '/task/event/tx/start'
 GROUP_TX_ENDPOINT = '/task/event/tx/group'
 GROUP_TX_QUEUE = "group-tx"
@@ -24,6 +25,8 @@ METHOD_TX_QUEUE = "method-tx"
 message_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'event': voluptuous.ndbkey(),
+    'user': voluptuous.any(None, voluptuous.ndbkey(), ''),
+    'user_name': basestring,
     'timestamp': voluptuous.any(None, datetime, ''),
     'type': basestring,
     'message': {
@@ -50,6 +53,10 @@ class Message(EntityBase):
 
     message_type = ndb.StringProperty('mt')
     message = ndb.JsonProperty('m')
+
+    user = ndb.KeyProperty('u')
+    user_name = ndb.StringProperty('un')
+    is_admin = ndb.BooleanProperty('ia')
 
     @classmethod
     def from_dict(cls, data):
@@ -94,6 +101,9 @@ class Message(EntityBase):
             # TODO: Ensure user is an admin.
             broadcast_message(event_key, message.key)
 
+        message.user_name = data.get('user_name')
+        message.user = data.get('user')
+
         message.message = message_data
 
         return message
@@ -109,6 +119,13 @@ class Message(EntityBase):
         message['added'] = self.timestamp.strftime('%Y-%m-%d %H:%M')
         message['type'] = self.message_type
         message['message'] = self.message
+
+        message['user_name'] = self.user_name or ''
+        message['user'] = None
+        message['is_admin'] = self.is_admin
+
+        if self.user:
+            message['user'] = self.user.urlsafe()
 
         return message
 

@@ -7,8 +7,11 @@ class App.SOSBeacon.Model.Message extends Backbone.Model
             event: null,
             type: "",
             message: {},
-            modified: ''
-            timestamp: null
+            modified: '',
+            timestamp: null,
+            user: null,
+            user_name: "",
+            is_admin: false
         }
 
     validators:
@@ -52,7 +55,7 @@ class App.SOSBeacon.Collection.MessageList extends Backbone.Paginator.requestPag
     server_api: {}
 
 
-class App.SOSBeacon.View.AddMessage extends Backbone.View
+class App.SOSBeacon.View.EditMessage extends Backbone.View
     template: JST['event-center/add-message']
     id: "add-message-area"
 
@@ -62,9 +65,17 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
 
     initialize: (options) =>
         @event = options.event
+        if options.message?
+            @message = options.message
+        else
+            @message = new App.SOSBeacon.Model.Message({
+                message: {
+                    message: ''
+                }
+            })
 
     render: () =>
-        @$el.html(@template())
+        @$el.html(@template(@message.toJSON()))
 
         try
             @$("textarea#add-message-box").wysihtml5()
@@ -75,8 +86,7 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
         @$el.html('')
 
     saveComment: =>
-        model = new App.SOSBeacon.Model.Message()
-        model.save(
+        @message.save(
             message: {
                 body: @$('textarea#add-message-box').val()
             }
@@ -84,7 +94,7 @@ class App.SOSBeacon.View.AddMessage extends Backbone.View
             event: @event.id
         )
 
-        App.SOSBeacon.Event.trigger("message:add", model, this)
+        App.SOSBeacon.Event.trigger("message:add", @message, this)
 
         @hide()
 
@@ -149,8 +159,6 @@ class App.SOSBeacon.View.MessageList extends Backbone.View
     addOne: (object) =>
         view = new App.SOSBeacon.View.MessageListItem({model: object})
         item = view.render().el
-        if object.get('type') == 'b'
-            $(item).attr('class', 'view-message-broadcast')
 
         @$el.append(item)
 
@@ -170,6 +178,10 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
     template: JST['event-center/message-list-item']
     className: "view-message-item"
 
+    events:
+        #"click #message-item-button-edit": "editMessage"
+        "click #message-item-button-remove": "removeMessage"
+
     initialize: =>
         @model.bind('change', @render, this)
         @model.bind('destroy', @remove, this)
@@ -177,6 +189,22 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
     render: =>
         @$el.html(@template(@model.toJSON()))
         return this
+
+    #TODO: get the edit message interface working.
+    #editMessage: =>
+        #if @model.type == "c"
+            #@messageView = new App.SOSBeacon.View.EditMessage({
+                #message: @model
+            #})
+            #@$(".message-entry").append(@messageView.render().el)
+
+        #else
+            #"edit broadcast"
+
+    removeMessage: =>
+        proceed = confirm('Are you sure you want to delete?  This can not be undone.')
+        if proceed
+            @model.destroy()
 
 
 class App.SOSBeacon.Model.MessageType extends Backbone.Model
@@ -197,3 +225,65 @@ App.SOSBeacon.eventTypes = new App.SOSBeacon.Collection.MessageType([
     {type: 'b', label: "Broadcast"},
 ])
 
+
+class App.SOSBeacon.View.MessageListApp extends Backbone.View
+    template: JST['event-center/event-messages']
+
+    events:
+        "click .event-submit-comment": "saveComment"
+        "keypress .edit": "updateOnEnter"
+
+    initialize: (id) =>
+        @eventId = id
+
+        @loadMessages()
+
+    loadMessages: =>
+        @messages = new App.SOSBeacon.Collection.MessageList()
+        _.extend(@messages.server_api, {
+            'feq_event': @eventId
+            'orderBy': 'timestamp'
+            'orderDirection': 'asc'
+            'limit': 200
+        })
+
+        @messages.fetch()
+
+    render: =>
+        @$el.html(@template())
+
+        @renderMessages()
+
+        try
+            @$("textarea#add-message-box").wysihtml5({"image": false})
+
+        return this
+
+    saveComment: =>
+        @$('button.event-submit-comment').attr("disabled", "disabled")
+
+        model = new App.SOSBeacon.Model.Message()
+        model.save({
+            message: {
+                body: @$('textarea#add-message-box').val()
+            }
+            type: 'c' #c for comment
+            event: @eventId
+        }, success: =>
+            location.reload()
+        )
+
+    renderMessages: =>
+        @messageListView = new App.SOSBeacon.View.MessageList(@messages)
+        @$("#event-message-list").append(@messageListView.render().el)
+
+    updateOnEnter: (e) =>
+        focusItem = $("*:focus")
+
+        if e.keyCode == 13
+            @saveComment()
+
+            return false
+
+    onClose: () =>
+        @messageListView.close()

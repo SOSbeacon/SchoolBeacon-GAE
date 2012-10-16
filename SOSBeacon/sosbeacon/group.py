@@ -83,4 +83,3 @@ def get_student_keys(group_key, cursor=None, batch_size=50):
 
     return query.fetch_page(
         batch_size, start_cursor=start_cursor, keys_only=True)
-

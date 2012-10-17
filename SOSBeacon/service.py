@@ -77,6 +77,10 @@ url_map = [
     # Contact marker
     webapp2.Route(r'/service/contact_marker<:/?>',
                   handler='sosbeacon.service.ContactMarkerListHandler'),
+
+    # Student marker
+    webapp2.Route(r'/service/student_marker<:/?>',
+                  handler='sosbeacon.service.StudentMarkerListHandler'),
 ]
 
 app = webapp2.WSGIApplication(

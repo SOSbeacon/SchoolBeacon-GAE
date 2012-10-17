@@ -358,6 +358,12 @@ class MethodTxHandler(webapp2.RequestHandler):
             logging.error('No method given.')
             return
 
+        retry_count = self.request.headers.get('X-AppEngine-TaskRetryCount', 0)
+        exec_count = self.request.headers.get('X-AppEngine-ExecutionCount', 0)
+        if exec_count > 5 or retry_count > 10:
+            logging.error('Too many failures sending to %s, aborting.', method)
+            return
+
         broadcast_to_method(event_key, message_key, short_id, method)
 
 
@@ -400,6 +406,7 @@ class UpdateContactMarkerHandler(webapp2.RequestHandler):
         if not contact:
             logging.error('No contact given.')
             return
+        contact = json.loads(contact)
 
         methods = self.request.get('methods')
         if not methods:

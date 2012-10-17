@@ -315,3 +315,15 @@ class ContactMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
         super(ContactMarkerListHandler, self).__init__(
             ContactMarker, marker_schema, request, response,
             query_schema=marker_query_schema)
+
+
+class StudentMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+
+    def __init__(self, request=None, response=None):
+        from sosbeacon.event.student_marker import StudentMarker
+        from sosbeacon.event.student_marker import marker_schema
+        from sosbeacon.event.student_marker import marker_query_schema
+
+        super(StudentMarkerListHandler, self).__init__(
+            StudentMarker, marker_schema, request, response,
+            query_schema=marker_query_schema)

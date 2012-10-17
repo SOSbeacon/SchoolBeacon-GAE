@@ -437,7 +437,7 @@ def broadcast_sms(number, message, url):
                               settings.TWILIO_TOKEN)
 
     client.sms.messages.create(
-        to="+%s" % (number), from_="+14155992671", body=body)
+        to="+%s" % (number), from_=settings.TWILIO_FROM, body=body)
 
 
 def broadcast_email(address, message, url):
@@ -472,7 +472,7 @@ def broadcast_email(address, message, url):
                           secure=True)
 
     message = sendgrid.Message(
-        sender,
+        settings.SENDGRID_SENDER,
         subject,
         message.message['sms'],
         body)

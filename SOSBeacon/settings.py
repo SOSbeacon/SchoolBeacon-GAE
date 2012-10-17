@@ -1,8 +1,10 @@
 TWILIO_ACCOUNT = ''
 TWILIO_TOKEN = ''
+TWILIO_FROM = ''
 
 SENDGRID_ACCOUNT = ''
 SENDGRID_PASSWORD = ''
+SENDGRID_SENDER = ''
 
 try:
     import settingslocal

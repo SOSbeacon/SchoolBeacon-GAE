@@ -123,7 +123,8 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         @collection.fetch()
 
-        @messageListView = new App.SOSBeacon.View.MessageList(@collection)
+        @messageListView = new App.SOSBeacon.View.MessageList(
+            @collection, false)
         @$("#event-center-message").append(@messageListView.render().el)
 
     renderGroups: =>

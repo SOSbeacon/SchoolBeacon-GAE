@@ -36,7 +36,7 @@
 <script type="text/javascript">
     $(function(){
         var messageList = new App.SOSBeacon.View.MessageListApp(
-            '${event.key.urlsafe()}', false);
+            '${event.key.urlsafe()}', true);
         $("#event-messages").append(messageList.render().$el);
     });
 </script>

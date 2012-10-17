@@ -85,7 +85,7 @@ def process_messages(request, schema, entity):
         message.is_admin = True
         user_id = session.get('u')
         if user_id:
-            message.user = ndb.Key(User, user_id)
+            message.user = ndb.Key(User, user_id, namespace='')
             user = message.user.get()
             if user:
                 message.user_name = user.name

@@ -162,7 +162,6 @@ class App.SOSBeacon.View.MessageList extends Backbone.View
         view = new App.SOSBeacon.View.MessageListItem({model: object})
         item = view.render().el
 
-        console.log(@hideButtons)
         if not @hideButtons
             $(item).find('.message-item-buttons').css('display', 'none')
 

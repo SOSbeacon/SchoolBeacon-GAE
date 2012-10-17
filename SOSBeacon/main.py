@@ -127,7 +127,6 @@ class EventHandler(TemplateHandler):
 
         event = event_key.get()
         #Get the school id (ie namespace) and grab the event marker
-        method_id = utils.number_decode(method_id)
         method_key = ndb.Key(
             ContactMarker, "%s:%s" % (event_id, method_id),
             namespace=event.school)

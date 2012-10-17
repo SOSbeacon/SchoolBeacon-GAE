@@ -147,7 +147,9 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
 class App.SOSBeacon.View.MessageList extends Backbone.View
     id: "view-message-area"
 
-    initialize: (collection) =>
+    initialize: (collection, hideButtons) =>
+        @hideButtons = hideButtons
+
         @collection = collection
         @collection.bind('add', @insertOne, this)
         @collection.bind('reset', @reset, this)
@@ -159,6 +161,9 @@ class App.SOSBeacon.View.MessageList extends Backbone.View
     addOne: (object) =>
         view = new App.SOSBeacon.View.MessageListItem({model: object})
         item = view.render().el
+
+        if @hideButtons
+            $(item).find('.message-item-buttons').css('display', 'none')
 
         @$el.append(item)
 
@@ -233,7 +238,8 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
         "click .event-submit-comment": "saveComment"
         "keypress .edit": "updateOnEnter"
 
-    initialize: (id) =>
+    initialize: (id, hideButtons) =>
+        @hideButtons = hideButtons
         @eventId = id
 
         @loadMessages()
@@ -274,7 +280,8 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
         )
 
     renderMessages: =>
-        @messageListView = new App.SOSBeacon.View.MessageList(@messages)
+        @messageListView = new App.SOSBeacon.View.MessageList(
+            @messages, @hideButtons)
         @$("#event-message-list").append(@messageListView.render().el)
 
     updateOnEnter: (e) =>

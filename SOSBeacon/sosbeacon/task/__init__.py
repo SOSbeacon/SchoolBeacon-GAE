@@ -358,8 +358,11 @@ class MethodTxHandler(webapp2.RequestHandler):
             logging.error('No method given.')
             return
 
-        retry_count = self.request.headers.get('X-AppEngine-TaskRetryCount', 0)
-        exec_count = self.request.headers.get('X-AppEngine-ExecutionCount', 0)
+        retry_count = int(
+            self.request.headers.get('X-AppEngine-TaskRetryCount', 0))
+        exec_count = int(
+            self.request.headers.get('X-AppEngine-ExecutionCount', 0))
+
         if exec_count > 5 or retry_count > 10:
             logging.error('Too many failures sending to %s, aborting.', method)
             return

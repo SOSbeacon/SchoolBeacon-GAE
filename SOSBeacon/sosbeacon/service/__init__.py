@@ -85,7 +85,7 @@ def process_messages(request, schema, entity):
         message.is_admin = True
         user_id = session.get('u')
         if user_id:
-            message.user = ndb.Key(User, user_id)
+            message.user = ndb.Key(User, user_id, namespace='')
             user = message.user.get()
             if user:
                 message.user_name = user.name
@@ -314,4 +314,16 @@ class ContactMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
         super(ContactMarkerListHandler, self).__init__(
             ContactMarker, marker_schema, request, response,
+            query_schema=marker_query_schema)
+
+
+class StudentMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+
+    def __init__(self, request=None, response=None):
+        from sosbeacon.event.student_marker import StudentMarker
+        from sosbeacon.event.student_marker import marker_schema
+        from sosbeacon.event.student_marker import marker_query_schema
+
+        super(StudentMarkerListHandler, self).__init__(
+            StudentMarker, marker_schema, request, response,
             query_schema=marker_query_schema)

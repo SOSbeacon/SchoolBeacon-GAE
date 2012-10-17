@@ -123,7 +123,8 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         @collection.fetch()
 
-        @messageListView = new App.SOSBeacon.View.MessageList(@collection)
+        @messageListView = new App.SOSBeacon.View.MessageList(
+            @collection, false)
         @$("#event-center-message").append(@messageListView.render().el)
 
     renderGroups: =>
@@ -165,14 +166,17 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         el = $(e.target)
         href = el.attr('href')
         if href == "#responded" and not @respondedView
-            @respondedView = new App.SOSBeacon.View.ContactMarkerList(
+            @respondedView = new App.SOSBeacon.View.MarkerList(
                 new App.SOSBeacon.Collection.ContactMarkerList, true)
             @$("#responded").append(@respondedView.render().el)
         else if href == "#not-responded" and not @nonRespondedView
-            @nonRespondedView = new App.SOSBeacon.View.ContactMarkerList(
+            @nonRespondedView = new App.SOSBeacon.View.MarkerList(
                 new App.SOSBeacon.Collection.ContactMarkerList, false)
             @$("#not-responded").append(@nonRespondedView.render().el)
-        #TODO: no students view
+        else if href == "#no-students" and not @noStudentsView
+            @noStudentsView = new App.SOSBeacon.View.MarkerList(
+                new App.SOSBeacon.Collection.StudentMarkerList, false)
+            @$("#no-students").append(@noStudentsView.render().el)
 
         el.tab('show')
 

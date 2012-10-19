@@ -314,3 +314,30 @@ def update_marker_pair(marker1, marker2):
 
     update_marker_pair(marker1, marker1.revision, marker2, marker2.revision)
 
+
+def mark_as_acknowledged(event_key, marker_key):
+    """Mark a ContactMarker as acknowledged, and insert tasks to mark
+    StudentMarker as acknowledged.
+    """
+    import time
+
+    from .student_marker import mark_as_acknowledged as acknowledge_student
+
+    @ndb.transactional
+    def txn():
+        marker = marker_key.get()
+        if not marker:
+            return
+
+        marker.acknowledged = True
+        marker.last_viewed_date = int(time.time())
+        marker.put()
+        return marker
+    marker = txn()
+
+    if not marker:
+        return
+
+    for student in marker.students:
+        acknowledge_student(event_key, ndb.Key(urlsafe=student))
+

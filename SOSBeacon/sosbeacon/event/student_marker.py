@@ -159,3 +159,25 @@ def _hash_contact(contact):
 
     return hashlib.sha1('|'.join(tokens)).hexdigest()
 
+
+def mark_as_acknowledged(event_key, student_key):
+    """Mark a StudentMarker as acknowledged."""
+    import time
+
+    # FIXME: Update contact and check for all.
+
+    marker_key = ndb.Key(
+        StudentMarker, "%s:%s" % (event_key.id(), student_key.id()))
+
+    @ndb.transactional
+    def txn():
+        marker = marker_key.get()
+        if not marker:
+            return
+
+        marker.acknowledged = True
+        marker.acknowledged_at = int(time.time())
+        marker.put()
+        return marker
+    txn()
+

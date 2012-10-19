@@ -382,7 +382,6 @@ class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
 
     events:
         "click .view-button": "view"
-        "click .edit-button": "edit"
         "click .remove-button": "delete"
 
     render: =>

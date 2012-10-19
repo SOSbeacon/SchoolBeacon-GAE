@@ -1,4 +1,4 @@
-
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 
 import voluptuous
@@ -41,6 +41,8 @@ class Event(EntityBase):
     into a special global namespace, `_x_`.  Their associated markers go into
     the corresponding school's namespace.
     """
+
+    def _post_put_hook(self, future):
 
     _query_properties = {
         'title': RestQueryRule('title_', lambda x: x.lower() if x else ''),
@@ -97,6 +99,11 @@ class Event(EntityBase):
                 event.groups.append(ndb.Key(urlsafe=key))
             else:
                 event.groups.append(key)
+
+        # This needs done in the handler.  Can't do it in a hook, since that
+        # would fire everytime we update stats.
+        event_mc_key = 'Event:%s' % (int(self.key.id()),)
+        memcache.delete(event_mc_key)
 
         return event
 

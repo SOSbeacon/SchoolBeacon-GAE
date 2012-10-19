@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from google.appengine.api import memcache
 from google.appengine.ext import ndb
 
@@ -17,7 +19,7 @@ event_schema = {
     'title': basestring,
     'status': voluptuous.any('', EVENT_STATUS_DRAFT, EVENT_STATUS_CLOSED,
                              EVENT_STATUS_SENT),
-    'date': voluptuous.any(None, basestring),
+    'date': voluptuous.any(None, basestring, datetime),
     'last_broadcast_date': voluptuous.any(None, basestring),
     'groups': [voluptuous.ndbkey()],
     'type': voluptuous.any('e', 'n'),
@@ -41,8 +43,6 @@ class Event(EntityBase):
     into a special global namespace, `_x_`.  Their associated markers go into
     the corresponding school's namespace.
     """
-
-    def _post_put_hook(self, future):
 
     _query_properties = {
         'title': RestQueryRule('title_', lambda x: x.lower() if x else ''),
@@ -87,6 +87,8 @@ class Event(EntityBase):
         event.title = data.get('title')
         event.event_type = data.get('event_type')
         event.date = data.get('date')
+        if not event.date:
+            event.date = datetime.utcnow()
 
         status = data.get('status', EVENT_STATUS_DRAFT)
         if status == EVENT_STATUS_CLOSED:
@@ -100,10 +102,11 @@ class Event(EntityBase):
             else:
                 event.groups.append(key)
 
-        # This needs done in the handler.  Can't do it in a hook, since that
-        # would fire everytime we update stats.
-        event_mc_key = 'Event:%s' % (int(self.key.id()),)
-        memcache.delete(event_mc_key)
+        if event.key.id():
+            # This needs done in the handler.  We ca not do it in a hook, since
+            # that would fire everytime we update stats.
+            event_mc_key = 'Event:%s' % (int(event.key.id()),)
+            memcache.delete(event_mc_key)
 
         return event
 
@@ -116,7 +119,11 @@ class Event(EntityBase):
 
         event['title'] = self.title
         event['type'] = self.event_type
-        event['date'] = self.date
+
+        event['date'] = None
+        if self.date:
+            event['date'] = self.date.strftime('%Y-%m-%d %H:%M')
+
         event['status'] = self.status
 
         event['content'] = self.content
@@ -127,7 +134,9 @@ class Event(EntityBase):
         event['contact_count'] = self.contact_count
         event['responded_count'] = self.responded_count
 
-        event['last_broadcast_date'] = self.last_broadcast_date
+        event['last_broadcast_date'] = None
+        if self.date:
+            event['last_broadcast_date'] = self.date.strftime('%Y-%m-%d %H:%M')
 
         return event
 

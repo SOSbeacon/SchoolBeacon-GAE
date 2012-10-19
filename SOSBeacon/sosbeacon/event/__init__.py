@@ -10,6 +10,10 @@ from .message import message_query_schema
 from .message import message_schema
 
 
+MARKER_ACK_QUEUE = 'contact-marker-ack'
+MARKER_ACK_ENDPOINT = '/task/event/ack/contact_marker'
+
+
 def acknowledge_event(event_key, marker_key):
     """Insert a task to mark the marker as acked."""
     from google.appengine.api import taskqueue
@@ -20,7 +24,7 @@ def acknowledge_event(event_key, marker_key):
     #name = "ack-%s-%s-%d" % (
     #    event_urlsafe, marker_urlsafe, rounded_time_factor)
     taskqueue.add(
-        queue_name=MARKER_QUEUE,
+        queue_name=MARKER_ACK_QUEUE,
         url=MARKER_ACK_ENDPOINT,
         #name=name,
         params={

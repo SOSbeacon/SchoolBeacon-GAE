@@ -24,6 +24,7 @@ url_map = [
      'sosbeacon.task.UpdateContactMarkerHandler'),
     ('.*/event/merge/contact_marker',
      'sosbeacon.task.MergeContactMarkerHandler'),
+    ('.*/event/ack/contact_marker', 'sosbeacon.task.AckContactMarkerHandler'),
 ]
 
 app = webapp2.WSGIApplication(url_map)

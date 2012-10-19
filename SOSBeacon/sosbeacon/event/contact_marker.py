@@ -338,6 +338,6 @@ def mark_as_acknowledged(event_key, marker_key):
     if not marker:
         return
 
-    for student in marker.students:
-        acknowledge_student(event_key, ndb.Key(urlsafe=student))
+    for student_id in marker.students:
+        acknowledge_student(event_key, student_id)
 

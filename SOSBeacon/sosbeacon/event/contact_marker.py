@@ -26,7 +26,8 @@ marker_schema = {
 
 marker_query_schema = {
     'feq_acknowledged': voluptuous.boolean(),
-    'fan_key': voluptuous.ndbkey()
+    'fan_key': voluptuous.ndbkey(),
+    'name': basestring
 }
 
 
@@ -103,9 +104,7 @@ class ContactMarker(EntityBase):
         marker['name'] = self.name
         marker['acknowledged'] = self.acknowledged
         marker['last_viewed_date'] = self.last_viewed_date
-
-        marker['students'] = [
-            student for student, name, voice in self.students]
+        marker['students'] = self.students.keys()
 
         return marker
 
@@ -205,7 +204,7 @@ def insert_update_marker_task(marker_key, student_key,
         params={
             'marker': marker_urlsafe,
             'student': student_urlsafe,
-            'contact': contact,
+            'contact': json.dumps(contact),
             'methods': json.dumps(list(search_methods))
         }
     )

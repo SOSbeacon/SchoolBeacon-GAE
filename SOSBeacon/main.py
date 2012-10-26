@@ -31,6 +31,7 @@ import webapp2
 from webapp2_extras import sessions
 
 from google.appengine.api import memcache
+from google.appengine.api import namespace_manager
 from google.appengine.ext import ndb
 
 from mako import exceptions
@@ -40,6 +41,9 @@ from config import webapp_config
 
 from sosbeacon.event import Event
 from sosbeacon.event import acknowledge_event
+from sosbeacon.event.contact_marker import ContactMarker
+
+from sosbeacon.school import School
 
 
 EVENT_DOES_NOT_EXIST = "-!It's a Trap!-"
@@ -102,7 +106,7 @@ class EventHandler(TemplateHandler):
         event_id = utils.number_decode(event_id)
         method_id = str(utils.number_decode(method_id))
 
-        event_key = ndb.Key(Event, event_id, namespace='_x_')
+        event_key = ndb.Key(Event, int(event_id), namespace='_x_')
 
         event_mc_key = 'Event:%s' % (int(event_id),)
         event_html = memcache.get(event_mc_key)
@@ -120,6 +124,13 @@ class EventHandler(TemplateHandler):
             # Some one might be exploring.  Lets not give them anything.
             self.error(404)
             return
+
+        event = event_key.get()
+        #Get the school id (ie namespace) and grab the event marker
+        method_key = ndb.Key(
+            ContactMarker, "%s:%s" % (event_id, method_id),
+            namespace=event.school)
+        self.setup_session(method_key, event)
 
         #event = Event.get_by_id(int(event_id))
         #contact = Contact.get_by_id(int(contact_id))
@@ -139,6 +150,17 @@ class EventHandler(TemplateHandler):
             # This is (relatively) non-critical, so log and ignore exceptions.
             logging.exception('Ack failed')
             pass
+
+    def setup_session(self, method_key, event):
+        """Setup the session vars."""
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+        session['cm'] = method_key.id()
+        school_id = event.school.strip('_')
+        session['n'] = school_id
+        session['s'] = ndb.Key(School, int(school_id)).urlsafe()
+        session_store.save_sessions(self.response)
+
 
 class StudentImportHandler(MainHandler):
 

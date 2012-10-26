@@ -8,6 +8,7 @@ import voluptuous
 
 from skel.datastore import EntityBase
 
+
 GROUPS_TX_ENDPOINT = '/task/event/tx/start'
 GROUP_TX_ENDPOINT = '/task/event/tx/group'
 GROUP_TX_QUEUE = "group-tx"
@@ -24,6 +25,8 @@ METHOD_TX_QUEUE = "method-tx"
 message_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'event': voluptuous.ndbkey(),
+    'user': voluptuous.any(None, voluptuous.ndbkey(), ''),
+    'user_name': basestring,
     'timestamp': voluptuous.any(None, datetime, ''),
     'type': basestring,
     'message': {
@@ -50,6 +53,10 @@ class Message(EntityBase):
 
     message_type = ndb.StringProperty('mt')
     message = ndb.JsonProperty('m')
+
+    user = ndb.KeyProperty('u')
+    user_name = ndb.StringProperty('un')
+    is_admin = ndb.BooleanProperty('ia')
 
     @classmethod
     def from_dict(cls, data):
@@ -94,6 +101,13 @@ class Message(EntityBase):
             # TODO: Ensure user is an admin.
             broadcast_message(event_key, message.key)
 
+            #update event
+            event.last_broadcast_date = datetime.utcnow()
+            event.put()
+
+        message.user_name = data.get('user_name')
+        message.user = data.get('user')
+
         message.message = message_data
 
         return message
@@ -109,6 +123,13 @@ class Message(EntityBase):
         message['added'] = self.timestamp.strftime('%Y-%m-%d %H:%M')
         message['type'] = self.message_type
         message['message'] = self.message
+
+        message['user_name'] = self.user_name or ''
+        message['user'] = None
+        message['is_admin'] = self.is_admin
+
+        if self.user:
+            message['user'] = self.user.urlsafe()
 
         return message
 
@@ -245,7 +266,7 @@ def get_student_broadcast_task(student_key, event_key, message_key,
 
 def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
     """Send broadcast to each of the student's contacts."""
-    from sosbeacon.event.student_marker import StudentMarker
+    from sosbeacon.event.student_marker import create_or_update_marker
     from sosbeacon.student import Student  # Needed to load the entity.
     from sosbeacon.utils import insert_tasks
 
@@ -256,8 +277,6 @@ def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
         logging.info('Tried to broadcast %s to missing student %s.',
                      message_key.urlsafe(), student_key.urlsafe())
         return
-
-    message = message_key.get()
 
     tasks = []
 
@@ -280,28 +299,7 @@ def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
     if tasks:
         insert_tasks(tasks, CONTACT_TX_QUEUE)
 
-    marker_key = ndb.Key(
-        StudentMarker, "%s:%s" % (student_key.id(), message.event.id()))
-
-    new_marker = StudentMarker(
-        key=marker_key,
-        name=student.name,
-        contacts=student.contacts,
-        last_broadcast=datetime.now()
-    )
-
-    @ndb.transactional
-    def txn(new_marker):
-        marker = new_marker.key.get()
-
-        if marker:
-            marker.merge(new_marker)
-        else:
-            marker = new_marker
-
-        marker.put()
-
-    txn(new_marker)
+    create_or_update_marker(event_key, student)
 
 
 def get_contact_broadcast_task(event_key, message_key, student_key, contact,

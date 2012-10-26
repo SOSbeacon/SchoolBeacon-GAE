@@ -16,7 +16,8 @@ marker_schema = {
 
 marker_query_schema = {
     'feq_acknowledged': voluptuous.boolean(),
-    'fan_key': voluptuous.ndbkey()
+    'fan_key': voluptuous.ndbkey(),
+    'name': basestring
 }
 
 
@@ -43,35 +44,49 @@ class StudentMarker(EntityBase):
         """Merge this StudentMarker entity with another StudentMarker."""
         self.name = self.name or other.name
 
-        last_broadcast = max(self.last_broadcast, other.last_broadcast)
+        self.last_broadcast = get_latest_datetime(self.last_broadcast,
+                                                  other.last_broadcast)
 
-        #for contact_key, new_contact in other.contacts.iteritems():
-        #    contact = self.contacts.get(contact_key)
-        #    if contact:
-        #        contact['acked'] = max(contact['acked'], new_contact['acked'])
+        if not other.contacts:
+            # All other info comes from contacts, so if there's no change bail.
+            return self
 
-        #        last_sent = max(contact['sent'], new_contact['sent'])
-        #        contact['sent'] = last_sent
-        #        last_broadcast = max(last_sent, last_broadcast)
+        if not self.contacts:
+            self.contacts = {}
 
-        #    self.contacts[contact_key] = contact
+        for new_hash, new_contact in other.contacts.iteritems():
 
-        self.last_broadcast = last_broadcast
+            contact = self.contacts.get(new_hash)
+            if not contact:
+                # New contact
+                self.contacts[new_hash] = new_contact
+                contact = new_contact
+            else:
+                # Update existing contact.
+                contact['acked'] = max(contact.get('acked'),
+                                       new_contact.get('acked'))
 
-        self.acknowledged = max(self.acknowledged, other.acknowledged)
+                contact['acked_at'] = max(contact.get('acked_at'),
+                                          new_contact.get('acked_at'))
 
-        self.acknowledged_at = get_latest_datetime(
-            self.acknowledged_at, other.acknowledged_at)
+                contact['sent'] = max(contact.get('sent'),
+                                      new_contact.get('sent'))
 
-        self.all_acknowledged = max(
-            self.all_acknowledged, other.all_acknowledged)
+            # Update overall information.
+            self.acknowledged = max(self.acknowledged,
+                                    contact.get('acked'))
 
-        self.all_acknowledged_at = get_latest_datetime(
-            self.all_acknowledged_at, other.acknowledged_at)
+            self.acknowledged_at = max(self.acknowledged_at,
+                                       contact.get('acked_at'))
 
-        if not self.all_acknowledged:
-            self.all_acknowledged = all(
-                [contact.get('acked') for contact in self.contacts])
+            #self.all_acknowledged = min(self.all_acknowledged,
+            #                            contact.get('acked'))
+
+            #self.all_acknowledged_at = None if not self.all_acknowledged else max(
+            #    self.all_acknowledged_at, contact.get('acked_at'))
+
+            #self.last_broadcast = max(self.last_broadcast,
+            #                          contact.get('sent'))
 
         return self
 
@@ -82,9 +97,65 @@ class StudentMarker(EntityBase):
         marker["version"] = self.version_
         marker['name'] = self.name
         marker['acknowledged'] = self.acknowledged
+        marker['all_acknowledged'] = self.acknowledged
         marker['last_viewed_date'] = self.last_viewed_date
 
-        marker['students'] = [student for student, name, voice in self.students]
-
         return marker
+
+
+def create_or_update_marker(event_key, student):
+    """Create a StudentMarker if one doesn't exist, otherwise update the
+    last_broadcast timestamp if one does.
+    """
+    from datetime import datetime
+
+    marker_key = ndb.Key(
+        StudentMarker, "%s:%s" % (event_key.id(), student.key.id()))
+
+    new_marker = StudentMarker(
+        key=marker_key,
+        name=student.name,
+        contacts=_build_contact_map(student.contacts[:])
+    )
+
+    @ndb.transactional
+    def txn(new_marker):
+        marker = new_marker.key.get()
+
+        if marker:
+            marker.merge(new_marker)
+        else:
+            marker = new_marker
+
+        marker.last_broadcast = datetime.now()
+
+        marker.put()
+
+    txn(new_marker)
+
+
+def _build_contact_map(contacts):
+    """Take a list of contacts and convert them to a map, using the hash of
+    the contact as the key.
+    """
+    contact_map = {}
+    for contact in contacts:
+        contact_hash = _hash_contact(contact)
+        contact_map[contact_hash] = contact
+
+    return contact_map
+
+
+def _hash_contact(contact):
+    """Take a contact dict and return a hash for that contact."""
+    import hashlib
+
+    tokens = [unicode(contact.get('name'))]
+    methods = contact.get('methods')
+    if methods:
+        tokens.extend(unicode(method.get('value')) for method in methods)
+
+    tokens.sort()
+
+    return hashlib.sha1('|'.join(tokens)).hexdigest()
 

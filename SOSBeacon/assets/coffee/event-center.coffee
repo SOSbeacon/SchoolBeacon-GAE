@@ -85,11 +85,16 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
     events:
         "click .event-add-comment": "addComment"
         "click .event-add-broadcast": "addBroadcast"
+        "click #edit-event-button": "editEvent"
+        "click #details-tabs a": "triggerTab"
 
     initialize: (id) =>
         @groupViews = []
         @messageView = null
         @broadcastView = null
+        @respondedView = null
+        @nonRespondedView = null
+        @noStudentsView = null
 
         @model = new App.SOSBeacon.Model.Event({key: id})
         @model.fetch({async: false})
@@ -104,6 +109,8 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @renderGroups()
         @renderMessages()
 
+        $('#details-tabs a[href="#details"]').tab('show')
+
         return this
 
     renderMessages: =>
@@ -116,7 +123,8 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         @collection.fetch()
 
-        @messageListView = new App.SOSBeacon.View.MessageList(@collection)
+        @messageListView = new App.SOSBeacon.View.MessageList(
+            @collection, false)
         @$("#event-center-message").append(@messageListView.render().el)
 
     renderGroups: =>
@@ -137,7 +145,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
             @broadcastView.hide()
 
         if not @messageView
-            @messageView = new App.SOSBeacon.View.AddMessage({event: @model})
+            @messageView = new App.SOSBeacon.View.EditMessage({event: @model})
 
         @$(".message-entry").append(@messageView.render().el)
 
@@ -150,14 +158,35 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         @$(".message-entry").append(@broadcastView.render().el)
 
+    editEvent: =>
+        App.SOSBeacon.router.navigate(
+            "/eventcenter/edit/#{@model.id}", {trigger: true})
+
+    triggerTab: (e) =>
+        el = $(e.target)
+        href = el.attr('href')
+        if href == "#responded" and not @respondedView
+            @respondedView = new App.SOSBeacon.View.MarkerList(
+                new App.SOSBeacon.Collection.ContactMarkerList, true)
+            @$("#responded").append(@respondedView.render().el)
+        else if href == "#not-responded" and not @nonRespondedView
+            @nonRespondedView = new App.SOSBeacon.View.MarkerList(
+                new App.SOSBeacon.Collection.ContactMarkerList, false)
+            @$("#not-responded").append(@nonRespondedView.render().el)
+        else if href == "#no-students" and not @noStudentsView
+            @noStudentsView = new App.SOSBeacon.View.MarkerList(
+                new App.SOSBeacon.Collection.StudentMarkerList, false)
+            @$("#no-students").append(@noStudentsView.render().el)
+
+        el.tab('show')
+
     onClose: =>
         App.SOSBeacon.Event.unbind(null, null, this)
 
-        if @messageView
-            @messageView.close()
-
-        if @broadcastView
-            @broadcastView.close()
+        for view in [@messageView, @broadcastView, @respondedView,
+                     @nonRespondedView, @noStudentsView]
+            if view
+                view.close()
 
         for view in @groupViews
             view.close()
@@ -353,7 +382,6 @@ class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
 
     events:
         "click .view-button": "view"
-        "click .edit-button": "edit"
         "click .remove-button": "delete"
 
     render: =>
@@ -375,6 +403,7 @@ class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
     view: =>
         App.SOSBeacon.router.navigate(
             "/eventcenter/view/#{@model.id}", {trigger: true})
+
 
 class App.SOSBeacon.View.EventCenterListHeader extends App.Skel.View.ListItemHeader
     template: JST['event-center/listheader']

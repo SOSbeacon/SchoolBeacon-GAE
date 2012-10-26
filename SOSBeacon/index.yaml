@@ -10,6 +10,17 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: ContactMarker
+  properties:
+  - name: a
+  - name: nm
+
+- kind: ContactMarker
+  properties:
+  - name: a
+  - name: nm
+    direction: desc
+
 - kind: Event
   properties:
   - name: a
@@ -112,4 +123,10 @@ indexes:
   properties:
   - name: g
   - name: n_
+    direction: desc
+
+- kind: StudentMarker
+  properties:
+  - name: a
+  - name: n
     direction: desc

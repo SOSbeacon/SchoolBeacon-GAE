@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from google.appengine.api import memcache
 from google.appengine.ext import ndb
 
 import voluptuous
@@ -101,6 +102,12 @@ class Event(EntityBase):
             else:
                 event.groups.append(key)
 
+        if event.key.id():
+            # This needs done in the handler.  We ca not do it in a hook, since
+            # that would fire everytime we update stats.
+            event_mc_key = 'Event:%s' % (int(event.key.id()),)
+            memcache.delete(event_mc_key)
+
         return event
 
     def to_dict(self):
@@ -132,3 +139,4 @@ class Event(EntityBase):
             event['last_broadcast_date'] = self.date.strftime('%Y-%m-%d %H:%M')
 
         return event
+

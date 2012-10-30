@@ -13,8 +13,9 @@ from sosbeacon.event.message import broadcast_to_groups
 from sosbeacon.event.message import broadcast_to_method
 from sosbeacon.event.message import broadcast_to_student
 
-from sosbeacon.event.contact_marker import update_marker
+from sosbeacon.event.contact_marker import mark_as_acknowledged
 from sosbeacon.event.contact_marker import merge_markers
+from sosbeacon.event.contact_marker import update_marker
 
 
 class GroupsTxHandler(webapp2.RequestHandler):
@@ -448,4 +449,36 @@ class MergeContactMarkerHandler(webapp2.RequestHandler):
         methods = json.loads(methods)
 
         merge_markers(event_key, methods)
+
+
+class AckContactMarkerHandler(webapp2.RequestHandler):
+    """Ack contact marker."""
+    def post(self):
+        event_urlsafe = self.request.get('event')
+
+
+        if not event_urlsafe:
+            logging.error('No event key given.')
+            return
+
+        # TODO: Use event id rather than key here for namespacing purposes?
+        event_key = ndb.Key(urlsafe=event_urlsafe)
+        event = event_key.get()
+        if not event:
+            logging.error('Event %s not found!', event_key)
+            return
+
+        if event.status == EVENT_STATUS_CLOSED:
+            logging.error('Event %s closed!', event_key)
+            return
+
+        marker_urlsafe = self.request.get('marker')
+
+        if not marker_urlsafe:
+            logging.error('No marker key given.')
+            return
+
+        marker_key = ndb.Key(urlsafe=marker_urlsafe)
+
+        mark_as_acknowledged(event_key, marker_key)
 

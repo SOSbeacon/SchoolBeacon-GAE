@@ -31,7 +31,6 @@ import webapp2
 from webapp2_extras import sessions
 
 from google.appengine.api import memcache
-from google.appengine.api import namespace_manager
 from google.appengine.ext import ndb
 
 from mako import exceptions
@@ -127,35 +126,36 @@ class EventHandler(TemplateHandler):
 
         event = event_key.get()
         #Get the school id (ie namespace) and grab the event marker
-        method_key = ndb.Key(
+        marker_key = ndb.Key(
             ContactMarker, "%s:%s" % (event_id, method_id),
             namespace=event.school)
-        self.setup_session(method_key, event)
 
-        #event = Event.get_by_id(int(event_id))
-        #contact = Contact.get_by_id(int(contact_id))
-        #contact_groups = set(contact.groups)
-        #event_groups = set(event.groups)
-        #if event_groups.isdisjoint(contact_groups):
-        #    # This contact isn't in the groups allowed to see this event.
-        #    self.error(404)
-        #    return
+        marker = marker_key.get()
+        if not marker:
+            # TODO: Can this happen in a legitimate way?
+            self.error(404)
+            return
+
+        if marker.place_holder:
+            marker_key = marker.place_holder
+
+        self.setup_session(marker_key, event)
 
         self.response.out.write(event_html)
 
         # Try to mark this event as acknowledged.
         try:
-            acknowledge_event(event_key, method_id)
+            acknowledge_event(event_key, marker_key)
         except:
             # This is (relatively) non-critical, so log and ignore exceptions.
-            logging.exception('Ack failed')
+            logging.exception('Ack failed for marker %s.', marker_key)
             pass
 
-    def setup_session(self, method_key, event):
+    def setup_session(self, marker_key, event):
         """Setup the session vars."""
         session_store = sessions.get_store()
         session = session_store.get_session()
-        session['cm'] = method_key.id()
+        session['cm'] = marker_key.id()
         school_id = event.school.strip('_')
         session['n'] = school_id
         session['s'] = ndb.Key(School, int(school_id)).urlsafe()

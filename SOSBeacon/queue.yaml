@@ -20,3 +20,6 @@ queue:
 - name: contact-marker-merge
   rate: 100/s
 
+- name: contact-marker-ack
+  rate: 100/s
+

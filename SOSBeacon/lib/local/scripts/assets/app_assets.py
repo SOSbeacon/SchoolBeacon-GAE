@@ -41,9 +41,11 @@ from . import BASE_LOCATION
 from . import INPUT_FILES
 from . import _bundle_images
 
+APP_NAME = 'sosbeacon'
 
-def _bundle_app_js(app_path, env, debug=False):
-    """Combine thrid party js libs into libs.js.
+
+def _bundle_app_js(env, debug=False):
+    """Combine all js libs into sosbeacon.js.
 
     For debug, they are left uncompressed.  For production the minified
     versions are used.  We suggest using the vendor supplied minified version
@@ -51,12 +53,13 @@ def _bundle_app_js(app_path, env, debug=False):
     """
 
     all_js = Bundle(
-        _bundle_3rd_party_js(app_path, env, debug),
+        _bundle_3rd_party_js(debug),
+        #this needs to be debug false to handle recurisve templates
         Bundle(
             path.join('templates', '**', '*.jst'), filters='jst', debug=False),
-        _bundle_app_coffee(app_path, env, debug),
-        output=path.join('..', '..', app_path, 'static', 'script', '%s.js' % (
-            app_path.lower(),))
+        _bundle_app_coffee(debug),
+        output=path.join('..', '..', APP_NAME, 'static', 'script',
+                         'sosbeacon.js')
     )
 
     env.add(all_js)
@@ -65,8 +68,8 @@ def _bundle_app_js(app_path, env, debug=False):
         all_js.filters = 'closure_js'
 
 
-def _bundle_admin_js(app_path, env, debug=False):
-    """Combine thrid party js libs into libs.js.
+def _bundle_admin_js(env, debug=False):
+    """Combine all js libs into sosadmin.js.
 
     For debug, they are left uncompressed.  For production the minified
     versions are used.  We suggest using the vendor supplied minified version
@@ -74,12 +77,13 @@ def _bundle_admin_js(app_path, env, debug=False):
     """
 
     all_js = Bundle(
-        _bundle_3rd_party_js(app_path, env, debug),
+        _bundle_3rd_party_js(debug),
+        #this needs to be debug false to handle recurisve templates
         Bundle(
             path.join('templates', '**', '*.jst'), filters='jst', debug=False),
-        _bundle_admin_coffee(app_path, env, debug),
-        output=path.join('..', '..', app_path, 'static', 'script', '%s.js' % (
-            app_path.lower(),))
+        _bundle_admin_coffee(debug),
+        output=path.join(
+            '..', '..', APP_NAME, 'static', 'script', 'sosadmin.js')
     )
 
     env.add(all_js)
@@ -88,7 +92,7 @@ def _bundle_admin_js(app_path, env, debug=False):
         all_js.filters = 'closure_js'
 
 
-def _bundle_3rd_party_js(app_path, env, debug=False):
+def _bundle_3rd_party_js(debug=False):
     JS_LIB_PATH = path.join('js', 'lib')
     return Bundle(
         path.join(JS_LIB_PATH, 'json2.js'),
@@ -102,7 +106,7 @@ def _bundle_3rd_party_js(app_path, env, debug=False):
     )
 
 
-def _bundle_app_coffee(app, env, debug=False):
+def _bundle_app_coffee(app, debug=False):
     """Compile the apps coffeescript and bundle it into sosbeacon.js"""
     COFFEE_PATH = 'coffee'
     scripts = (
@@ -134,7 +138,7 @@ def _bundle_app_coffee(app, env, debug=False):
     )
 
 
-def _bundle_admin_coffee(app, env, debug=False):
+def _bundle_admin_coffee(app, debug=False):
     """Compile the admin coffeescript and bundle it into sosadmin.js"""
     COFFEE_PATH = 'coffee'
     ADMIN_PATH = path.join(COFFEE_PATH, 'admin')
@@ -160,17 +164,19 @@ def _bundle_admin_coffee(app, env, debug=False):
     )
 
 
-def _bundle_3rd_party_css(app_path, env, debug=False):
+def _bundle_3rd_party_css(env, debug=False):
     """Bundle any thrid party CSS files."""
     if debug:
         bundle = Bundle(
             path.join('css', 'bootstrap.css'),
-            output=path.join('..', '..', app_path, 'static', 'css', 'lib.css')
+            output=path.join(
+                '..', '..', APP_NAME, 'static', 'css', 'lib.css')
         )
     else:
         bundle = Bundle(
             path.join('css', 'min', 'bootstrap.min.css'),
-            output=path.join('..', '..', app_path, 'static', 'css', 'lib.css')
+            output=path.join(
+                '..', '..', APP_NAME, 'static', 'css', 'lib.css')
         )
 
     env.add(bundle)
@@ -178,7 +184,7 @@ def _bundle_3rd_party_css(app_path, env, debug=False):
     resp_bundle = Bundle(
         path.join('css', 'bootstrap-responsive.css'),
         output=path.join(
-            '..', '..', app_path, 'static', 'css', 'responsive.css')
+            '..', '..', APP_NAME, 'static', 'css', 'responsive.css')
     )
     env.add(resp_bundle)
 
@@ -213,12 +219,12 @@ def _setup_env(app, debug=True, cache=True):
     env.cache = cache
 
     #javascript
-    _bundle_app_js(app, env, debug)
-    _bundle_admin_js(app, env, debug)
+    _bundle_app_js(env, debug)
+    _bundle_admin_js(env, debug)
 
     #css
     _bundle_app_less(app, env, debug)
-    _bundle_3rd_party_css(app, env, debug)
+    _bundle_3rd_party_css(env, debug)
 
     #images
     _bundle_images(app, env)

@@ -6,6 +6,7 @@ from google.appengine.ext import ndb
 import voluptuous
 
 from skel.datastore import EntityBase
+from skel.rest_api.rules import RestQueryRule
 
 from sosbeacon.event.event import Event
 
@@ -37,6 +38,10 @@ class ContactMarker(EntityBase):
     Key name is constructed as:
         event.short_id + ':' + ContactMarker.short_id
     """
+    _query_properties = {
+        'name': RestQueryRule('name_', lambda x: x.lower() if x else ''),
+    }
+
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 

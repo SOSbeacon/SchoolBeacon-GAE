@@ -168,6 +168,36 @@ class GroupListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             query_schema=group_query_schema)
 
 
+def process_school(request, schema, entity):
+    from voluptuous import Schema
+
+    obj = json.loads(request.body)
+    schema = Schema(schema, extra=True)
+
+    try:
+        obj = schema(obj)
+    except:
+        logging.exception('validation failed')
+        logging.info(obj)
+
+    school = entity.from_dict(obj)
+    to_put = [school]
+
+    if not obj.get('key'):
+        # this is a new school. add the all groups group
+        from sosbeacon.group import Group
+        from sosbeacon.group import ALL_GROUPS_ID
+        group = Group(key=ndb.Key(Group, ALL_GROUPS_ID,
+                      namespace="_%s" % (school.key.id())))
+        group.name = "All Groups"
+        group.active = True
+        to_put.append(group)
+
+    ndb.put_multi(to_put)
+
+    return school
+
+
 class SchoolHandler(rest_handler.RestApiHandler, ProcessMixin):
 
     def __init__(self, request=None, response=None):
@@ -176,6 +206,10 @@ class SchoolHandler(rest_handler.RestApiHandler, ProcessMixin):
 
         super(SchoolHandler, self).__init__(
             School, school_schema, request, response)
+
+    def process(self, resource_id, *args, **kwargs):
+        message = process_school(self.request, self.schema, self.entity)
+        self.write_json_response(message.to_dict())
 
 
 class SchoolListHandler(rest_handler.RestApiListHandler, ProcessMixin):
@@ -189,6 +223,10 @@ class SchoolListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             School, school_schema, request, response,
             query_schema=school_query_schema,
             query_options={'namespace': '_x_'})
+
+    def process(self, resource_id, *args, **kwargs):
+        message = process_school(self.request, self.schema, self.entity)
+        self.write_json_response(message.to_dict())
 
 
 class EventHandler(rest_handler.RestApiHandler):

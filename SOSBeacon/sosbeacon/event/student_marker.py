@@ -4,6 +4,7 @@ from google.appengine.ext import ndb
 import voluptuous
 
 from skel.datastore import EntityBase
+from skel.rest_api.rules import RestQueryRule
 
 from sosbeacon.utils import get_latest_datetime
 
@@ -23,7 +24,11 @@ marker_query_schema = {
 
 class StudentMarker(EntityBase):
     """Used to store Student-Events tx / ack metadata."""
-    # Store the schema version, to aid in migrations.
+    _query_properties = {
+        'name': RestQueryRule('name_', lambda x: x.lower() if x else ''),
+    }
+
+   # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
     name = ndb.StringProperty('n', indexed=False)
@@ -94,11 +99,20 @@ class StudentMarker(EntityBase):
         """Return a MethodMarker entity represented as a dict of values."""
 
         marker = self._default_dict()
+
+        def _handle_date(field, prop):
+            marker[field] = None
+            if prop:
+                marker[field] = prop.strftime('%Y-%m-%d %H:%M')
+
         marker["version"] = self.version_
         marker['name'] = self.name
+        marker['contacts'] = self.contacts
+        _handle_date('last_broadcast', self.last_broadcast)
         marker['acknowledged'] = self.acknowledged
+        _handle_date('acknowledged_at', self.acknowledged_at)
         marker['all_acknowledged'] = self.acknowledged
-        marker['last_viewed_date'] = self.last_viewed_date
+        _handle_date('all_acknowledged_at', self.all_acknowledged_at)
 
         return marker
 

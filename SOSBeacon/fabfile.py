@@ -25,20 +25,22 @@ sys.path.append(os.path.join('lib', 'local', 'scripts'))
 
 APP = 'SOSBeacon'
 
+
 def dev():
     from assets import app_assets
-    from assets import skel_assets
 
-    skel_assets.build(app=APP, debug=True, cache=False)
     app_assets.build(app=APP, debug=True, cache=False)
     app_assets.watch(app=APP, debug=True, cache=False)
+
 
 def build():
     import assets
     assets.build(app=APP, debug=False, cache=True)
 
+
 def cleanpy():
     local('find . -name "*.pyc" -delete')
+
 
 def test(args='', python='python', run_javascript=True):
     path = os.path.join('lib', 'local', 'scripts', 'test_runner.py')
@@ -46,12 +48,10 @@ def test(args='', python='python', run_javascript=True):
     if run_javascript:
         local('cd assets; mocha --compilers coffee:coffee-script')
 
+
 def run(args='', python='python', clear_pycs=True):
     if clear_pycs:
         local('find . -name "*.pyc" -delete')
 
     path = os.path.join('lib', 'local', 'scripts', 'runserver.py')
     local('%s %s %s' % (python, path, args))
-
-def install_assets(node_location=''):
-    pass

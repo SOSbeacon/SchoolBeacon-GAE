@@ -42,10 +42,77 @@ from . import INPUT_FILES
 from . import _bundle_images
 
 
+def _bundle_app_js(app_path, env, debug=False):
+    """Combine thrid party js libs into libs.js.
+
+    For debug, they are left uncompressed.  For production the minified
+    versions are used.  We suggest using the vendor supplied minified version
+    of each library.
+    """
+
+    all_js = Bundle(
+        _bundle_3rd_party_js(app_path, env, debug),
+        Bundle(
+            path.join('templates', '**', '*.jst'), filters='jst', debug=False),
+        _bundle_app_coffee(app_path, env, debug),
+        output=path.join('..', '..', app_path, 'static', 'script', '%s.js' % (
+            app_path.lower(),))
+    )
+
+    env.add(all_js)
+
+    if not debug:
+        all_js.filters = 'closure_js'
+
+
+def _bundle_admin_js(app_path, env, debug=False):
+    """Combine thrid party js libs into libs.js.
+
+    For debug, they are left uncompressed.  For production the minified
+    versions are used.  We suggest using the vendor supplied minified version
+    of each library.
+    """
+
+    all_js = Bundle(
+        _bundle_3rd_party_js(app_path, env, debug),
+        Bundle(
+            path.join('templates', '**', '*.jst'), filters='jst', debug=False),
+        _bundle_admin_coffee(app_path, env, debug),
+        output=path.join('..', '..', app_path, 'static', 'script', '%s.js' % (
+            app_path.lower(),))
+    )
+
+    env.add(all_js)
+
+    if not debug:
+        all_js.filters = 'closure_js'
+
+
+def _bundle_3rd_party_js(app_path, env, debug=False):
+    JS_LIB_PATH = path.join('js', 'lib')
+    return Bundle(
+        path.join(JS_LIB_PATH, 'json2.js'),
+        path.join(JS_LIB_PATH, 'jquery.js'),
+        path.join(JS_LIB_PATH, 'underscore.js'),
+        path.join(JS_LIB_PATH, 'backbone.js'),
+        path.join(JS_LIB_PATH, 'backbone.paginator.js'),
+        path.join(JS_LIB_PATH, 'bootstrap.js'),
+        path.join(JS_LIB_PATH, 'bootstrap-typeahead-improved.js'),
+        path.join(JS_LIB_PATH, 'date.js'),
+    )
+
+
 def _bundle_app_coffee(app, env, debug=False):
     """Compile the apps coffeescript and bundle it into sosbeacon.js"""
     COFFEE_PATH = 'coffee'
     scripts = (
+        path.join(COFFEE_PATH, 'skel', 'nested.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'app.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'datagrid.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'skel.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'channel.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'utils.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'smartbox.coffee'),
         path.join(COFFEE_PATH, 'request_paginator.coffee'),
         path.join(COFFEE_PATH, 'app.coffee'),
         path.join(COFFEE_PATH, 'responders.coffee'),
@@ -61,19 +128,10 @@ def _bundle_app_coffee(app, env, debug=False):
         path.join(COFFEE_PATH, 'router.coffee'),
     )
 
-    if not scripts:
-        return
-
-    all_js = Bundle(
+    return Bundle(
         *scripts,
-        filters='coffeescript',
-        output=path.join('..', '..', app, 'static', 'script', '%s.js' % (
-            app.lower(),))
+        filters='coffeescript'
     )
-    env.add(all_js)
-
-    if not debug:
-        all_js.filters = 'closure_js'
 
 
 def _bundle_admin_coffee(app, env, debug=False):
@@ -81,6 +139,13 @@ def _bundle_admin_coffee(app, env, debug=False):
     COFFEE_PATH = 'coffee'
     ADMIN_PATH = path.join(COFFEE_PATH, 'admin')
     scripts = (
+        path.join(COFFEE_PATH, 'skel', 'nested.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'app.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'datagrid.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'skel.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'channel.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'utils.coffee'),
+        path.join(COFFEE_PATH, 'skel', 'smartbox.coffee'),
         path.join(COFFEE_PATH, 'request_paginator.coffee'),
         path.join(ADMIN_PATH, 'app.coffee'),
         path.join(ADMIN_PATH, 'menu.coffee'),
@@ -89,99 +154,41 @@ def _bundle_admin_coffee(app, env, debug=False):
         path.join(ADMIN_PATH, 'school.coffee'),
     )
 
-    if not scripts:
-        return
-
-    all_js = Bundle(
+    return Bundle(
         *scripts,
-        filters='coffeescript',
-        output=path.join('..', '..', app, 'static', 'script', 'sosadmin.js')
+        filters='coffeescript'
     )
-    env.add(all_js)
-
-    if not debug:
-        all_js.filters = 'closure_js'
 
 
-def _bundle_app_jsts(app, env, debug=False):
-    """Compile and bundle JSTs into template.js"""
-    all_js = Bundle(
-        path.join('templates', '*.jst'),
-        path.join('templates', '**', '*.jst'),
-        debug=False,
-        filters='jst',
-        output=path.join('..', '..', app, 'static', 'script', 'template.js')
-    )
-    env.add(all_js)
-
-    if not debug:
-        all_js.filters = 'closure_js'
-
-
-def _bundle_3rd_party_js(app, env, debug=False):
-    """Combine thrid party js libs into libs.js.
-
-    For debug, they are left uncompressed.  For production the minified
-    versions are used.  We suggest using hte vendor supplied minified version
-    of each library.
-    """
-    JSPATH = path.join('js', 'lib')
-
-    if debug:
-        scripts = ()
-        if not scripts:
-            return
-
-        all_js = Bundle(
-            *scripts,
-            output=path.join('..', '..', app, 'static', 'script', 'libs.js')
-        )
-    else:
-        JSPATH = path.join(JSPATH, 'min')
-
-        scripts = ()
-        if not scripts:
-            return
-
-        all_js = Bundle(
-            *scripts,
-            output=path.join('..', '..', app, 'static', 'script', 'libs.js')
-        )
-
-    env.add(all_js)
-    if debug:
-        all_js.build()
-
-
-def _bundle_3rd_party_css(app, env, debug=False):
+def _bundle_3rd_party_css(app_path, env, debug=False):
     """Bundle any thrid party CSS files."""
     if debug:
-        items = ()
-        if not items:
-            return
-
         bundle = Bundle(
-                *items,
-                output=path.join('..', '..', app, 'static', 'css', 'lib.css')
-            )
+            path.join('css', 'bootstrap.css'),
+            output=path.join('..', '..', app_path, 'static', 'css', 'lib.css')
+        )
     else:
-        items = ()
-        if not items:
-            return
-
         bundle = Bundle(
-                *items,
-                output=path.join('..', '..', app, 'static', 'css', 'lib.css')
-            )
+            path.join('css', 'min', 'bootstrap.min.css'),
+            output=path.join('..', '..', app_path, 'static', 'css', 'lib.css')
+        )
 
     env.add(bundle)
+
+    resp_bundle = Bundle(
+        path.join('css', 'bootstrap-responsive.css'),
+        output=path.join(
+            '..', '..', app_path, 'static', 'css', 'responsive.css')
+    )
+    env.add(resp_bundle)
 
 
 def _bundle_app_less(app, env, debug):
     """Compile and minify demo's less files into demo.css."""
     bundle = Bundle(
         Bundle(path.join('less', '%s.less' % (app.lower(),)), filters='less'),
-        output=path.join('..', '..', app, 'static', 'css', '%s.css' % (app.lower(),))
+        output=path.join(
+            '..', '..', app, 'static', 'css', '%s.css' % (app.lower(),))
     )
 
     if not debug:
@@ -199,16 +206,15 @@ def _setup_env(app, debug=True, cache=True):
         env.config['CLOSURE_COMPRESSOR_OPTIMIZATION'] = 'WHITESPACE_ONLY'
         env.manifest = False
     else:
-        env.config['CLOSURE_COMPRESSOR_OPTIMIZATION'] = 'ADVANCED_OPTIMIZATIONS'
+        env.config[
+            'CLOSURE_COMPRESSOR_OPTIMIZATION'] = 'ADVANCED_OPTIMIZATIONS'
 
     env.debug = False
     env.cache = cache
 
     #javascript
-    _bundle_app_jsts(app, env, debug)
-    _bundle_app_coffee(app, env, debug)
-    _bundle_admin_coffee(app, env, debug)
-    _bundle_3rd_party_js(app, env, debug)
+    _bundle_app_js(app, env, debug)
+    _bundle_admin_js(app, env, debug)
 
     #css
     _bundle_app_less(app, env, debug)
@@ -222,10 +228,10 @@ def _setup_env(app, debug=True, cache=True):
 
 def _load_logger():
     # Setup a logger
-     log = logging.getLogger('webassets')
-     log.addHandler(logging.StreamHandler())
-     log.setLevel(logging.DEBUG)
-     return log
+    log = logging.getLogger('webassets')
+    log.addHandler(logging.StreamHandler())
+    log.setLevel(logging.DEBUG)
+    return log
 
 
 def build(app='', debug=True, cache=True):
@@ -235,10 +241,10 @@ def build(app='', debug=True, cache=True):
 
     cmdenv.rebuild()
 
+
 def watch(app='', debug=False, cache=False):
     env = _setup_env(app, debug, cache)
     log = _load_logger()
     cmdenv = CommandLineEnvironment(env, log)
 
     cmdenv.watch()
-

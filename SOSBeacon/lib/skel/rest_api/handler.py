@@ -137,11 +137,6 @@ class RestQuery(object):
         self.query_filters = RestQueryFilters()
         limit = int(params.get('limit', 100))
 
-        from google.appengine.api import namespace_manager
-        namespace = namespace_manager.get_namespace()
-        if namespace:
-            self.query_options['namespace'] = namespace
-
         query = entity.query(**self.query_options)
 
         for default_filters in self.default_filters:

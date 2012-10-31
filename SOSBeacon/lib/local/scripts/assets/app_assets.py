@@ -103,6 +103,10 @@ def _bundle_3rd_party_js(debug=False):
         path.join(JS_LIB_PATH, 'bootstrap.js'),
         path.join(JS_LIB_PATH, 'bootstrap-typeahead-improved.js'),
         path.join(JS_LIB_PATH, 'date.js'),
+        path.join(JS_LIB_PATH, 'select2.js'),
+        path.join(JS_LIB_PATH, 'prettify.js'),
+        path.join(JS_LIB_PATH, 'wysihtml5-0.3.0.js'),
+        path.join(JS_LIB_PATH, 'bootstrap-wysihtml5.js'),
     )
 
 
@@ -169,12 +173,20 @@ def _bundle_3rd_party_css(env, debug=False):
     if debug:
         bundle = Bundle(
             path.join('css', 'bootstrap.css'),
+            path.join('css', 'select2.css'),
+            path.join('css', 'prettify.css'),
+            path.join('css', 'wysiwyg-color.css'),
+            path.join('css', 'bootstrap-wysihtml5.css'),
             output=path.join(
                 '..', '..', APP_NAME, 'static', 'css', 'lib.css')
         )
     else:
         bundle = Bundle(
             path.join('css', 'min', 'bootstrap.min.css'),
+            path.join('css', 'select2.css'),
+            path.join('css', 'prettify.css'),
+            path.join('css', 'wysiwyg-color.css'),
+            path.join('css', 'bootstrap-wysihtml.css'),
             output=path.join(
                 '..', '..', APP_NAME, 'static', 'css', 'lib.css')
         )

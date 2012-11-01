@@ -19,8 +19,8 @@ event_schema = {
     'title': basestring,
     'status': voluptuous.any('', EVENT_STATUS_DRAFT, EVENT_STATUS_CLOSED,
                              EVENT_STATUS_SENT),
-    'date': voluptuous.any(None, basestring, datetime),
-    'last_broadcast_date': voluptuous.any(None, basestring),
+    'date': voluptuous.datetime(),
+    'last_broadcast_date': voluptuous.datetime(),
     'groups': [voluptuous.ndbkey()],
     'type': voluptuous.any('e', 'n'),
     'counts': {

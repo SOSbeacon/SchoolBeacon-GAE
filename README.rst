@@ -33,7 +33,6 @@ Install node packages: ::
     $ sudo sh node_packages.sh
 
 
-
 Development
 -----------
 
@@ -44,14 +43,15 @@ Lets work. Go to your appdirectory (SOSbeacon here) ::
 Once everything is installed you can now compile the app and go into dev watch mode.
 - In this mode you can edit your coffeescript and less files and it will auto compile them for you for easy development. ::
 
-    $ fab dev
+    $ python build.py dev
 
 To run the local server: ::
+- https://developers.google.com/appengine/docs/python/gettingstartedpython27/devenvironment
 
-    $ fab run
+    $ dev_appserver.py .
 or ::
 
-    $ fab run:args=-p8888
+    $ dev_appserver.py -p 8001 . --enable_sendmail
 
 The Framework
 -------------
@@ -59,28 +59,28 @@ The Framework
 First you will need to setup the skeleton framework.  Add a remote for the
 skeleton framework ::
 
-    $ git remote add skeleton git@github.com:EzoxSystems/gae-skeleton.git
+    $ git remote add sbeacon git@github.com:{organization}/sbeacon.git
 
 Fetch from the skeleton so you are up to date ::
 
-    $ git fetch skeleton
+    $ git fetch sbeacon
 
 Then setup a branch to track the framework ::
 
-    $ git checkout -b skeleton skeleton/master
+    $ git checkout -b sbeacon sbeacon/master
 
 In the future you can keep your application up to date with the skeleton by
-using the skeleton branch ::
+using the sbeacon branch ::
 
-    $ git checkout skeleton
+    $ git checkout sbeacon
 
-Now make sure you have the latest version of your code in skeleton ::
+Now make sure you have the latest version of your code in sbeacon ::
 
     $ git merge master
 
 And then pull in the latest skeleton ::
 
-    $ git pull skeleton
+    $ git pull sbeacon
 
 You can now run your tests, correct merge conflicts, if any, then commit and
 submit a pull-request back to your master branch.

@@ -14,12 +14,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+"""Setup paths and App Engine's stubs, then run builds."""
 
 import os
 import sys
 
-from fabric.api import local
+import argparse
+
 
 sys.path.append(os.path.join('lib', 'local', 'scripts'))
 
@@ -33,25 +34,30 @@ def dev():
     app_assets.watch(app=APP, debug=True, cache=False)
 
 
-def build():
+def prod():
     import assets
     assets.build(app=APP, debug=False, cache=True)
 
 
-def cleanpy():
-    local('find . -name "*.pyc" -delete')
+BUILDS = {
+    'dev': dev,
+    'prod': prod
+}
 
 
-def test(args='', python='python', run_javascript=True):
-    path = os.path.join('lib', 'local', 'scripts', 'test_runner.py')
-    local('%s %s %s' % (python, path, args))
-    if run_javascript:
-        local('cd assets; mocha --compilers coffee:coffee-script')
+def run():
+    parser = argparse.ArgumentParser(description='Run Sbeacon builds')
+    parser.add_argument(
+        'build',  default='dev', help="Build types to be run.")
+
+    args = parser.parse_args()
+
+    build = BUILDS.get(args.build)
+
+    assert build
+
+    build()
 
 
-def run(args='', python='python', clear_pycs=True):
-    if clear_pycs:
-        local('find . -name "*.pyc" -delete')
-
-    path = os.path.join('lib', 'local', 'scripts', 'runserver.py')
-    local('%s %s %s' % (python, path, args))
+if __name__ == '__main__':
+    run()

@@ -29,8 +29,6 @@
 
 <%block name="body_script">
 
-<script type="application/javascript" src="/static/script/skel.js"></script>
-<script type="application/javascript" src="/static/script/template.js"></script>
 <script type="application/javascript" src="/static/script/sosbeacon.js"></script>
 
 <script type="text/javascript">

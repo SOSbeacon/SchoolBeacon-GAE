@@ -3,3 +3,4 @@ rednose
 mock
 nose-exclude
 nosegunit
+webassets

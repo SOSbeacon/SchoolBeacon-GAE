@@ -54,7 +54,6 @@ class App.SOSBeacon.Router extends Backbone.Router
         @swap(App.SOSBeacon.View.StudentApp)
 
     addStudent: () =>
-        console.log('route')
         @swap(App.SOSBeacon.View.StudentEditApp)
 
     editStudent: (id) =>

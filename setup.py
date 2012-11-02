@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 
 """
-distutils/setuptools install script. See inline comments for packaging documentation.
+distutils/setuptools install script. See inline comments for packaging
+documentation.
 """
 
 import os
 import sys
-
-import skel
 
 try:
     from setuptools import setup
@@ -20,7 +19,6 @@ if sys.argv[-1] == 'publish':
     sys.exit()
 
 packages = [
-    'skel',
 ]
 
 requires = [
@@ -29,15 +27,19 @@ requires = [
     'closure>=20120305',
     'cssmin>=0.1.4',
     'mock>=0.8.0',
+    'nose>=1.2.1',
+    'rednose>=0.3.3',
+    'nose-exclude>=0.1.9',
+    'nosegunit>=0.0.1',
 ]
 
 extras_require = {
 }
 
 setup(
-    name='gae-skeleton',
-    version=skel.__version__,
-    description='A simple skeleton for App Engine apps',
+    name='sosbeacon',
+    version='0.1',
+    description='School Beacon Broadcast System',
     long_description=open('README.rst').read() + '\n\n' +
             open('HISTORY.rst').read(),
     author='Robert Kluin, Beau Lyddon',

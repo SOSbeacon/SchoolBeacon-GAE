@@ -34,28 +34,6 @@ class ProcessMixin(object):
         self.response.out.write(json.dumps(out))
 
 
-class PersonHandler(rest_handler.RestApiHandler, ProcessMixin):
-
-    def __init__(self, request, response):
-        from sosbeacon.person import Person
-        from sosbeacon.person import person_schema
-
-        super(PersonHandler, self).__init__(
-            Person, person_schema, request, response)
-
-
-class PersonListHandler(rest_handler.RestApiListHandler, ProcessMixin):
-
-    def __init__(self, request, response):
-        from sosbeacon.person import Person
-        from sosbeacon.person import person_schema
-        from sosbeacon.person import person_query_schema
-
-        super(PersonListHandler, self).__init__(
-            Person, person_schema, request, response,
-            query_schema=person_query_schema)
-
-
 def process_messages(request, schema, entity):
     from voluptuous import Schema
 

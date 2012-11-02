@@ -227,7 +227,6 @@ class App.SOSBeacon.View.StudentEditApp extends Backbone.View
         "click .view-button": "viewStudents"
 
     initialize: (id) =>
-        console.log('here')
         if not id
             @model = new App.SOSBeacon.Model.Student()
         else
@@ -246,7 +245,6 @@ class App.SOSBeacon.View.StudentEditApp extends Backbone.View
                 "/student/edit/#{model.id}")
 
     render: () =>
-        console.log('here')
         @$el.html(@template(@model.toJSON()))
         @$el.append(@editForm.render().el)
 

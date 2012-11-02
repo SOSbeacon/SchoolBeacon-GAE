@@ -1,6 +1,13 @@
 GAE Framework
 =============
 
+The Code
+-------------
+
+First you will need to setup the repo. Clone the repo
+
+    $ git clone git@github.com:SOSbeacon/SOSbeacon.git
+
 
 Dependencies
 ------------
@@ -52,36 +59,4 @@ To run the local server: ::
 or ::
 
     $ dev_appserver.py -p 8001 . --enable_sendmail
-
-The Framework
--------------
-
-First you will need to setup the skeleton framework.  Add a remote for the
-skeleton framework ::
-
-    $ git remote add sbeacon git@github.com:{organization}/sbeacon.git
-
-Fetch from the skeleton so you are up to date ::
-
-    $ git fetch sbeacon
-
-Then setup a branch to track the framework ::
-
-    $ git checkout -b sbeacon sbeacon/master
-
-In the future you can keep your application up to date with the skeleton by
-using the sbeacon branch ::
-
-    $ git checkout sbeacon
-
-Now make sure you have the latest version of your code in sbeacon ::
-
-    $ git merge master
-
-And then pull in the latest skeleton ::
-
-    $ git pull sbeacon
-
-You can now run your tests, correct merge conflicts, if any, then commit and
-submit a pull-request back to your master branch.
 

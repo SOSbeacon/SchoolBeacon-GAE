@@ -25,7 +25,6 @@ packages = [
 
 requires = [
     'glob2>=0.3',
-    'Fabric>=1.4.2',
     'webassets>=0.6',
     'closure>=20120305',
     'cssmin>=0.1.4',
@@ -40,7 +39,7 @@ setup(
     version=skel.__version__,
     description='A simple skeleton for App Engine apps',
     long_description=open('README.rst').read() + '\n\n' +
-                     open('HISTORY.rst').read(),
+            open('HISTORY.rst').read(),
     author='Robert Kluin, Beau Lyddon',
     author_email='',
     url='',

@@ -257,7 +257,7 @@ def build(app='', debug=True, cache=True):
     log = _load_logger()
     cmdenv = CommandLineEnvironment(env, log)
 
-    cmdenv.rebuild()
+    cmdenv.build()
 
 
 def watch(app='', debug=False, cache=False):

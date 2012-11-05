@@ -1,6 +1,13 @@
 GAE Framework
 =============
 
+The Code
+-------------
+
+First you will need to setup the repo. Clone the repo
+
+    $ git clone git@github.com:SOSbeacon/SOSbeacon.git
+
 
 Dependencies
 ------------
@@ -33,7 +40,6 @@ Install node packages: ::
     $ sudo sh node_packages.sh
 
 
-
 Development
 -----------
 
@@ -44,44 +50,13 @@ Lets work. Go to your appdirectory (SOSbeacon here) ::
 Once everything is installed you can now compile the app and go into dev watch mode.
 - In this mode you can edit your coffeescript and less files and it will auto compile them for you for easy development. ::
 
-    $ fab dev
+    $ python build.py dev
 
 To run the local server: ::
+- https://developers.google.com/appengine/docs/python/gettingstartedpython27/devenvironment
 
-    $ fab run
+    $ dev_appserver.py .
 or ::
 
-    $ fab run:args=-p8888
-
-The Framework
--------------
-
-First you will need to setup the skeleton framework.  Add a remote for the
-skeleton framework ::
-
-    $ git remote add skeleton git@github.com:EzoxSystems/gae-skeleton.git
-
-Fetch from the skeleton so you are up to date ::
-
-    $ git fetch skeleton
-
-Then setup a branch to track the framework ::
-
-    $ git checkout -b skeleton skeleton/master
-
-In the future you can keep your application up to date with the skeleton by
-using the skeleton branch ::
-
-    $ git checkout skeleton
-
-Now make sure you have the latest version of your code in skeleton ::
-
-    $ git merge master
-
-And then pull in the latest skeleton ::
-
-    $ git pull skeleton
-
-You can now run your tests, correct merge conflicts, if any, then commit and
-submit a pull-request back to your master branch.
+    $ dev_appserver.py -p 8001 . --enable_sendmail
 

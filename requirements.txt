@@ -1,5 +1,11 @@
-fabric
+nose
+rednose
+mock
+nose-exclude
+nosegunit
+
+glob2
 webassets
 closure
 cssmin
-mock
+

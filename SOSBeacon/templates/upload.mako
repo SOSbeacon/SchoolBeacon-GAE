@@ -31,24 +31,37 @@
 </div>
 
 <div id="sosbeacon">
-  <div id="sosbeaconcontainer" class="container"></div>
+  <div id="sosbeaconcontainer" class="container">
+    <div id="sosbeaconapp">
+      <div class="top_view row-fluid">
+        <form action="${upload_url}" enctype="multipart/form-data"
+          method="POST" class="import containter-fluid well form-horizontal">
+          <div class="row-fluid">
+            <div class="modal-header">
+              <h3>Uplaod Imange or Audio Clip</h3>
+            </div>
+            <div class="modal-body">
+              <fieldset>
+                <div class="control-group">
+                  <label class="control-label" for="file">File:</label>
+                  <div class="controls">
+                    <input type="file" name="file" id="file" />
+                  </div>
+                </div>
+              </fieldset>
+            </div>
+          </div>
+          <div class="modal-footer form-actions">
+            <button class="save btn btn-primary">
+              <i class="icon-download-alt icon-white"></i> Upload
+            </button>
+          </div>
+        </form>
+      </div> 
+    </div>
+  </div>
 </div>
 
 <%block name="body_script">
-  <script type="application/javascript" src="/static/script/sosbeacon.js"></script>
-  <script type="text/javascript">
-    $(function(){
-        var sosbeacon = new App.SOSBeacon.Router
-        Backbone.history.start();
-        App.SOSBeacon.router = sosbeacon;
-
-        //setup some urls.
-        //TODO: move this to urls file?
-        App.Skel.Event.bind("groupstudents:selected", function(id) {
-          sosbeacon.showGroupStudents(id)
-          sosbeacon.navigate('groupstudents/' + id);
-        })
-      });
-  </script>
 </%block>
 

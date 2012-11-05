@@ -25,7 +25,8 @@ class TestEventModel(unittest.TestCase):
         self.assertEqual('_x_', event.key.namespace())
         self.assertEqual(EVENT_STATUS_DRAFT, event.status)
 
-    def test_from_dict(self):
+    @mock.patch('google.appengine.api.memcache.delete')
+    def test_from_dict(self, memcache_delete_mock):
         """Ensure merging two non-acked doesn't ack."""
         from datetime import datetime
         from sosbeacon.event.event import Event
@@ -50,6 +51,8 @@ class TestEventModel(unittest.TestCase):
         self.assertEqual(event_dict['status'], event.status)
         self.assertEqual(event_dict['content'], event.content)
         self.assertEqual(event_dict['groups'], event.groups)
+
+        self.assertFalse(memcache_delete_mock.call_count)
 
     @unittest.skip('Figure out if this test has any value.')
     def test_to_from_composition(self):
@@ -119,4 +122,28 @@ class TestEventModel(unittest.TestCase):
 
         # TODO: Figure out if this test has any value.
         self.assertEqual(EVENT_STATUS_SENT, new_event.status)
+
+    @mock.patch('google.appengine.ext.ndb.Key.get')
+    @mock.patch('google.appengine.api.memcache.delete')
+    def test_cleared_from_memcache(self, memcache_delete_mock, key_get_mock):
+        """Ensure status can not be changed from sent to draft."""
+        from google.appengine.ext import ndb
+
+        from sosbeacon.event.event import Event
+
+        event = Event(key=ndb.Key(Event, 1))
+        key_get_mock.return_value = event
+
+        event_dict = {
+            'key': ndb.Key(Event, 1),
+            'title': 'Test Title',
+            'type': 'e',
+            'content': 'This is some test content',
+            'groups': []
+        }
+
+        Event.from_dict(event_dict)
+
+        memcache_delete_mock.assert_called_once_with(
+            'Event:%s' % (int(event.key.id()),))
 

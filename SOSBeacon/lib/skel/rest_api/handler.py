@@ -154,8 +154,7 @@ class RestQuery(object):
             return query
 
         order_asc = True
-        if ('orderDirection' in params and
-            params['orderDirection'] == 'desc'):
+        if 'orderDirection' in params and params['orderDirection'] == 'desc':
             order_asc = False
 
         prop_string = params.pop('orderBy')

@@ -19,8 +19,9 @@ event_schema = {
     'title': basestring,
     'status': voluptuous.any('', EVENT_STATUS_DRAFT, EVENT_STATUS_CLOSED,
                              EVENT_STATUS_SENT),
-    'date': voluptuous.any(None, basestring, datetime),
-    'last_broadcast_date': voluptuous.any(None, basestring),
+    'date': voluptuous.any(None, basestring, voluptuous.datetime()),
+    'last_broadcast_date': voluptuous.any(None, basestring,
+                                          voluptuous.datetime()),
     'groups': [voluptuous.ndbkey()],
     'type': voluptuous.any('e', 'n'),
     'counts': {
@@ -102,7 +103,7 @@ class Event(EntityBase):
             else:
                 event.groups.append(key)
 
-        if event.key.id():
+        if event.key and event.key.id():
             # This needs done in the handler.  We ca not do it in a hook, since
             # that would fire everytime we update stats.
             event_mc_key = 'Event:%s' % (int(event.key.id()),)

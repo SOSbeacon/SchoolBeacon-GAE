@@ -14,41 +14,50 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+"""Setup paths and App Engine's stubs, then run builds."""
 
 import os
 import sys
 
-from fabric.api import local
+import argparse
+
 
 sys.path.append(os.path.join('lib', 'local', 'scripts'))
 
-APP = 'Appname'
+APP = 'SOSBeacon'
+
 
 def dev():
     from assets import app_assets
-    from assets import skel_assets
 
-    skel_assets.build(app=APP, debug=True, cache=False)
     app_assets.build(app=APP, debug=True, cache=False)
     app_assets.watch(app=APP, debug=True, cache=False)
 
-def build():
+
+def prod():
     import assets
     assets.build(app=APP, debug=False, cache=True)
 
-def cleanpy():
-    local('find . -name "*.pyc" -delete')
 
-def test(args='', python='python', run_javascript=True):
-    path = os.path.join('lib', 'local', 'scripts', 'test_runner.py')
-    local('%s %s %s' % (python, path, args))
-    if run_javascript:
-        local('cd assets; mocha --compilers coffee:coffee-script')
+BUILDS = {
+    'dev': dev,
+    'prod': prod
+}
 
-def run(args='', python='python'):
-    path = os.path.join('lib', 'local', 'scripts', 'runserver.py')
-    local('%s %s %s' % (python, path, args))
 
-def install_assets(node_location=''):
-    pass
+def run():
+    parser = argparse.ArgumentParser(description='Run Sbeacon builds')
+    parser.add_argument(
+        'build',  default='dev', help="Build types to be run.")
+
+    args = parser.parse_args()
+
+    build = BUILDS.get(args.build)
+
+    assert build
+
+    build()
+
+
+if __name__ == '__main__':
+    run()

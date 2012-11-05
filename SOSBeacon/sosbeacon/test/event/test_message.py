@@ -120,7 +120,8 @@ class TestMessageModel(unittest.TestCase):
 
         message_alloc_ids_mock.return_value = 1, 1
 
-        event = Event(school=unicode(namespace_manager.get_namespace()))
+        event = Event(title='test',
+                      school=unicode(namespace_manager.get_namespace()))
         event_key = Mock()
         event_key.get.return_value = event
 

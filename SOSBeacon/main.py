@@ -19,6 +19,7 @@
 
 import logging
 import os
+import urllib
 import sys
 
 # Add lib to path.
@@ -31,7 +32,9 @@ import webapp2
 from webapp2_extras import sessions
 
 from google.appengine.api import memcache
+from google.appengine.ext import blobstore
 from google.appengine.ext import ndb
+from google.appengine.ext.webapp import blobstore_handlers
 
 from mako import exceptions
 from mako.lookup import TemplateLookup
@@ -85,7 +88,6 @@ class MainHandler(TemplateHandler):
         return self._school_name
 
     def get(self):
-
         out = self.render('default.mako', school_name=self.school_name)
         self.response.out.write(out)
 
@@ -183,11 +185,39 @@ class StudentImportHandler(MainHandler):
         self.response.out.write(out)
 
 
+class FileUploadHandler(MainHandler):
+
+    def get(self):
+        upload_url = blobstore.create_upload_url('/uploads/post')
+        out = self.render(
+            'upload.mako', school_name=self.school_name, upload_url=upload_url)
+        self.response.out.write(out)
+
+
+class FileUploadPostHandler(blobstore_handlers.BlobstoreUploadHandler):
+
+    def post(self):
+        upload_files = self.get_uploads('file')
+        blob_info = upload_files[0]
+        self.redirect('/uploads/view/%s' % blob_info.key())
+
+
+class FileUplaodViewHandler(blobstore_handlers.BlobstoreDownloadHandler):
+
+    def get(self, resource):
+        resource = str(urllib.unquote(resource))
+        blob_info = blobstore.BlobInfo.get(resource)
+        self.send_blob(blob_info)
+
+
 url_map = [
     ('/', MainHandler),
     ('/admin/', AdminHandler),
     ('/e/(.*)/(.*)', EventHandler),
     ('/import/student/upload/', StudentImportHandler),
+    ('/uploads/new', FileUploadHandler),
+    ('/uploads/post', FileUploadPostHandler),
+    ('/uploads/view/([^/]+)?', FileUplaodViewHandler),
 ]
 app = webapp2.WSGIApplication(
     url_map,

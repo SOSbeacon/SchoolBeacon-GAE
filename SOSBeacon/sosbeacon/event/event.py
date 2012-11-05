@@ -103,7 +103,7 @@ class Event(EntityBase):
             else:
                 event.groups.append(key)
 
-        if event.key.id():
+        if event.key and event.key.id():
             # This needs done in the handler.  We ca not do it in a hook, since
             # that would fire everytime we update stats.
             event_mc_key = 'Event:%s' % (int(event.key.id()),)

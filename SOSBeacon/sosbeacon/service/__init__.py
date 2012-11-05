@@ -133,6 +133,27 @@ class GroupHandler(rest_handler.RestApiHandler, ProcessMixin):
         super(GroupHandler, self).__init__(
             Group, group_schema, request, response)
 
+    def process(self, resource_id, *args, **kwargs):
+        if self.resource_is_all_groups(resource_id):
+            return
+
+        return super(GroupHandler, self).process(resource_id, *args, **kwargs)
+
+    def delete(self, resource_id, *args, **kwargs):
+        if self.resource_is_all_groups(resource_id):
+            return
+
+        return super(GroupHandler, self).delete(resource_id, *args, **kwargs)
+
+    def resource_is_all_groups(self, resource_id):
+        """Ensure they don't mess with the 'All Groups' group."""
+        from sosbeacon.group import ALL_GROUPS_ID
+
+        key = ndb.Key(urlsafe=resource_id)
+
+        if key.id() == ALL_GROUPS_ID:
+            return True
+
 
 class GroupListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
@@ -166,7 +187,9 @@ def process_school(request, schema, entity):
         from sosbeacon.group import Group
         from sosbeacon.group import ALL_GROUPS_ID
         group = Group(key=ndb.Key(Group, ALL_GROUPS_ID,
-                      namespace="_%s" % (school.key.id())))
+                      namespace="_%s" % (school.key.id())),
+                      active=True,
+                      notes='This is a special group, it may not be removed.')
         group.name = "All Groups"
         group.active = True
         to_put.append(group)

@@ -20,6 +20,8 @@ url_map = [
     ('.*/event/tx/student', 'sosbeacon.task.StudentTxHandler'),
     ('.*/event/tx/contact', 'sosbeacon.task.ContactTxHandler'),
     ('.*/event/tx/method', 'sosbeacon.task.MethodTxHandler'),
+    ('.*/event/update/event/counts',
+     'sosbeacon.task.UpdateEventCountsHandler'),
     ('.*/event/update/contact_marker',
      'sosbeacon.task.UpdateContactMarkerHandler'),
     ('.*/event/merge/contact_marker',

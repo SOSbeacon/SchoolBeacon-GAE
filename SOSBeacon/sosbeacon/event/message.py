@@ -136,6 +136,9 @@ class Message(EntityBase):
 
 def broadcast_message(event_key, message_key, batch_id=""):
     """Insert a task to initiate the broadcast."""
+    from sosbeacon.event.event import EVENT_STATUS_CLOSED
+    from sosbeacon.event.event import EVENT_STATUS_SENT
+
     event_urlsafe = event_key.urlsafe()
     message_urlsafe = message_key.urlsafe()
 
@@ -151,6 +154,20 @@ def broadcast_message(event_key, message_key, batch_id=""):
         countdown=2  # TODO: Need something better than this for sure.
     )
     taskqueue.Queue(name=GROUP_TX_QUEUE).add(task)
+
+    @ndb.transactional
+    def update_event_status():
+        event = event_key.get()
+
+        if event.status != EVENT_STATUS_CLOSED:
+            # Don't reopen the event if it is closed.
+            event.status = EVENT_STATUS_SENT
+
+        event.last_broadcast_date = datetime.now()
+
+        event.put()
+
+    update_event_status()
 
 
 def broadcast_to_groups(group_keys, event_key, message_key, batch_id):

@@ -214,7 +214,7 @@ def update_event_counts(event_key):
     queue = taskqueue.Queue(name=EVENT_UPDATE_QUEUE)
 
     work = queue.lease_tasks_by_tag(
-        lease_seconds=10,
+        lease_seconds=20,
         max_tasks=250,
         tag=event_key,
         deadline=3

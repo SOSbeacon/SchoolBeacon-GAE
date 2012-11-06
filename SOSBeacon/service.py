@@ -49,8 +49,6 @@ url_map = [
     #webapp2.Route(r'/service/event/student/<resource_id>',
     #              handler='sosbeacon.service.EventStudentHandler'),
     ## Event
-    #webapp2.Route(r'/service/event/send',
-    #             handler='sosbeacon.service.SendEventHandler'),
     webapp2.Route(r'/service/event/<resource_id>',
                   handler='sosbeacon.service.EventHandler'),
     webapp2.Route(r'/service/event<:/?>',

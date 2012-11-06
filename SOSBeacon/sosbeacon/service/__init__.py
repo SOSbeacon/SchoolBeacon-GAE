@@ -309,42 +309,6 @@ class EventStudentHandler(rest_handler.RestApiHandler):
         return
 
 
-class SendEventHandler(webapp2.RequestHandler):
-    def post(self):
-        from google.appengine.api import taskqueue
-        from google.appengine.ext import ndb
-
-        from sosbeacon.event import Event
-
-        event_key = self.request.get('event')
-        if not event_key:
-            self.error(404)
-            return
-
-        event_key = ndb.Key(urlsafe=event_key)
-
-        @ndb.transactional
-        def mark_as_sent():
-            """Update the event to mark it as sent and track who sent it."""
-            event = event_key.get()
-            if not event or event.notice_sent:
-                return
-
-            #event.notice_sent_by = current user here.
-            event.notice_sent_at = datetime.datetime.now()
-            event.notice_sent = True
-
-            event.put()
-
-            taskqueue.add(
-                url='/task/event/tx/start',
-                params={'event': event_key.urlsafe()},
-                transactional=True
-            )
-
-        mark_as_sent()
-
-
 class ContactMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
     def __init__(self, request=None, response=None):

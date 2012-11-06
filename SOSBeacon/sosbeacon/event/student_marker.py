@@ -122,6 +122,7 @@ def create_or_update_marker(event_key, student):
     last_broadcast timestamp if one does.
     """
     from datetime import datetime
+    from sosbeacon.event.event import insert_count_update_task
 
     marker_key = ndb.Key(
         StudentMarker, "%s:%s" % (event_key.id(), student.key.id()))
@@ -146,6 +147,8 @@ def create_or_update_marker(event_key, student):
         marker.put()
 
     txn(new_marker)
+
+    insert_count_update_task(event_key, student.key, 'student')
 
 
 def _build_contact_map(contacts):

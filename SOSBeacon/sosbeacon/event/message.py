@@ -101,10 +101,6 @@ class Message(EntityBase):
             # TODO: Ensure user is an admin.
             broadcast_message(event_key, message.key)
 
-            #update event
-            event.last_broadcast_date = datetime.utcnow()
-            event.put()
-
         message.user_name = data.get('user_name')
         message.user = data.get('user')
 

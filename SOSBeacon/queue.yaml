@@ -23,3 +23,10 @@ queue:
 - name: contact-marker-ack
   rate: 100/s
 
+# Event update queue
+- name: event-update
+  mode: pull
+
+- name: event-updator
+  rate: 100/s
+

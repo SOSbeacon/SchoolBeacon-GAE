@@ -189,17 +189,14 @@ class FileUploadHandler(MainHandler):
 
     def get(self):
         upload_url = blobstore.create_upload_url('/uploads/post')
-        out = self.render(
-            'upload.mako', school_name=self.school_name, upload_url=upload_url)
-        self.response.out.write(out)
+        self.response.out.write(upload_url)
 
 
 class FileUploadPostHandler(blobstore_handlers.BlobstoreUploadHandler):
 
     def post(self):
-        upload_files = self.get_uploads('file')
-        blob_info = upload_files[0]
-        self.redirect('/uploads/view/%s' % blob_info.key())
+        blob_info = self.get_uploads()[0]
+        self.response.out.write('/uploads/view/%s' % blob_info.key())
 
 
 class FileUplaodViewHandler(blobstore_handlers.BlobstoreDownloadHandler):
@@ -207,7 +204,7 @@ class FileUplaodViewHandler(blobstore_handlers.BlobstoreDownloadHandler):
     def get(self, resource):
         resource = str(urllib.unquote(resource))
         blob_info = blobstore.BlobInfo.get(resource)
-        self.send_blob(blob_info)
+        self.send_blob(blob_info, content_type="image/png")
 
 
 url_map = [
@@ -223,4 +220,3 @@ app = webapp2.WSGIApplication(
     url_map,
     config=webapp_config
 )
-

@@ -63,5 +63,18 @@
 </div>
 
 <%block name="body_script">
+  <script type="application/javascript" src="/static/script/sosbeacon.js"></script>
+  <script type="text/javascript">
+    $(function() {
+      $("#file").uploadify({
+        'swf': '/static/img/uploadify.swf',
+        'uploader': '${upload_url}',
+        'onUploadComplete' : function(file) {
+        },
+        'onUploadSuccess' : function(file, data, response) {
+        }
+      });
+   });
+  </script>
 </%block>
 

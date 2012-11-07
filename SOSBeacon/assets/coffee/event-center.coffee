@@ -238,7 +238,9 @@ class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
         @renderHeader()
 
         try
-            @$("#content").wysihtml5()
+            @$("#content").wysihtml5({
+                "uploadUrl": "/uploads/new",
+            })
 
         return this
 

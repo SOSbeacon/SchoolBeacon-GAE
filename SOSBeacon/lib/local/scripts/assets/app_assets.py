@@ -107,6 +107,7 @@ def _bundle_3rd_party_js(debug=False):
         path.join(JS_LIB_PATH, 'prettify.js'),
         path.join(JS_LIB_PATH, 'wysihtml5-0.3.0.js'),
         path.join(JS_LIB_PATH, 'bootstrap-wysihtml5.js'),
+        path.join(JS_LIB_PATH, 'jquery.uploadify.js'),
     )
 
 
@@ -177,6 +178,7 @@ def _bundle_3rd_party_css(env, debug=False):
             path.join('css', 'prettify.css'),
             path.join('css', 'wysiwyg-color.css'),
             path.join('css', 'bootstrap-wysihtml5.css'),
+            path.join('css', 'uploadify.css'),
             output=path.join(
                 '..', '..', APP_NAME, 'static', 'css', 'lib.css')
         )
@@ -187,6 +189,7 @@ def _bundle_3rd_party_css(env, debug=False):
             path.join('css', 'prettify.css'),
             path.join('css', 'wysiwyg-color.css'),
             path.join('css', 'bootstrap-wysihtml.css'),
+            path.join('css', 'uploadify.css'),
             output=path.join(
                 '..', '..', APP_NAME, 'static', 'css', 'lib.css')
         )

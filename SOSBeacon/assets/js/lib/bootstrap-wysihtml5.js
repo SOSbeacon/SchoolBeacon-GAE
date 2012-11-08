@@ -62,7 +62,12 @@
                       "<h3>" + locale.image.insert + "</h3>" +
                     "</div>" +
                     "<div class='modal-body'>" +
-                      "<input value='http://' class='bootstrap-wysihtml5-insert-image-url input-xlarge'>" +
+                      "<input value='http://' class='bootstrap-wysihtml5-insert-image-url input-xlarge'><br />" +
+                      "<div class='control-group'>" +
+                      "<form enctype='multipart/form-data'>" +
+                        "<input type='file' name='file' id='file' />" +
+                      "</form>" +
+                      "</div>" +
                     "</div>" +
                     "<div class='modal-footer'>" +
                       "<a href='#' class='btn' data-dismiss='modal'>" + locale.image.cancel + "</a>" +
@@ -143,6 +148,7 @@
                 'class' : "wysihtml5-toolbar",
                 'style': "display:none"
             });
+            toolbar.uploadUrl = options.uploadUrl;
             var culture = options.locale || defaultOptions.locale || "en";
             for(var key in defaultOptions) {
                 var value = false;
@@ -226,6 +232,22 @@
 
             insertImageModal.on('shown', function() {
                 urlInput.focus();
+                $.ajax({
+                  type: "GET",
+                  url: toolbar.uploadUrl,
+                  success: function(response) {
+                    $("#file").uploadify({
+                      'swf': '/static/img/uploadify.swf',
+                      'uploader': response,
+                      'buttonText': 'Upload Image',
+                      'fileTypeExts' : '*.gif; *.jpg; *.png',
+                      'onUploadSuccess' : function(file, data, response) {
+                        var url = window.location.origin + data;
+                        self.editor.composer.commands.exec("insertImage", url);
+                      }
+                    });
+                  }, 
+                });
             });
 
             insertImageModal.on('hide', function() {

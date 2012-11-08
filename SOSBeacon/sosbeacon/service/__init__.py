@@ -133,6 +133,27 @@ class GroupHandler(rest_handler.RestApiHandler, ProcessMixin):
         super(GroupHandler, self).__init__(
             Group, group_schema, request, response)
 
+    def process(self, resource_id, *args, **kwargs):
+        if self.resource_is_all_groups(resource_id):
+            return
+
+        return super(GroupHandler, self).process(resource_id, *args, **kwargs)
+
+    def delete(self, resource_id, *args, **kwargs):
+        if self.resource_is_all_groups(resource_id):
+            return
+
+        return super(GroupHandler, self).delete(resource_id, *args, **kwargs)
+
+    def resource_is_all_groups(self, resource_id):
+        """Ensure they don't mess with the 'All Groups' group."""
+        from sosbeacon.group import ALL_GROUPS_ID
+
+        key = ndb.Key(urlsafe=resource_id)
+
+        if key.id() == ALL_GROUPS_ID:
+            return True
+
 
 class GroupListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
@@ -166,7 +187,9 @@ def process_school(request, schema, entity):
         from sosbeacon.group import Group
         from sosbeacon.group import ALL_GROUPS_ID
         group = Group(key=ndb.Key(Group, ALL_GROUPS_ID,
-                      namespace="_%s" % (school.key.id())))
+                      namespace="_%s" % (school.key.id())),
+                      active=True,
+                      notes='This is a special group, it may not be removed.')
         group.name = "All Groups"
         group.active = True
         to_put.append(group)
@@ -284,42 +307,6 @@ class EventStudentHandler(rest_handler.RestApiHandler):
     def delete(self):
         self.error(405)
         return
-
-
-class SendEventHandler(webapp2.RequestHandler):
-    def post(self):
-        from google.appengine.api import taskqueue
-        from google.appengine.ext import ndb
-
-        from sosbeacon.event import Event
-
-        event_key = self.request.get('event')
-        if not event_key:
-            self.error(404)
-            return
-
-        event_key = ndb.Key(urlsafe=event_key)
-
-        @ndb.transactional
-        def mark_as_sent():
-            """Update the event to mark it as sent and track who sent it."""
-            event = event_key.get()
-            if not event or event.notice_sent:
-                return
-
-            #event.notice_sent_by = current user here.
-            event.notice_sent_at = datetime.datetime.now()
-            event.notice_sent = True
-
-            event.put()
-
-            taskqueue.add(
-                url='/task/event/tx/start',
-                params={'event': event_key.urlsafe()},
-                transactional=True
-            )
-
-        mark_as_sent()
 
 
 class ContactMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):

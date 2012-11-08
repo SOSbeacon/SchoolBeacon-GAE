@@ -61,7 +61,7 @@ class Group(EntityBase):
         group = self._default_dict()
         group["version"] = self.version_
         group['name'] = self.name
-        group['active'] = 'Yes' if self.active else ''
+        group['active'] = self.active
         group['notes'] = self.notes
 
         return group

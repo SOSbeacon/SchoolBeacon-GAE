@@ -163,6 +163,8 @@ def create_or_update_marker(event_key, student_key, contact, search_methods):
     its short_id, if multiple are found, request a merge, then return one's
     short_id.
     """
+    from .event import insert_count_update_task
+
     if not search_methods:
         raise ValueError('Non-empty value for search_methods is required.')
 
@@ -189,9 +191,14 @@ def create_or_update_marker(event_key, student_key, contact, search_methods):
             short_id=short_id,
             methods=search_methods)
         marker.put()
+
+        insert_count_update_task(event_key, marker.key, 'contact')
+
         return marker.short_id
 
     insert_update_marker_task(marker.key, student_key, contact, search_methods)
+
+    insert_count_update_task(event_key, marker.key, 'contact')
 
     return marker.short_id
 
@@ -326,6 +333,7 @@ def mark_as_acknowledged(event_key, marker_key):
     """
     import time
 
+    from .event import insert_count_update_task
     from .student_marker import mark_as_acknowledged as acknowledge_student
 
     @ndb.transactional
@@ -345,4 +353,6 @@ def mark_as_acknowledged(event_key, marker_key):
 
     for student_id in marker.students:
         acknowledge_student(event_key, student_id)
+
+    insert_count_update_task(event_key, marker.key, 'ack')
 

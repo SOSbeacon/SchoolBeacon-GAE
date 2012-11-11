@@ -27,6 +27,7 @@ marker_schema = {
 
 marker_query_schema = {
     'feq_acknowledged': voluptuous.boolean(),
+    'feq_event': voluptuous.ndbkey(),
     'fan_key': voluptuous.ndbkey(),
     'name': basestring
 }

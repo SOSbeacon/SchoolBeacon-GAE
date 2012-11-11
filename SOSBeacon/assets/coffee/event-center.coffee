@@ -167,15 +167,20 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         href = el.attr('href')
         if href == "#responded" and not @respondedView
             @respondedView = new App.SOSBeacon.View.MarkerList(
-                new App.SOSBeacon.Collection.ContactMarkerList, true)
+                new App.SOSBeacon.Collection.ContactMarkerList,
+                @model.key, true)
             @$("#responded").append(@respondedView.render().el)
+
         else if href == "#not-responded" and not @nonRespondedView
             @nonRespondedView = new App.SOSBeacon.View.MarkerList(
-                new App.SOSBeacon.Collection.ContactMarkerList, false)
+                new App.SOSBeacon.Collection.ContactMarkerList,
+                @model.key, false)
             @$("#not-responded").append(@nonRespondedView.render().el)
+
         else if href == "#no-students" and not @noStudentsView
             @noStudentsView = new App.SOSBeacon.View.MarkerList(
-                new App.SOSBeacon.Collection.StudentMarkerList, false)
+                new App.SOSBeacon.Collection.StudentMarkerList,
+                @model.key, false)
             @$("#no-students").append(@noStudentsView.render().el)
 
         el.tab('show')

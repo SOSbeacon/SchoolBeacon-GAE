@@ -95,8 +95,10 @@ class App.SOSBeacon.View.MarkerList extends App.Skel.View.ListView
     gridFilters: null
     ackFlag: false
 
-    initialize: (collection, ackFlag) =>
+    initialize: (collection, eventKey, ackFlag) =>
+        @eventKey = eventKey
         @ackFlag = ackFlag
+
         @gridFilters = new App.Ui.Datagrid.FilterList()
 
         @gridFilters.add(new App.Ui.Datagrid.FilterItem(
@@ -119,6 +121,7 @@ class App.SOSBeacon.View.MarkerList extends App.Skel.View.ListView
             _.extend(@collection.server_api, @collection.query_defaults)
 
         filters['feq_acknowledged'] = @ackFlag
+        filters['feq_event'] = @eventKey
 
         #add filter to always flag by the ack type
         _.extend(@collection.server_api, filters)

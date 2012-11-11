@@ -187,7 +187,7 @@ def process_school(request, schema, entity):
         from sosbeacon.group import Group
         from sosbeacon.group import ALL_GROUPS_ID
         group = Group(key=ndb.Key(Group, ALL_GROUPS_ID,
-                      namespace="_%s" % (school.key.id())),
+                                  namespace="_%s" % (school.key.id())),
                       active=True,
                       notes='This is a special group, it may not be removed.')
         group.name = "All Groups"

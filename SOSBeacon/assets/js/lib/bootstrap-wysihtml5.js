@@ -244,6 +244,7 @@
                       'buttonText': 'Upload Image',
                       'fileTypeExts' : '*.gif; *.jpg; *.png',
                       'onUploadSuccess' : function(file, data, response) {
+                        self.editor.currentView.element.focus();
                         var url = window.location.origin + data;
                         self.editor.composer.commands.exec("insertImage", url);
                         insertImageModal.modal('hide');

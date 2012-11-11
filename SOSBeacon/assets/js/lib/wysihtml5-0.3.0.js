@@ -740,7 +740,7 @@ rangy.createModule("DomUtil", function(api, module) {
             } else {
                 n.parentNode.insertBefore(node, o == 0 ? n : dom.splitDataNode(n, o));
             }
-        } else if (o >= n.childNodes.length) {
+        } else if (o >= n.childNodes.length - 1) {
             n.appendChild(node);
         } else {
             n.insertBefore(node, n.childNodes[o]);

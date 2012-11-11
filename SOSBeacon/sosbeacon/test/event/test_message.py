@@ -564,6 +564,12 @@ class TestBroadcastToStudent(unittest.TestCase):
     expected task.
     """
 
+    def setUp(self):
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_taskqueue_stub(root_path='')
+
     def test_no_student(self):
         """Ensure the method does not error if the student is not found."""
         from sosbeacon.event.message import broadcast_to_student

@@ -557,6 +557,12 @@ class TestGetMarkerForMethods(unittest.TestCase):
 class TestCreateOrUpdateMarker(unittest.TestCase):
     """Test create_or_update_marker creates or updates a ContactMarker."""
 
+    def setUp(self):
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_taskqueue_stub(root_path='')
+
     def test_no_search_methods(self):
         """Ensure error is raised if there are no methods."""
         from sosbeacon.event.contact_marker import create_or_update_marker

@@ -6,6 +6,8 @@ import voluptuous
 from skel.datastore import EntityBase
 from skel.rest_api.rules import RestQueryRule
 
+from sosbeacon.event.event import Event
+
 from sosbeacon.utils import get_latest_datetime
 
 marker_schema = {
@@ -17,6 +19,7 @@ marker_schema = {
 
 marker_query_schema = {
     'feq_acknowledged': voluptuous.boolean(),
+    'feq_event': voluptuous.ndbkey(),
     'fan_key': voluptuous.ndbkey(),
     'name': basestring
 }
@@ -30,6 +33,8 @@ class StudentMarker(EntityBase):
 
    # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
+
+    event = ndb.KeyProperty(Event)
 
     name = ndb.StringProperty('n', indexed=False)
     contacts = ndb.JsonProperty('c')
@@ -129,6 +134,7 @@ def create_or_update_marker(event_key, student):
 
     new_marker = StudentMarker(
         key=marker_key,
+        event=event_key,
         name=student.name,
         contacts=_build_contact_map(student.contacts[:])
     )

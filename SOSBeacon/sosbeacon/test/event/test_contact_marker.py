@@ -639,8 +639,7 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
 
         event_key = ndb.Key(Event, 'EVENTKEY')
 
-        student_key = mock.Mock()
-        student_key.id.return_value = "STUDENTKEY"
+        student_key = ndb.Key(Student, 'STUDENTKEY')
 
         ret_value = create_or_update_marker(
             event_key, student_key, {'a': True}, ['123'])

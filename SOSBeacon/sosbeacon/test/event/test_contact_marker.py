@@ -557,6 +557,12 @@ class TestGetMarkerForMethods(unittest.TestCase):
 class TestCreateOrUpdateMarker(unittest.TestCase):
     """Test create_or_update_marker creates or updates a ContactMarker."""
 
+    def setUp(self):
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_taskqueue_stub(root_path='')
+
     def test_no_search_methods(self):
         """Ensure error is raised if there are no methods."""
         from sosbeacon.event.contact_marker import create_or_update_marker
@@ -629,9 +635,12 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
         from sosbeacon.event.contact_marker import ContactMarker
         from sosbeacon.event.contact_marker import create_or_update_marker
         from sosbeacon.event.event import Event
+        from sosbeacon.student import Student
 
         marker1_key = mock.Mock(spec=ndb.Key)
         marker1_key.kind.return_value = "ContactMarker"
+        marker1_key.urlsafe.return_value = "CONTACTMARKER"
+
         marker1 = ContactMarker(key=marker1_key, short_id='A')
         marker1_key.get.return_value = marker1
 
@@ -639,8 +648,7 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
 
         event_key = ndb.Key(Event, 'EVENTKEY')
 
-        student_key = mock.Mock()
-        student_key.id.return_value = "STUDENTKEY"
+        student_key = ndb.Key(Student, 'STUDENTKEY')
 
         ret_value = create_or_update_marker(
             event_key, student_key, {'a': True}, ['123'])

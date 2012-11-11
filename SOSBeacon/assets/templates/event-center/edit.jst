@@ -6,7 +6,8 @@
           <label for="title" class="control-label">Title:</label>
           <div class="controls">
             <input id="title" name="title" type="text" value="<%- title %>" 
-            autocomplete="off" class="title span6" placeholder="Title..." />
+            autocomplete="off" class="title span6" placeholder="Title..."
+            autofocus />
           </div>
         </div>
         <div class="control-group">
@@ -22,8 +23,10 @@
         <div class="control-group">
           <label for="content" class="control-label">Details:</label>
           <div class="controls">
-            <textarea id="content" name="content" rows="100" class="content input-xlarge span10"
-                      placeholder="Full event detail...."><%- content %></textarea>
+            <textarea id="content" name="content" rows="100"
+              class="content input-xlarge span10"
+              placeholder="Full event detail...."><%- content %>
+            </textarea>
           </div>
         </div>
       </fieldset>

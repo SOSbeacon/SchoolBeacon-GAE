@@ -78,7 +78,9 @@ class App.SOSBeacon.View.EditMessage extends Backbone.View
         @$el.html(@template(@message.toJSON()))
 
         try
-            @$("textarea#add-message-box").wysihtml5()
+            @$("textarea#add-message-box").wysihtml5({
+                "uploadUrl": "/uploads/new",
+            })
 
         return this
 
@@ -115,7 +117,9 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
         @$el.html(@template())
 
         try
-            @$("textarea#add-email-box").wysihtml5()
+            @$("textarea#add-email-box").wysihtml5({
+                "uploadUrl": "/uploads/new",
+            })
 
         return this
 

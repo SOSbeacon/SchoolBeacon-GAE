@@ -171,7 +171,7 @@ def insert_count_update_task(event_key, source_key, count_type):
             queue_name=EVENT_UPDATE_QUEUE,
             method='PULL',
             tag=event_key,
-            name="%s-%s-%s" % (count_type, source_key, event_key),
+            name="%s-%s-%s" % (count_type, event_key, source_key),
             params={'type': count_type, 'source': source_key}
         )
     except (taskqueue.TombstonedTaskError,

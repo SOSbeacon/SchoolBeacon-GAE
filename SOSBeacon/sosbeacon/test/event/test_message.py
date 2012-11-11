@@ -564,6 +564,12 @@ class TestBroadcastToStudent(unittest.TestCase):
     expected task.
     """
 
+    def setUp(self):
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_taskqueue_stub(root_path='')
+
     def test_no_student(self):
         """Ensure the method does not error if the student is not found."""
         from sosbeacon.event.message import broadcast_to_student
@@ -579,13 +585,18 @@ class TestBroadcastToStudent(unittest.TestCase):
     @patch('sosbeacon.event.message.get_contact_broadcast_task', autospec=True)
     def test_no_contacts(self, get_contact_broadcast_task_mock):
         """Ensure the method does not error if no contacts are found."""
+        from google.appengine.ext import ndb
+
+        from sosbeacon.event.event import Event
         from sosbeacon.event.message import broadcast_to_student
 
         student_key = Mock()
         student_key.get.return_value.name = "Joe Blow"
         student_key.get.return_value.contacts = ()
+        student_key.get.return_value.key.urlsafe.return_value = "STUDENTKEY"
 
-        event_key = Mock()
+        event_key = ndb.Key(Event, "EVENTKEY")
+
         message_key = Mock()
 
         broadcast_to_student(student_key, event_key, message_key)
@@ -597,6 +608,9 @@ class TestBroadcastToStudent(unittest.TestCase):
     def test_broadcast_to_contacts(self, get_contact_broadcast_task_mock,
                                    insert_tasks_mock):
         """Ensure the method does not error if no contacts are found."""
+        from google.appengine.ext import ndb
+
+        from sosbeacon.event.event import Event
         from sosbeacon.event.message import broadcast_to_student
 
         contacts = ({'t': 'test', 'name': 'me'},)
@@ -604,8 +618,10 @@ class TestBroadcastToStudent(unittest.TestCase):
         student_key = Mock()
         student_key.get.return_value.name = "Joe Blow"
         student_key.get.return_value.contacts = contacts
+        student_key.get.return_value.key.urlsafe.return_value = "STUDENTKEY"
 
-        event_key = Mock()
+        event_key = ndb.Key(Event, "EVENTKEY")
+
         message_key = Mock()
 
         broadcast_to_student(student_key, event_key, message_key)
@@ -619,6 +635,8 @@ class TestBroadcastToStudent(unittest.TestCase):
     @patch('google.appengine.ext.ndb.Model.put', autospec=True)
     def test_student_marker_inserted(self, put_mock, insert_tasks_mock):
         """Ensure the method creates the student marker."""
+        from google.appengine.ext import ndb
+
         from sosbeacon.event.message import broadcast_to_student
 
         student_key = Mock()
@@ -626,8 +644,12 @@ class TestBroadcastToStudent(unittest.TestCase):
         student_key.get.return_value.contacts = ()
         student_key.id.return_value = 211
         student_key.get.return_value.event.id.return_value = 919
+        student_key.get.return_value.key.urlsafe.return_value = "STUDENTKEY"
 
-        event_key = Mock()
+        event_key = Mock(spec=ndb.Key)
+        event_key.kind.return_value = "Event"
+        event_key.urlsafe.return_value = "EVENTKEY"
+
         message_key = Mock()
 
         broadcast_to_student(student_key, event_key, message_key)

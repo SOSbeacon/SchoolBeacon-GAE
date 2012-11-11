@@ -218,6 +218,7 @@
             var insertImage = function() {
                 var url = urlInput.val();
                 urlInput.val(initialValue);
+                self.editor.currentView.element.focus();
                 self.editor.composer.commands.exec("insertImage", url);
             };
 
@@ -231,6 +232,7 @@
             insertButton.click(insertImage);
 
             insertImageModal.on('shown', function() {
+                self.editor.currentView.element.focus();
                 urlInput.focus();
                 $.ajax({
                   type: "GET",
@@ -244,6 +246,7 @@
                       'onUploadSuccess' : function(file, data, response) {
                         var url = window.location.origin + data;
                         self.editor.composer.commands.exec("insertImage", url);
+                        insertImageModal.modal('hide');
                       }
                     });
                   }, 
@@ -280,6 +283,7 @@
             var insertLink = function() {
                 var url = urlInput.val();
                 urlInput.val(initialValue);
+                self.editor.currentView.element.focus();
                 self.editor.composer.commands.exec("createLink", {
                     href: url,
                     target: "_blank",

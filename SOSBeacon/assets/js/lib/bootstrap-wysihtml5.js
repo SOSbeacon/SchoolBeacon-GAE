@@ -246,12 +246,20 @@
                       'uploader': response,
                       'buttonText': 'Upload Image',
                       'fileTypeExts' : '*.gif; *.jpg; *.png',
+                      'onUploadStart' : function() {
+                        $(".bootstrap-wysihtml5-insert-image-modal>.modal-footer>.btn").each(function(val) {
+                          $(this).css('display', 'None'); 
+                        });
+                      },
                       'onUploadSuccess' : function(file, data, response) {
                         self.editor.currentView.element.focus();
                         var url = window.location.origin + data;
                         urlInput.val(url);
                         $("#file").css('display', 'none');
                         $("#file-queue").css('display', 'none');
+                        $(".bootstrap-wysihtml5-insert-image-modal>.modal-footer>.btn").each(function(val) {
+                          $(this).css('display', ''); 
+                        });
                       }
                     });
                   }, 

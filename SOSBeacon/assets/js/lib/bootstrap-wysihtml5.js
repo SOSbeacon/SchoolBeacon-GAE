@@ -238,15 +238,20 @@
                   type: "GET",
                   url: toolbar.uploadUrl,
                   success: function(response) {
+                    $("#file").css('display', 'block');
+                    $("#file-queue").css('display', 'block');
+                    $("#file-queue").html('');
                     $("#file").uploadify({
                       'swf': '/static/img/uploadify.swf',
                       'uploader': response,
                       'buttonText': 'Upload Image',
                       'fileTypeExts' : '*.gif; *.jpg; *.png',
                       'onUploadSuccess' : function(file, data, response) {
+                        self.editor.currentView.element.focus();
                         var url = window.location.origin + data;
-                        self.editor.composer.commands.exec("insertImage", url);
-                        insertImageModal.modal('hide');
+                        urlInput.val(url);
+                        $("#file").css('display', 'none');
+                        $("#file-queue").css('display', 'none');
                       }
                     });
                   }, 

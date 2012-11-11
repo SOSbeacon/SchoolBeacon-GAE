@@ -629,9 +629,12 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
         from sosbeacon.event.contact_marker import ContactMarker
         from sosbeacon.event.contact_marker import create_or_update_marker
         from sosbeacon.event.event import Event
+        from sosbeacon.student import Student
 
         marker1_key = mock.Mock(spec=ndb.Key)
         marker1_key.kind.return_value = "ContactMarker"
+        marker1_key.urlsafe.return_value = "CONTACTMARKER"
+
         marker1 = ContactMarker(key=marker1_key, short_id='A')
         marker1_key.get.return_value = marker1
 

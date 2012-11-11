@@ -50,7 +50,10 @@ handlers:
   script: login_openid.app
   login: required
 
-- url: /service/comment.*
+- url: /uploads/view/.*
+  script: main.app
+
+- url: /service/message.*
   script: service.app
 
 - url: /service/.*

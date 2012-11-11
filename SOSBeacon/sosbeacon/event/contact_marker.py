@@ -179,7 +179,10 @@ def create_or_update_marker(event_key, student_key, contact, search_methods):
 
     marker = get_marker_for_methods(event_key, search_methods)
 
-    if not marker:
+    if marker:
+        insert_update_marker_task(
+            marker.key, student_key, contact, search_methods)
+    else:
         # TODO: What needs set?
         short_id = str(ContactMarker.allocate_ids(size=1, parent=event_key)[0])
         key_id = "%s:%s" % (event_key.id(), short_id)
@@ -191,12 +194,6 @@ def create_or_update_marker(event_key, student_key, contact, search_methods):
             short_id=short_id,
             methods=search_methods)
         marker.put()
-
-        insert_count_update_task(event_key, marker.key, 'contact')
-
-        return marker.short_id
-
-    insert_update_marker_task(marker.key, student_key, contact, search_methods)
 
     insert_count_update_task(event_key, marker.key, 'contact')
 

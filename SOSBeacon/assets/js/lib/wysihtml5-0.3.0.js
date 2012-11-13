@@ -7466,6 +7466,113 @@ wysihtml5.Commands = Base.extend(
       return image && image.src;
     }
   };
+
+//  Insert Audio
+    var NODE_NAME_AUDIO = "AUDIO";
+    var NODE_NAME_SOURCE = "SOURCE";
+    wysihtml5.commands.insertAudio = {
+        /**
+         * Inserts an <img>
+         * If selection is already an image link, it removes it
+         *
+         * @example
+         *    // either ...
+         *    wysihtml5.commands.insertAudio.exec(composer, "insertImage", "http://www.google.de/logo.jpg");
+         *    // ... or ...
+         *    wysihtml5.commands.insertAudio.exec(composer, "insertImage", { src: "http://www.google.de/logo.jpg", title: "foo" });
+         */
+        exec: function(composer, command, value) {
+            value = typeof(value) === "object" ? value : { src: value };
+
+            var doc     = composer.doc,
+                audio   = this.state(composer),
+                textNode,
+                i,
+                parent;
+
+            if (audio) {
+                // Audio already selected, set the caret before it and delete it
+                composer.selection.setBefore(audio);
+                parent = audio.parentNode;
+                parent.removeChild(audio);
+
+                // and it's parent <a> too if it hasn't got any other relevant child nodes
+                wysihtml5.dom.removeEmptyTextNodes(parent);
+                if (parent.nodeName === "A" && !parent.firstChild) {
+                    composer.selection.setAfter(parent);
+                    parent.parentNode.removeChild(parent);
+                }
+
+                // firefox and ie sometimes don't remove the image handles, even though the image got removed
+                wysihtml5.quirks.redraw(composer.element);
+                return;
+            }
+
+            audio = doc.createElement(NODE_NAME_AUDIO);
+            audio.setAttribute('controls', 'controls')
+            sources = audio.appendChild(doc.createElement(NODE_NAME_SOURCE))
+            for (i in value) {
+                audio[i] = value[i];
+            }
+
+            composer.selection.insertNode(audio);
+            if (wysihtml5.browser.hasProblemsSettingCaretAfterImg()) {
+                textNode = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+                composer.selection.insertNode(textNode);
+                composer.selection.setAfter(textNode);
+            } else {
+                composer.selection.setAfter(audio);
+            }
+        },
+
+        state: function(composer) {
+            var doc = composer.doc,
+                selectedNode,
+                text,
+                audiosInSelection;
+
+            if (!wysihtml5.dom.hasElementWithTagName(doc, NODE_NAME_AUDIO)) {
+                return false;
+            }
+
+            selectedNode = composer.selection.getSelectedNode();
+            if (!selectedNode) {
+                return false;
+            }
+
+            if (selectedNode.nodeName === NODE_NAME_AUDIO) {
+                // This works perfectly in IE
+                return selectedNode;
+            }
+
+            if (selectedNode.nodeType !== wysihtml5.ELEMENT_NODE) {
+                return false;
+            }
+
+            text = composer.selection.getText();
+            text = wysihtml5.lang.string(text).trim();
+            if (text) {
+                return false;
+            }
+
+            audiosInSelection = composer.selection.getNodes(wysihtml5.ELEMENT_NODE, function(node) {
+                return node.nodeName === "AUDIO";
+            });
+
+            if (audiosInSelection.length !== 1) {
+                return false;
+            }
+
+            return audiosInSelection[0];
+        },
+
+        value: function(composer) {
+            var audio = this.state(composer);
+            return audio && audio.src;
+        }
+    };
+
+
 })(wysihtml5);(function(wysihtml5) {
   var undef,
       LINE_BREAK = "<br>" + (wysihtml5.browser.needsSpaceAfterLineBreak() ? " " : "");

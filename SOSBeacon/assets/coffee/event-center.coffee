@@ -144,8 +144,10 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         if @broadcastView
             @broadcastView.hide()
 
-        if not @messageView
-            @messageView = new App.SOSBeacon.View.EditMessage({event: @model})
+        if @messageView
+            @messageView.close()
+
+        @messageView = new App.SOSBeacon.View.EditMessage({event: @model})
 
         @$(".message-entry").append(@messageView.render().el)
 
@@ -153,8 +155,10 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         if @messageView
             @messageView.hide()
 
-        if not @broadcastView
-            @broadcastView = new App.SOSBeacon.View.AddBroadcast({event: @model})
+        if @broadcastView
+            @broadcastView.close()
+
+        @broadcastView = new App.SOSBeacon.View.AddBroadcast({event: @model})
 
         @$(".message-entry").append(@broadcastView.render().el)
 

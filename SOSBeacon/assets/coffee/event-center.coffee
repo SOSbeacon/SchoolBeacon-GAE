@@ -303,9 +303,8 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
         @$el.html(@template(@model.toJSON()))
 
         @renderGroups()
-
+#
         @$("#title").focus()
-
         return this
 
     renderGroups: () =>
@@ -350,7 +349,6 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
                 App.Util.TrackChanges.clear(this)
                 App.SOSBeacon.Event.trigger('model:save', @model, this)
         )
-
         return false
 
     updateOnEnter: (e) =>

@@ -36,22 +36,27 @@
                   "</div>" +
                 "</li>",
 
-            "link":
+            "audio":
                 "<li>" +
                   "<div class='bootstrap-wysihtml5-insert-link-modal modal hide fade'>" +
                     "<div class='modal-header'>" +
                       "<a class='close' data-dismiss='modal'>&times;</a>" +
-                      "<h3>" + locale.link.insert + "</h3>" +
+                      "<h3>" + locale.audio.insert + "</h3>" +
                     "</div>" +
                     "<div class='modal-body'>" +
-                      "<input value='http://' class='bootstrap-wysihtml5-insert-link-url input-xlarge'>" +
-                    "</div>" +
+                        "<input value='' id='audio' class='bootstrap-wysihtml5-insert-link-url input-xlarge'>" +
+                        "<div class='control-group'>" +
+                            "<form enctype='multipart/form-data'>" +
+                                "<input type='file' name='files' id='files' />" +
+                            "</form>" +
+                        "</div>" +
+                     "</div>" +
                     "<div class='modal-footer'>" +
-                      "<a href='#' class='btn' data-dismiss='modal'>" + locale.link.cancel + "</a>" +
-                      "<a href='#' class='btn btn-primary' data-dismiss='modal'>" + locale.link.insert + "</a>" +
+                      "<a href='#' class='btn' data-dismiss='modal'>" + locale.audio.cancel + "</a>" +
+                      "<a href='#' class='btn btn-primary' data-dismiss='modal'>" + locale.audio.insert + "</a>" +
                     "</div>" +
                   "</div>" +
-                  "<a class='btn' data-wysihtml5-command='createLink' title='" + locale.link.insert + "'><i class='icon-share'></i></a>" +
+                  "<a class='btn' data-wysihtml5-command='createLink' title='" + locale.audio.insert + "'><i class='icon-share'></i></a>" +
                 "</li>",
 
             "image":
@@ -59,7 +64,7 @@
                   "<div class='bootstrap-wysihtml5-insert-image-modal modal hide fade'>" +
                     "<div class='modal-header'>" +
                       "<a class='close' data-dismiss='modal'>&times;</a>" +
-                      "<h3>" + locale.image.insert + "</h3>" +
+                      "<h3>" + locale.audio.insert + "</h3>" +
                     "</div>" +
                     "<div class='modal-body'>" +
                       "<input value='http://' class='bootstrap-wysihtml5-insert-image-url input-xlarge'><br />" +
@@ -168,8 +173,8 @@
                         this.initHtml(toolbar);
                     }
 
-                    if(key === "link") {
-                        this.initInsertLink(toolbar);
+                    if(key === "audio") {
+                        this.initInsertAudio(toolbar);
                     }
 
                     if(key === "image") {
@@ -286,39 +291,70 @@
             });
         },
 
-        initInsertLink: function(toolbar) {
+        initInsertAudio: function(toolbar) {
             var self = this;
-            var insertLinkModal = toolbar.find('.bootstrap-wysihtml5-insert-link-modal');
-            var urlInput = insertLinkModal.find('.bootstrap-wysihtml5-insert-link-url');
-            var insertButton = insertLinkModal.find('a.btn-primary');
+            var insertAudioModal = toolbar.find('.bootstrap-wysihtml5-insert-link-modal');
+            var urlInput = insertAudioModal.find('.bootstrap-wysihtml5-insert-link-url');
+            var insertButton = insertAudioModal.find('a.btn-primary');
             var initialValue = urlInput.val();
 
-            var insertLink = function() {
+            var insertAudio = function() {
                 var url = urlInput.val();
-                urlInput.val(initialValue);
-                self.editor.currentView.element.focus();
-                self.editor.composer.commands.exec("createLink", {
-                    href: url,
-                    target: "_blank",
-                    rel: "nofollow"
-                });
+                if (url.length != 0) {
+                    urlInput.val(initialValue);
+                    self.editor.currentView.element.focus();
+                    self.editor.composer.commands.exec("insertAudio", url);
+                } else {
+                    alert("Please insert audio file");
+                }
             };
             var pressedEnter = false;
 
             urlInput.keypress(function(e) {
                 if(e.which == 13) {
-                    insertLink();
-                    insertLinkModal.modal('hide');
+                    insertAudio();
+                    insertAudioModal.modal('hide');
                 }
             });
 
-            insertButton.click(insertLink);
+            insertButton.click(insertAudio);
 
-            insertLinkModal.on('shown', function() {
+            insertAudioModal.on('shown', function() {
+                self.editor.currentView.element.focus();
                 urlInput.focus();
+                $.ajax({
+                    type: "GET",
+                    url: toolbar.uploadUrl,
+                    success: function(response) {
+                        $("#files").css('display', 'block');
+                        $("#file-queue").css('display', 'block');
+                        $("#file-queue").html('');
+                        $("#files").uploadify({
+                            'swf': '/static/img/uploadify.swf',
+                            'uploader': response,
+                            'buttonText': 'Upload Audio',
+                            'fileTypeExts' : '*.mp3',
+                            'onUploadStart' : function() {
+                                $(".bootstrap-wysihtml5-insert-link-modal>.modal-footer>.btn").each(function(val) {
+                                    $(this).css('display', 'None');
+                                });
+                            },
+                            'onUploadSuccess' : function(file, data, response) {
+                                self.editor.currentView.element.focus();
+                                var url = window.location.origin + data;
+                                urlInput.val(url);
+                                $("#files").css('display', 'none');
+                                $("#file-queue").css('display', 'none');
+                                $(".bootstrap-wysihtml5-insert-link-modal>.modal-footer>.btn").each(function(val) {
+                                    $(this).css('display', '');
+                                });
+                            }
+                        });
+                    },
+                });
             });
 
-            insertLinkModal.on('hide', function() {
+            insertAudioModal.on('hide', function() {
                 self.editor.currentView.element.focus();
             });
 
@@ -326,8 +362,8 @@
                 var activeButton = $(this).hasClass("wysihtml5-command-active");
 
                 if (!activeButton) {
-                    insertLinkModal.append('body').modal('show');
-                    insertLinkModal.on('click.dismiss.modal', '[data-dismiss="modal"]', function(e) {
+                    insertAudioModal.append('body').modal('show');
+                    insertAudioModal.on('click.dismiss.modal', '[data-dismiss="modal"]', function(e) {
                         e.stopPropagation();
                     });
                     return false;
@@ -382,9 +418,10 @@
         "font-styles": true,
         "color": false,
         "emphasis": true,
+        "audio": true,
         "lists": true,
         "html": false,
-        "link": true,
+        "link": false,
         "image": true,
         events: {},
         parserRules: {
@@ -469,6 +506,10 @@
             },
             link: {
                 insert: "Insert link",
+                cancel: "Cancel"
+            },
+            audio: {
+                insert: "Insert audio",
                 cancel: "Cancel"
             },
             image: {

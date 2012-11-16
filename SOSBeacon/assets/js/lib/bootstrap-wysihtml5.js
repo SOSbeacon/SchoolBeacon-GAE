@@ -268,7 +268,7 @@
                         });
                       }
                     });
-                  }, 
+                  }
                 });
             });
 
@@ -331,11 +331,11 @@
                         $("#files-queue").css('display', 'block');
                         $("#files-queue").html('');
                         $("#files").uploadify({
-                            'file_size_limit' : "3 MB",
+                            'file_size_limit' : "2 MB",
                             'swf': '/static/img/uploadify.swf',
-                            'uploader': response,
                             'buttonText': 'Upload Audio',
                             'fileTypeExts' : '*.mp3;*.ogg',
+                            'uploader': response,
                             'onUploadStart' : function() {
                                 $(".bootstrap-wysihtml5-insert-link-modal>.modal-footer>.btn").each(function(val) {
                                     $(this).css('display', 'None');
@@ -352,7 +352,7 @@
                                 });
                             }
                         });
-                    },
+                    }
                 });
             });
 

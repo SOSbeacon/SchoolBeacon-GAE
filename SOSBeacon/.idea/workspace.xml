@@ -20,10 +20,10 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="event-center.coffee" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="event-center.coffee" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/assets/coffee/event-center.coffee">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="129" column="16" selection-start="3439" selection-end="3439" vertical-scroll-proportion="0.24511546">
+            <state line="133" column="40" selection-start="3635" selection-end="3635" vertical-scroll-proportion="0.0">
               <folding />
             </state>
           </provider>
@@ -40,10 +40,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="bootstrap-wysihtml5.js" pinned="false" current="false" current-in-tab="false">
+      <file leaf-file-name="bootstrap-wysihtml5.js" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/assets/js/lib/bootstrap-wysihtml5.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="345" column="67" selection-start="17350" selection-end="17350" vertical-scroll-proportion="0.0">
+            <state line="340" column="5" selection-start="16997" selection-end="16997" vertical-scroll-proportion="0.48432055">
               <folding />
             </state>
           </provider>
@@ -52,16 +52,7 @@
       <file leaf-file-name="wysihtml5-0.3.0.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="3712" column="59" selection-start="140263" selection-end="140269" vertical-scroll-proportion="-2.672131">
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="__init__.py" pinned="false" current="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/sosbeacon/service/__init__.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state line="267" column="0" selection-start="8448" selection-end="8448" vertical-scroll-proportion="0.0">
+            <state line="7543" column="0" selection-start="264081" selection-end="264081" vertical-scroll-proportion="-3.8360655">
               <folding />
             </state>
           </provider>
@@ -85,9 +76,9 @@
         <option value="$PROJECT_DIR$/sosbeacon/service/__init__.py" />
         <option value="$PROJECT_DIR$/assets/coffee/event-messages.coffee" />
         <option value="$PROJECT_DIR$/main.py" />
-        <option value="$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js" />
         <option value="$PROJECT_DIR$/assets/coffee/event-center.coffee" />
         <option value="$PROJECT_DIR$/assets/js/lib/bootstrap-wysihtml5.js" />
+        <option value="$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js" />
       </list>
     </option>
   </component>
@@ -137,60 +128,6 @@
             </PATH_ELEMENT>
             <PATH_ELEMENT>
               <option name="myItemId" value="SOSBeacon" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="SOSBeacon" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="SOSBeacon" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="assets" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="templates" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="SOSBeacon" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="SOSBeacon" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="assets" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="templates" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="event-center" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-          </PATH>
-          <PATH>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="SOSBeacon" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="SOSBeacon" />
-              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
-            </PATH_ELEMENT>
-            <PATH_ELEMENT>
-              <option name="myItemId" value="assets" />
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
@@ -375,13 +312,6 @@
         <state line="19" column="63" selection-start="527" selection-end="527" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/sosbeacon/service/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="267" column="0" selection-start="8448" selection-end="8448" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/assets/coffee/responders.coffee">
       <provider selected="true" editor-type-id="text-editor">
         <state line="93" column="5" selection-start="2164" selection-end="2165" vertical-scroll-proportion="2.241036" />
@@ -415,23 +345,9 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/assets/js/lib/bootstrap-wysihtml5.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="345" column="67" selection-start="17350" selection-end="17350" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/assets/coffee/event-messages.coffee">
       <provider selected="true" editor-type-id="text-editor">
         <state line="115" column="30" selection-start="2850" selection-end="2850" vertical-scroll-proportion="0.44621515">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="3712" column="59" selection-start="140263" selection-end="140269" vertical-scroll-proportion="-2.672131">
           <folding />
         </state>
       </provider>
@@ -457,9 +373,30 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/sosbeacon/service/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="303" column="36" selection-start="9579" selection-end="9579" vertical-scroll-proportion="0.3321492">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/assets/coffee/event-center.coffee">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="129" column="16" selection-start="3439" selection-end="3439" vertical-scroll-proportion="0.24511546">
+        <state line="133" column="40" selection-start="3635" selection-end="3635" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="7543" column="0" selection-start="264081" selection-end="264081" vertical-scroll-proportion="-3.8360655">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/js/lib/bootstrap-wysihtml5.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="340" column="5" selection-start="16997" selection-end="16997" vertical-scroll-proportion="0.48432055">
           <folding />
         </state>
       </provider>

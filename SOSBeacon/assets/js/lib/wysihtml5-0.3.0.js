@@ -7466,12 +7466,10 @@ wysihtml5.Commands = Base.extend(
       return image && image.src;
     }
   };
-
     var NODE_NAME_AUDIO = "AUDIO";
-//    var NODE_NAME_SOURCE = "SOURCE";
     wysihtml5.commands.insertAudio = {
         /**
-         * Inserts an <audio>
+         * Inserts an <img>
          * If selection is already an audio link, it removes it
          *
          * @example
@@ -7502,25 +7500,22 @@ wysihtml5.Commands = Base.extend(
                     parent.parentNode.removeChild(parent);
                 }
 
-                // firefox and ie sometimes don't remove the image handles, even though the image got removed
+                // firefox and ie sometimes don't remove the audio handles, even though the audio got removed
                 wysihtml5.quirks.redraw(composer.element);
                 return;
             }
 
             audio = doc.createElement(NODE_NAME_AUDIO);
             audio.setAttribute('controls', 'controls')
-//            audio.setAttribute('TYPE', 'audio/ogg')
-            $("audio").append("test");
-//            sources = audio.appendChild(doc.createElement(NODE_NAME_SOURCE))
             for (i in value) {
                 audio[i] = value[i];
 
             }
-            console.log("asdff " + $('textarea.content').val())
             composer.selection.insertNode(audio);
             textNode = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
             composer.selection.insertNode(textNode);
             composer.selection.setAfter(audio);
+
         },
 
         state: function(composer) {
@@ -7569,7 +7564,6 @@ wysihtml5.Commands = Base.extend(
             return audio && audio.src;
         }
     };
-
 })(wysihtml5);(function(wysihtml5) {
   var undef,
       LINE_BREAK = "<br>" + (wysihtml5.browser.needsSpaceAfterLineBreak() ? " " : "");

@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
+<<<<<<< HEAD
     <list default="true" id="dbf57b5e-ba06-4d21-aafd-fb43d6132056" name="Default" comment="" />
+=======
+    <list default="true" id="b83a27bb-43a2-4982-bc2b-d5e54a224970" name="Default" comment="" />
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
     <ignored path="SOSBeacon.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -20,15 +24,23 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf>
-      <file leaf-file-name="event-center.coffee" pinned="false" current="false" current-in-tab="false">
+<<<<<<< HEAD
+      <file leaf-file-name="event-center.coffee" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/assets/coffee/event-center.coffee">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="133" column="40" selection-start="3635" selection-end="3635" vertical-scroll-proportion="0.0">
+            <state line="129" column="16" selection-start="3439" selection-end="3439" vertical-scroll-proportion="0.24511546">
+=======
+      <file leaf-file-name="bootstrap-wysihtml5.js" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/assets/js/lib/bootstrap-wysihtml5.js">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="60" column="0" selection-start="3673" selection-end="3673" vertical-scroll-proportion="0.0">
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
               <folding />
             </state>
           </provider>
         </entry>
       </file>
+<<<<<<< HEAD
       <file leaf-file-name="message.py" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/sosbeacon/event/message.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -40,10 +52,16 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="bootstrap-wysihtml5.js" pinned="false" current="true" current-in-tab="true">
+      <file leaf-file-name="bootstrap-wysihtml5.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/assets/js/lib/bootstrap-wysihtml5.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="340" column="5" selection-start="16997" selection-end="16997" vertical-scroll-proportion="0.48432055">
+            <state line="345" column="67" selection-start="17350" selection-end="17350" vertical-scroll-proportion="0.0">
+=======
+      <file leaf-file-name="bootstrap.css" pinned="false" current="true" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/assets/css/bootstrap.css">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="1489" column="28" selection-start="28721" selection-end="28721" vertical-scroll-proportion="0.5653299">
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
               <folding />
             </state>
           </provider>
@@ -52,7 +70,27 @@
       <file leaf-file-name="wysihtml5-0.3.0.js" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="7543" column="0" selection-start="264081" selection-end="264081" vertical-scroll-proportion="-3.8360655">
+<<<<<<< HEAD
+            <state line="3712" column="59" selection-start="140263" selection-end="140269" vertical-scroll-proportion="-2.672131">
+=======
+            <state line="7473" column="11" selection-start="261499" selection-end="261499" vertical-scroll-proportion="0.0">
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+<<<<<<< HEAD
+      <file leaf-file-name="__init__.py" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/sosbeacon/service/__init__.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="267" column="0" selection-start="8448" selection-end="8448" vertical-scroll-proportion="0.0">
+=======
+      <file leaf-file-name="event-center.coffee" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/assets/coffee/event-center.coffee">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="362" column="0" selection-start="9983" selection-end="9983" vertical-scroll-proportion="-9.213115">
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
               <folding />
             </state>
           </provider>
@@ -69,6 +107,7 @@
     <option name="changedFiles">
       <list>
         <option value="$PROJECT_DIR$/lib/local/scripts/assets/app_assets.py" />
+<<<<<<< HEAD
         <option value="$PROJECT_DIR$/assets/templates/event-center/message-list-item.jst" />
         <option value="$PROJECT_DIR$/assets/templates/event-center/detail.jst" />
         <option value="$PROJECT_DIR$/app.yaml" />
@@ -76,16 +115,27 @@
         <option value="$PROJECT_DIR$/sosbeacon/service/__init__.py" />
         <option value="$PROJECT_DIR$/assets/coffee/event-messages.coffee" />
         <option value="$PROJECT_DIR$/main.py" />
-        <option value="$PROJECT_DIR$/assets/coffee/event-center.coffee" />
-        <option value="$PROJECT_DIR$/assets/js/lib/bootstrap-wysihtml5.js" />
         <option value="$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js" />
+        <option value="$PROJECT_DIR$/assets/coffee/event-center.coffee" />
+=======
+        <option value="$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js" />
+        <option value="$PROJECT_DIR$/app.yaml" />
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
+        <option value="$PROJECT_DIR$/assets/js/lib/bootstrap-wysihtml5.js" />
       </list>
     </option>
   </component>
   <component name="ProjectFrameBounds">
+<<<<<<< HEAD
     <option name="y" value="24" />
     <option name="width" value="1366" />
     <option name="height" value="744" />
+=======
+    <option name="x" value="65" />
+    <option name="y" value="24" />
+    <option name="width" value="1215" />
+    <option name="height" value="1000" />
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
@@ -131,6 +181,67 @@
               <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
             </PATH_ELEMENT>
           </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="SOSBeacon" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="SOSBeacon" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="assets" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+<<<<<<< HEAD
+            <PATH_ELEMENT>
+              <option name="myItemId" value="templates" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+=======
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="SOSBeacon" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="SOSBeacon" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="assets" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+<<<<<<< HEAD
+              <option name="myItemId" value="templates" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="event-center" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
+          <PATH>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="SOSBeacon" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.ProjectViewProjectNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="SOSBeacon" />
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+            <PATH_ELEMENT>
+              <option name="myItemId" value="assets" />
+=======
+              <option name="myItemId" value="css" />
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
+              <option name="myItemType" value="com.intellij.ide.projectView.impl.nodes.PsiDirectoryNode" />
+            </PATH_ELEMENT>
+          </PATH>
         </subPane>
       </pane>
       <pane id="Scope" />
@@ -139,7 +250,11 @@
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="recentsLimit" value="5" />
+<<<<<<< HEAD
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+=======
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../python/SOSbeacon-master/SOSBeacon" />
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
   </component>
   <component name="RunManager" selected="App Engine server.SOSBeacon">
     <configuration default="true" type="Python.AppEngineServer" factoryName="App Engine server">
@@ -156,6 +271,7 @@
       <option name="additionalOptions" value="" />
       <method />
     </configuration>
+<<<<<<< HEAD
     <configuration default="true" type="tests" factoryName="Nosetests">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -194,6 +310,8 @@
       <option name="USE_PATTERN" value="false" />
       <method />
     </configuration>
+=======
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
     <configuration default="false" name="SOSBeacon" type="Python.AppEngineServer" factoryName="App Engine server">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -215,13 +333,19 @@
   <component name="ShelveChangesManager" show_recycled="false" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">
+<<<<<<< HEAD
       <changelist id="dbf57b5e-ba06-4d21-aafd-fb43d6132056" name="Default" comment="" />
       <created>1352860971481</created>
       <updated>1352860971481</updated>
+=======
+      <created>1352817549313</created>
+      <updated>1352817549313</updated>
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
     </task>
     <servers />
   </component>
   <component name="ToolWindowManager">
+<<<<<<< HEAD
     <frame x="0" y="24" width="1366" height="744" extended-state="6" />
     <editor active="true" />
     <layout>
@@ -242,6 +366,28 @@
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+=======
+    <frame x="65" y="24" width="1215" height="1000" extended-state="6" />
+    <editor active="true" />
+    <layout>
+      <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="true" content_ui="tabs" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.23175965" sideWeight="0.9988208" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
+      <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
+      <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="true" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
+      <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
+      <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
+      <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
+      <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
     </layout>
   </component>
   <component name="VcsContentAnnotationSettings">
@@ -297,6 +443,7 @@
     <breakpoint-manager />
   </component>
   <component name="editorHistoryManager">
+<<<<<<< HEAD
     <entry file="file://$PROJECT_DIR$/sosbeacon/school.py">
       <provider selected="true" editor-type-id="text-editor">
         <state line="54" column="0" selection-start="1346" selection-end="1346" vertical-scroll-proportion="0.07666099" />
@@ -312,6 +459,40 @@
         <state line="19" column="63" selection-start="527" selection-end="527" vertical-scroll-proportion="0.0" />
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/sosbeacon/service/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="267" column="0" selection-start="8448" selection-end="8448" vertical-scroll-proportion="0.0">
+=======
+    <entry file="file://$PROJECT_DIR$/assets/templates/event-center/listheader.jst">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/templates/event-center/itemheader.jst">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/templates/event-center/list.jst">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/templates/event-center/message-list-item.jst">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
+          <folding />
+        </state>
+      </provider>
+    </entry>
+<<<<<<< HEAD
     <entry file="file://$PROJECT_DIR$/assets/coffee/responders.coffee">
       <provider selected="true" editor-type-id="text-editor">
         <state line="93" column="5" selection-start="2164" selection-end="2165" vertical-scroll-proportion="2.241036" />
@@ -345,6 +526,54 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/assets/js/lib/bootstrap-wysihtml5.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="345" column="67" selection-start="17350" selection-end="17350" vertical-scroll-proportion="0.0">
+=======
+    <entry file="file://$PROJECT_DIR$/assets/templates/event/edit.jst">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="36" column="27" selection-start="1514" selection-end="1519" vertical-scroll-proportion="0.35433072">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/templates/event/view.jst">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/templates/event-center/view.jst">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="9" column="17" selection-start="327" selection-end="335" vertical-scroll-proportion="0.16403402">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="7473" column="11" selection-start="261499" selection-end="261499" vertical-scroll-proportion="0.0">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/templates/event-center/detail.jst">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="47" column="19" selection-start="1313" selection-end="1320" vertical-scroll-proportion="-6.8688526">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/templates/event-center/edit.jst">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="22" column="35" selection-start="895" selection-end="895" vertical-scroll-proportion="0.0">
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
+          <folding />
+        </state>
+      </provider>
+    </entry>
+<<<<<<< HEAD
     <entry file="file://$PROJECT_DIR$/assets/coffee/event-messages.coffee">
       <provider selected="true" editor-type-id="text-editor">
         <state line="115" column="30" selection-start="2850" selection-end="2850" vertical-scroll-proportion="0.44621515">
@@ -352,51 +581,78 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="3712" column="59" selection-start="140263" selection-end="140269" vertical-scroll-proportion="-2.672131">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/assets/templates/event-center/edit.jst">
       <provider selected="true" editor-type-id="text-editor">
         <state line="18" column="23" selection-start="808" selection-end="808" vertical-scroll-proportion="0.47957373">
+=======
+    <entry file="file://$PROJECT_DIR$/assets/js/lib/bootstrap-typeahead-improved.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/assets/js/lib/backbone.paginator.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-9.006075">
+          <folding>
+            <element signature="n#!!doc" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/static/script/sosadmin.js">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="30590" column="7" selection-start="1061372" selection-end="1061372" vertical-scroll-proportion="0.33333334">
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
           <folding />
         </state>
       </provider>
     </entry>
+<<<<<<< HEAD
     <entry file="file://$PROJECT_DIR$/assets/templates/event-center/event-messages.jst">
       <provider selected="true" editor-type-id="text-editor">
         <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="0.0">
+=======
+    <entry file="file://$PROJECT_DIR$/assets/coffee/event-center.coffee">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="362" column="0" selection-start="9983" selection-end="9983" vertical-scroll-proportion="-9.213115">
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
           <folding />
         </state>
       </provider>
     </entry>
+<<<<<<< HEAD
     <entry file="file://$PROJECT_DIR$/assets/templates/event-center/detail.jst">
       <provider selected="true" editor-type-id="text-editor">
         <state line="52" column="39" selection-start="1487" selection-end="1487" vertical-scroll-proportion="0.5062167">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/sosbeacon/service/__init__.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="303" column="36" selection-start="9579" selection-end="9579" vertical-scroll-proportion="0.3321492">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/assets/coffee/event-center.coffee">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="133" column="40" selection-start="3635" selection-end="3635" vertical-scroll-proportion="0.0">
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/assets/js/lib/wysihtml5-0.3.0.js">
-      <provider selected="true" editor-type-id="text-editor">
-        <state line="7543" column="0" selection-start="264081" selection-end="264081" vertical-scroll-proportion="-3.8360655">
-          <folding />
-        </state>
-      </provider>
-    </entry>
+=======
     <entry file="file://$PROJECT_DIR$/assets/js/lib/bootstrap-wysihtml5.js">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="340" column="5" selection-start="16997" selection-end="16997" vertical-scroll-proportion="0.48432055">
+        <state line="60" column="0" selection-start="3673" selection-end="3673" vertical-scroll-proportion="0.0">
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
+          <folding />
+        </state>
+      </provider>
+    </entry>
+<<<<<<< HEAD
+    <entry file="file://$PROJECT_DIR$/assets/coffee/event-center.coffee">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="129" column="16" selection-start="3439" selection-end="3439" vertical-scroll-proportion="0.24511546">
+=======
+    <entry file="file://$PROJECT_DIR$/assets/css/bootstrap.css">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="1489" column="28" selection-start="28721" selection-end="28721" vertical-scroll-proportion="0.5653299">
+>>>>>>> bb65a0f6914883b5420e40d3197f266a5d3d3c10
           <folding />
         </state>
       </provider>

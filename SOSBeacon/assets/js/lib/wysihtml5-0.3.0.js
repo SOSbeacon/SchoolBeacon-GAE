@@ -7471,14 +7471,14 @@ wysihtml5.Commands = Base.extend(
 //    var NODE_NAME_SOURCE = "SOURCE";
     wysihtml5.commands.insertAudio = {
         /**
-         * Inserts an <img>
-         * If selection is already an image link, it removes it
+         * Inserts an <audio>
+         * If selection is already an audio link, it removes it
          *
          * @example
          *    // either ...
-         *    wysihtml5.commands.insertAudio.exec(composer, "insertImage", "http://www.google.de/logo.jpg");
+         *    wysihtml5.commands.insertAudio.exec(composer, "insertAudio", "http://www.google.de/audio.mp3");
          *    // ... or ...
-         *    wysihtml5.commands.insertAudio.exec(composer, "insertImage", { src: "http://www.google.de/logo.jpg", title: "foo" });
+         *    wysihtml5.commands.insertAudio.exec(composer, "insertAudio", { src: "http://www.google.de/audio.mp3 });
          */
         exec: function(composer, command, value) {
             value = typeof(value) === "object" ? value : { src: value };
@@ -7509,15 +7509,18 @@ wysihtml5.Commands = Base.extend(
 
             audio = doc.createElement(NODE_NAME_AUDIO);
             audio.setAttribute('controls', 'controls')
+//            audio.setAttribute('TYPE', 'audio/ogg')
+            $("audio").append("test");
 //            sources = audio.appendChild(doc.createElement(NODE_NAME_SOURCE))
             for (i in value) {
                 audio[i] = value[i];
-            }
 
+            }
+            console.log("asdff " + $('textarea.content').val())
             composer.selection.insertNode(audio);
             textNode = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
             composer.selection.insertNode(textNode);
-            composer.selection.setAfter(textNode);
+            composer.selection.setAfter(audio);
         },
 
         state: function(composer) {
@@ -7570,7 +7573,7 @@ wysihtml5.Commands = Base.extend(
 })(wysihtml5);(function(wysihtml5) {
   var undef,
       LINE_BREAK = "<br>" + (wysihtml5.browser.needsSpaceAfterLineBreak() ? " " : "");
-  
+
   wysihtml5.commands.insertLineBreak = {
     exec: function(composer, command) {
       if (composer.commands.support(command)) {

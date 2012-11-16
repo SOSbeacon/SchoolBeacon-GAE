@@ -95,7 +95,7 @@ class App.SOSBeacon.View.EditMessage extends Backbone.View
             type: 'c' #c for comment
             event: @event.id
         )
-
+        console.log("asdfasdf " + $('textarea#add-message-box').val())
         App.SOSBeacon.Event.trigger("message:add", @message, this)
         @hide()
 

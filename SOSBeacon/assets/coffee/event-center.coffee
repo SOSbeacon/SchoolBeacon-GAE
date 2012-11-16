@@ -189,6 +189,8 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         el.tab('show')
 
+
+
     onClose: =>
         App.SOSBeacon.Event.unbind(null, null, this)
 
@@ -349,6 +351,7 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
                 App.Util.TrackChanges.clear(this)
                 App.SOSBeacon.Event.trigger('model:save', @model, this)
         )
+        console.log("test1 : " + $.trim(@$('textarea.content').val()))
         return false
 
     updateOnEnter: (e) =>

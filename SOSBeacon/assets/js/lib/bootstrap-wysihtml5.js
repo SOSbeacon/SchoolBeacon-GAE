@@ -258,6 +258,7 @@
                       },
                       'onUploadSuccess' : function(file, data, response) {
                         self.editor.currentView.element.focus();
+
                         var url = window.location.origin + data;
                         urlInput.val(url);
                         $("#file").css('display', 'none');
@@ -327,13 +328,14 @@
                     url: toolbar.uploadUrl,
                     success: function(response) {
                         $("#files").css('display', 'block');
-                        $("#file-queue").css('display', 'block');
-                        $("#file-queue").html('');
+                        $("#files-queue").css('display', 'block');
+                        $("#files-queue").html('');
                         $("#files").uploadify({
+                            'file_size_limit' : "3 MB",
                             'swf': '/static/img/uploadify.swf',
                             'uploader': response,
                             'buttonText': 'Upload Audio',
-                            'fileTypeExts' : '*.mp3',
+                            'fileTypeExts' : '*.mp3;*.ogg',
                             'onUploadStart' : function() {
                                 $(".bootstrap-wysihtml5-insert-link-modal>.modal-footer>.btn").each(function(val) {
                                     $(this).css('display', 'None');
@@ -344,7 +346,7 @@
                                 var url = window.location.origin + data;
                                 urlInput.val(url);
                                 $("#files").css('display', 'none');
-                                $("#file-queue").css('display', 'none');
+                                $("#files-queue").css('display', 'none');
                                 $(".bootstrap-wysihtml5-insert-link-modal>.modal-footer>.btn").each(function(val) {
                                     $(this).css('display', '');
                                 });

@@ -5,4 +5,4 @@ node_modules
 .ropeproject
 settingslocal.py
 
-SOSBeacon/.idea
+.idea

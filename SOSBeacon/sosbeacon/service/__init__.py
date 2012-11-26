@@ -259,18 +259,6 @@ class EventListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             default_filters=(school_filter,),
             query_options={'namespace': '_x_'})
 
-class RobocallHandler(rest_handler.RestApiListHandler, ProcessMixin):
-
-    def __init__(self, request, response):
-        from sosbeacon.event import Event
-        from sosbeacon.event import event_schema
-        from sosbeacon.event import event_query_schema
-
-        # TODO: Lock event (or restrict some fields) if sending is in progress?
-        super(RobocallHandler, self).__init__(
-            Event, event_schema, request, response,
-            query_schema=event_query_schema,
-            query_options={'namespace': '_x_'})
 
 class EventStudentListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 

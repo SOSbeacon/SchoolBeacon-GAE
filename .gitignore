@@ -4,3 +4,4 @@ static
 node_modules
 .ropeproject
 settingslocal.py
+.idea

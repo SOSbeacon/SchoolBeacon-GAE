@@ -305,8 +305,9 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
         @$el.html(@template(@model.toJSON()))
 
         @renderGroups()
-#
+
         @$("#title").focus()
+
         return this
 
     renderGroups: () =>
@@ -351,7 +352,7 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
                 App.Util.TrackChanges.clear(this)
                 App.SOSBeacon.Event.trigger('model:save', @model, this)
         )
-        console.log("test1 : " + $.trim(@$('textarea.content').val()))
+
         return false
 
     updateOnEnter: (e) =>

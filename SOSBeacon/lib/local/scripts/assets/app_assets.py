@@ -41,7 +41,7 @@ from . import BASE_LOCATION
 from . import INPUT_FILES
 from . import _bundle_images
 
-APP_NAME = 'sosbeacon'
+APP_NAME = 'SOSBeacon'
 
 
 def _bundle_app_js(env, debug=False):

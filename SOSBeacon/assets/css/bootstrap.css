@@ -4648,3 +4648,8 @@ div.subnav .nav > li.dropdown.open > .dropdown-toggle:hover {
 .invisible {
   visibility: hidden;
 }
+
+.icon-audio {
+    background-position: -456px -48px;
+    background: url(../img/audio.jpg) no-repeat !important;
+}

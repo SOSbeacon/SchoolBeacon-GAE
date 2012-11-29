@@ -53,7 +53,6 @@ url_map = [
                   handler='sosbeacon.service.EventHandler'),
     webapp2.Route(r'/service/event<:/?>',
                   handler='sosbeacon.service.EventListHandler'),
-
     #Message
     webapp2.Route(r'/service/message/<resource_id>',
                   handler='sosbeacon.service.MessageHandler'),

@@ -95,7 +95,6 @@ class App.SOSBeacon.View.EditMessage extends Backbone.View
             type: 'c' #c for comment
             event: @event.id
         )
-
         App.SOSBeacon.Event.trigger("message:add", @message, this)
 
         @hide()

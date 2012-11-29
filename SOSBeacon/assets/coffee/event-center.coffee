@@ -189,6 +189,8 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         el.tab('show')
 
+
+
     onClose: =>
         App.SOSBeacon.Event.unbind(null, null, this)
 

@@ -330,3 +330,4 @@ class StudentMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
         super(StudentMarkerListHandler, self).__init__(
             StudentMarker, marker_schema, request, response,
             query_schema=marker_query_schema)
+

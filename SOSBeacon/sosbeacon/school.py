@@ -13,11 +13,6 @@ school_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'name': basestring,
     #'owner': voluptuous.ndbkey(),
-    'invitations': [{
-        'key': basestring,
-        'name': basestring,
-        'email': basestring
-        }],
     #'users': [voluptuous.ndbkey()],
 }
 
@@ -51,8 +46,6 @@ class School(EntityBase):
     owner = ndb.KeyProperty('o', kind='User')
     users = ndb.KeyProperty('ul', kind='User', repeated=True)
 
-    invitations = ndb.JsonProperty('ic')
-
     def _pre_put_hook(self):
         """Ran before the entity is written to the datastore."""
         self.revision += 1
@@ -81,55 +74,18 @@ class School(EntityBase):
         #    school.owner = data.get('owner')
 
         #school.users = data.get('users')
-
-        # Process invitations.
-        raw_invitations = data.get('invitations')
-
-        invitations = {}
-        for invitation in raw_invitations:
-            token = invitation['key']
-            name = invitation.get('name')
-            email = invitation.get('email')
-
-            invitations[token] = {
-                'name': name,
-                'email': email,
-                'isnew': False
-            }
-
-            if invitation['isnew']:
-                # NOTE: Yes. I am a bad person for putting this here.
-                send_invitation_email(
-                    school=school,
-                    token=token,
-                    name=name,
-                    email=email,
-                )
-
-        school.invitations = invitations
-
         return school
 
     def to_dict(self):
         """Return a School entity represented as a dict of values
         suitable for School.from_dict.
         """
-        invitations = []
-        if self.invitations:
-            for key, invitation in self.invitations.iteritems():
-                invitations.append({
-                    'key': key,
-                    'name': invitation.get('name'),
-                    'email': invitation.get('email'),
-                    'isnew': False
-                })
-
         school = {
             'version': self.version_,
             'key': self.key.urlsafe(),
             'revision': self.revision,
-            'added': self.added.isoformat(' '),
-            'modified': self.modified.isoformat(' '),
+            'added': self.added.strftime('%Y-%m-%d %H:%M'),
+            'modified': self.modified.strftime('%Y-%m-%d %H:%M'),
 
             # name
             'name': self.name,
@@ -137,40 +93,5 @@ class School(EntityBase):
             # user info
             'owner': self.owner.urlsafe() if self.owner else '',
             'users': [key.urlsafe() for key in self.users],
-
-            # Invite tokens
-            'invitations': invitations
         }
         return school
-
-def send_invitation_email(school, token, name, email):
-    """Send user and inviation to join the School Admins."""
-    from google.appengine.api import mail
-
-    try:
-        name = name.strip().split()[0]
-    except IndexError:
-        pass
-
-    host = os.environ['HTTP_HOST']
-    url = "https://%s/_ah/login_required?sc=%s&tk=%s" % (
-        host, school.key.urlsafe(), token)
-
-    message = """
-    Hello %s,
-      You have been invited to join %s on SBeacon.  Please click the following
-    link to accept.
-
-    %s
-
-    Thanks and welcome to SBeacon,
-      The SBeacon Team
-    """ % (name, school.name, url)
-
-    email = mail.EmailMessage(sender="SBeacon <clifforloff@gmail.com>",
-                              subject='%s Invited You to SBeacon' % (school.name,),
-                              to=email,
-                              body=message)
-
-    email.send()
-

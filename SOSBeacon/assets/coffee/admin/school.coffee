@@ -1,26 +1,17 @@
 
 class App.SOSAdmin.Model.School extends Backbone.Model
     idAttribute: 'key'
-    urlRoot: '/service/school'
+    urlRoot: '/service/admin/school'
+
     defaults: ->
         return {
             key: null,
             name: "",
             owner: "",
-            invitations: [],
             users: [],
+            added: "Loading...",
+            modified: 'Loading...'
         }
-
-    initialize: =>
-        #@users = new App.SOSBeacon.Collection.UserList()
-        #users = @get('users')
-        #if not _.isEmpty(users)
-        #    url = @users.url + '/' + users.join()
-        #    @users.fetch({url: url, async: false})
-
-        @invitations = @nestCollection(
-            'invitations',
-            new App.SOSAdmin.Collection.InvitationList(@get('invitations')))
 
     validate: (attrs) =>
         hasError = false
@@ -36,12 +27,12 @@ class App.SOSAdmin.Model.School extends Backbone.Model
 
 class App.SOSAdmin.Collection.SchoolList extends Backbone.Paginator.requestPager
     model: App.SOSAdmin.Model.School
-    url: '/service/school'
+    url: '/service/admin/school'
 
     paginator_core: {
         type: 'GET',
         dataType: 'json'
-        url: '/service/school'
+        url: '/service/admin/school'
     }
 
     paginator_ui: {
@@ -52,7 +43,7 @@ class App.SOSAdmin.Collection.SchoolList extends Backbone.Paginator.requestPager
     }
 
     query_defaults: {
-        orderBy: 'name'
+        orderBy: 'added'
     }
 
     server_api: {}
@@ -69,7 +60,6 @@ class App.SOSAdmin.View.SchoolEdit extends App.Skel.View.EditView
 
     events:
         "change": "change"
-        "click button.add_invitation": "addInvitation"
         "submit form" : "save"
         "keypress .edit": "updateOnEnter"
         "hidden": "close"
@@ -79,69 +69,35 @@ class App.SOSAdmin.View.SchoolEdit extends App.Skel.View.EditView
             propertyMap: @propertyMap
             validatorMap: @model.validators
         )
-
-        @invitationViews = []
-        @model.invitations.each((invitation, i) =>
-            editView = new App.SOSAdmin.View.InvitationEdit({model: invitation})
-            editView.on('removed', @removeInvitation)
-            @invitationViews.push(editView)
-        )
-
         return super()
-
-    removeInvitation: (invitationView) =>
-        # Remove invitation from model.
-        @model.invitations.remove(invitationView.model)
-
-        # Remove invitationView from of invitationViews.
-        index = _.indexOf(@invitationViews, invitationView)
-        delete @invitationViews[index]
-
-        return true
-
-    addInvitation: (e) =>
-        if e
-            e.preventDefault()
-
-        invitation = new @model.invitations.model()
-        @model.invitations.add(invitation)
-
-        view = new App.SOSAdmin.View.InvitationEdit(model: invitation)
-        view.on('removed', @removeInvitation)
-        @invitationViews.push(view)
-
-        rendered = view.render()
-        @$('fieldset.invitations').append(rendered.el)
-
-        rendered.$el.find('input.name').focus()
-
-        return false
 
     save: (e) =>
         if e
             e.preventDefault()
 
-        badInvitations = _.filter(@invitationViews, (view) ->
-            return not view.validate()
-        )
-        if not _.isEmpty(badInvitations)
-            return false
-
-        valid = @model.save(
+        valid = @model.save({
             name: @$('input.name').val()
+        },
+            complete: (xhr, textStatus) =>
+                if xhr.status == 400
+                    valid = 'exits'
         )
-        if valid == false
-            return false
 
-        return super()
+        setTimeout(( =>
+            if valid == false
+                return false
+
+            if valid == 'exits'
+                App.Util.Form.hideAlert()
+                App.Util.Form.showAlert("Error!", "Duplicate school names not allowed.", "alert-warning")
+                return false
+
+            return super()
+        ), 300)
 
     render: (asModal) =>
         $el = @$el
         $el.html(@template(@model.toJSON()))
-
-        _.each(@invitationViews, (view, i) =>
-            $el.find('fieldset.invitations').append(view.render().el)
-        )
 
         return super(asModal)
 
@@ -161,8 +117,13 @@ class App.SOSAdmin.View.SchoolListItem extends App.Skel.View.ListItemView
     template: JST['admin/school/list-item']
 
     events:
+        "click .users-button": "viewUsers"
         "click .edit-button": "edit"
         "click .remove-button": "delete"
+
+    viewUsers: =>
+        App.SOSAdmin.router.navigate("/schoolusers/"+@model.id, {trigger: true})
+        return false
 
     onClose: =>
         App.Skel.Event.unbind(null, null, this)
@@ -192,3 +153,32 @@ class App.SOSAdmin.View.SchoolList extends App.Skel.View.ListView
 
         super(collection)
 
+class App.SOSAdmin.View.SchoolTypeahaedFilter extends App.Ui.Datagrid.TypeaheadFilter
+
+    render: =>
+        @$el.html(@template(@model.toJSON()))
+
+        @$('input.filter-input').typeahead({
+        value_property: 'name'
+        updater: (item) =>
+            @value = item.key
+            return item.name
+
+        matcher: (item) ->
+            return true
+
+        source: (typeahead, query) =>
+            $.ajax({
+                type: 'GET'
+                dataType: 'json'
+                url: '/service/admin/school'
+                data: {flike_name: query}
+                success: (data) ->
+                    typeahead.process(data)
+            })
+        })
+
+        return this
+
+    onClose: =>
+        @$('input.filter-input').trigger('cleanup')

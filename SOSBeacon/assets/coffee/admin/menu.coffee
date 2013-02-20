@@ -46,9 +46,21 @@ class App.SOSAdmin.View.Menu extends Backbone.View
     initialize: () ->
         items = [
             {
+                text: 'Dashboard',
+                title: 'dashboard',
+                href: '#\/',
+                icon: "icon-book"
+            },
+            {
                 text: 'Schools',
                 title: 'schools',
-                href: '#\/schools',
+                href: '#\/school',
+                icon: "icon-book"
+            },
+            {
+                text: 'Users',
+                title: 'users',
+                href: '#\/user',
                 icon: "icon-book"
             }
         ]

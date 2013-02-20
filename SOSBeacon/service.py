@@ -66,9 +66,9 @@ url_map = [
                   handler='sosbeacon.service.GroupListHandler'),
 
     # School
-    webapp2.Route(r'/service/school/<resource_id:.+>',
+    webapp2.Route(r'/service/admin/school/<resource_id:.+>',
                   handler='sosbeacon.service.SchoolHandler'),
-    webapp2.Route(r'/service/school<:/?>',
+    webapp2.Route(r'/service/admin/school<:/?>',
                   handler='sosbeacon.service.SchoolListHandler'),
 
     # Contact marker
@@ -78,7 +78,14 @@ url_map = [
     # Student marker
     webapp2.Route(r'/service/student_marker<:/?>',
                   handler='sosbeacon.service.StudentMarkerListHandler'),
-]
+
+    # User
+    webapp2.Route(r'/service/admin/user/<resource_id:.+>',
+                  handler='sosbeacon.service.UserHandler'),
+    webapp2.Route(r'/service/admin/user<:/?>',
+                  handler='sosbeacon.service.UserListHandler'),
+
+    ]
 
 app = webapp2.WSGIApplication(
     url_map,

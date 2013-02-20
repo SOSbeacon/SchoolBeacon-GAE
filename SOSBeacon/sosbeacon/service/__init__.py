@@ -331,3 +331,105 @@ class StudentMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             StudentMarker, marker_schema, request, response,
             query_schema=marker_query_schema)
 
+
+class UserHandler(rest_handler.RestApiHandler, ProcessMixin):
+
+    def __init__(self, request=None, response=None):
+        from sosbeacon.user import user_schema
+
+        super(UserHandler, self).__init__(
+            User, user_schema, request, response)
+
+    def put(self, resource_id, *args, **kwargs):
+        """Update user information"""
+        user = process_put_user(self.request, self.schema, self.entity)
+        self.write_json_response(user.to_dict())
+
+class UserListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+
+    def __init__(self, request=None, response=None):
+        from sosbeacon.user import user_schema
+        from sosbeacon.user import user_query_schema
+
+        super(UserListHandler, self).__init__(
+            User, user_schema, request, response,
+            query_schema=user_query_schema,
+            query_options={'namespace': '_x_'})
+
+    def post(self, resource_id, *args, **kwargs):
+        user = process_post_user(self.request, self.schema, self.entity)
+        if user is False:
+            self.abort(400)
+            return
+
+        self.write_json_response(user.to_dict())
+
+    def get(self, resource_id, *args, **kwargs):
+        """"""
+        self.request.GET['feq_is_admin'] = False
+
+        resources = self.query.fetch(
+            self.entity, self.request.params, self.query_schema)
+        response = [entity.to_dict() for entity in resources]
+
+        self.write_json_response(response)
+
+def process_post_user(request, schema, entity):
+    from voluptuous import Schema
+    from sosbeacon.student import create_default_student
+    from sosbeacon.user import send_invitation_email
+
+    obj = json.loads(request.body)
+    schema = Schema(schema, extra=True)
+
+    if obj['email'] == '' or obj['phone'] == '' or \
+            obj['name'] == '':
+        return False
+
+    if len(obj['password']) < 6:
+        return False
+
+    #check user exits
+    check_email = User.query(User.email == obj['email'], namespace = '_x_')
+    check_phone = User.query(User.phone == obj['phone'], namespace = '_x_')
+
+    if check_email.get() or check_phone.get():
+        return False
+
+    try:
+        obj = schema(obj)
+    except:
+        logging.exception('validation failed')
+        logging.info(obj)
+
+    user = entity.from_dict(obj)
+    user.set_password(obj['password'])
+    to_put = [user]
+
+    ndb.put_multi(to_put)
+    create_default_student(user)
+    send_invitation_email(user.name, user.email, obj['password'])
+
+    return user
+
+def process_put_user(request, schema, entity):
+    from voluptuous import Schema
+
+    obj = json.loads(request.body)
+    schema = Schema(schema, extra=True)
+
+    try:
+        obj = schema(obj)
+    except:
+        logging.exception('validation failed')
+        logging.info(obj)
+
+    user = entity.from_dict(obj)
+    if len(obj['password']) > 6:
+        user.set_password(obj['password'])
+
+    to_put = [user]
+
+    ndb.put_multi(to_put)
+
+    return user

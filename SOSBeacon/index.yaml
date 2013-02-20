@@ -130,3 +130,8 @@ indexes:
   - name: a
   - name: n
     direction: desc
+
+- kind: User
+  properties:
+  - name: is_admin
+  - name: a_

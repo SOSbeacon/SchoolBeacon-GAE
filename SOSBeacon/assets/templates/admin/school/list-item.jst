@@ -2,11 +2,19 @@
   <%- name %>
 </td>
 <td>
-  <div class="grid-row btn-toolbar">
-    <div class="grid-buttons btn-group">
-      <button class="edit-button btn">Edit</button>
-      <button class="remove-button btn">Remove</button>
-    </div>
-  </div>
+  <%- added %>
 </td>
-
+<td>
+  <%- modified %>
+</td>
+<td class="manage-button">
+  <button class="remove-button btn">
+     <i class="icon-trash"></i> Remove
+  </button>
+  <button class="edit-button btn" style="margin: 0 -2px">
+     <i class="icon-pencil"></i> Edit
+  </button>
+  <button class="users-button btn">
+     <i class="icon-list"></i> Manage Users
+  </button>
+</td>

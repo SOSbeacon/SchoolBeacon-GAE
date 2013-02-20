@@ -20,7 +20,10 @@ class App.SOSAdmin.Router extends Backbone.Router
     menu: null
 
     routes:
-        "": "showSchool"
+        "": "showDashboard"
+        "school": "showSchool"
+        "schoolusers/:id": "showSchoolUsers"
+        "user": "showUser"
 
     initialize: (data) ->
         @menu = new App.SOSAdmin.View.Menu()
@@ -33,6 +36,14 @@ class App.SOSAdmin.Router extends Backbone.Router
         @currentView = new newView(args)
         $(@el).append(@currentView.render().el)
 
+    showDashboard: () =>
+        @swap(App.SOSAdmin.View.DashboardApp)
+
     showSchool: () =>
         @swap(App.SOSAdmin.View.SchoolApp)
 
+    showUser: () =>
+        @swap(App.SOSAdmin.View.UserApp)
+
+    showSchoolUsers: (id) =>
+        @swap(App.SOSAdmin.View.SchoolUsersApp, id)

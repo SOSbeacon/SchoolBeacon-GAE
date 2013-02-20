@@ -9,13 +9,15 @@ import voluptuous
 from skel.datastore import EntityBase
 from skel.rest_api.rules import RestQueryRule
 
+DEFAULT_STUDENT_ID = "student__"
 EMAIL_REGEX = re.compile("^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
 
 student_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'name': basestring,
-    'identifier': basestring,
+#    'identifier': basestring,
     'groups': [voluptuous.ndbkey()],
+    'school': [voluptuous.ndbkey()],
     'contacts': [{
         'name': basestring,
         'type': voluptuous.any('p', 'o', 'd'),
@@ -45,15 +47,19 @@ class Student(EntityBase):
     name = ndb.StringProperty('n')
     name_ = ndb.ComputedProperty(lambda self: self.name.lower(), name='n_')
 
-    identifier = ndb.StringProperty('i')
-    identifier_ = ndb.ComputedProperty(
-        lambda self: self.identifier.lower(),
-        name='i_')
+#    identifier = ndb.StringProperty('i')
+#    identifier_ = ndb.ComputedProperty(
+#        lambda self: self.identifier.lower(),
+#        name='i_')
 
     groups = ndb.KeyProperty('g', repeated=True)
+    school = ndb.KeyProperty('sc', kind='School')
     contacts = ndb.JsonProperty('c')
 
     notes = ndb.TextProperty()
+
+#   filter default student
+    default_student = ndb.BooleanProperty(default=False)
 
     @classmethod
     def from_dict(cls, data):
@@ -67,10 +73,11 @@ class Student(EntityBase):
             student = cls()
 
         student.name = data.get('name')
-        student.identifier = data.get('identifier')
+#        student.identifier = data.get('identifier')
         student.notes = data.get('notes')
 
         student.groups = data.get('groups')
+        student.school = data.get('school') if data.get('school') else student.school
         student.contacts = data.get('contacts')
 
         return student
@@ -82,7 +89,7 @@ class Student(EntityBase):
         student = self._default_dict()
         student["version"] = self.version_
         student['name'] = self.name
-        student['identifier'] = self.identifier
+#        student['identifier'] = self.identifier
 
         student['contacts'] = self.contacts if self.contacts else []
         student['groups'] = [key.urlsafe() for key in self.groups]
@@ -263,3 +270,22 @@ def _get_group(group_name, group_lookup):
     group = Group(name=group_name, active=True)
     future = group.put_async()
     return group.key, future
+
+
+def create_default_student(user):
+    """Create a default student when user is created"""
+    contacts = [
+        {'notes': '', 'type': 'd', 'name': user.name, 'methods': [
+            {'type': 'e', 'value': user.email},
+            {'type': 't', 'value': user.phone},
+            {'type': 'p', 'value': ''}]}]
+
+    default_student = Student(key=ndb.Key(Student, DEFAULT_STUDENT_ID + "-%s" % (user.key.id()),
+        namespace="_x_"),
+        name = user.name,
+        contacts = contacts,
+        default_student=True,
+        groups = [],
+        school = None)
+
+    default_student.put()

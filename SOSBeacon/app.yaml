@@ -43,6 +43,12 @@ handlers:
 - url: /static
   static_dir: static
 
+- url: /authentication.*
+  script: login.app
+
+- url: /admin/authentication.*
+  script: login.app
+
 - url: /_ah/login_required
   script: login_openid.app
 
@@ -78,5 +84,5 @@ handlers:
 
 - url: .*
   script: main.app
-  login: required
+#  login: required
 

@@ -79,10 +79,6 @@ class Message(EntityBase):
                 # TODO: Raise some other error type here?
                 raise Exception("Event not found.")
 
-            if event.school != unicode(namespace_manager.get_namespace()):
-                # TODO: Raise some other error type here?
-                raise Exception("Security violation!")
-
             key_id = "%s:%s" % (event_key.id(),
                                 cls.allocate_ids(size=1, parent=event_key)[0])
             message = cls(id=key_id, event=event.key)
@@ -170,14 +166,14 @@ def broadcast_to_groups(group_keys, event_key, message_key, batch_id):
     """Scan over the given set of groups, sending the broadcast to everyone
     in those groups.
     """
-    from sosbeacon.group import ALL_GROUPS_ID
+    from sosbeacon.group import ADMIN_GROUPS_ID
     from sosbeacon.group import Group
     from sosbeacon.utils import insert_tasks
 
     # This is done to dedupe the group list, for better resilience.
     group_keys = list(set(group_keys))
 
-    if len(group_keys) == 1 and group_keys[0].id() == ALL_GROUPS_ID:
+    if len(group_keys) == 1 and group_keys[0].id() == ADMIN_GROUPS_ID:
         group_keys = Group.query().order(Group.key).iter(keys_only=True)
 
     tasks = []

@@ -16,13 +16,14 @@ class App.SOSBeacon.Model.Group extends Backbone.Model
         return {
             key: null,
             name: "",
-            active: true,
-            notes: "",
+            default_group: false,
+            number_student: 0,
+            added: "Loading...",
+            modified: 'Loading...'
         }
 
     validators:
         name: new App.Util.Validate.string(len: {min: 1, max: 50}),
-        active: new App.Util.Validate.bool()
 
     validate: (attrs, options) =>
         if options?.unset or options?.loading
@@ -60,7 +61,7 @@ class App.SOSBeacon.Collection.GroupList extends Backbone.Paginator.requestPager
     }
 
     query_defaults: {
-        orderBy: 'name'
+        orderBy: 'added'
     }
 
     server_api: {}
@@ -101,7 +102,6 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
     focusButton: 'input#name'
 
     propertyMap:
-        active: "input.active",
         name: "input.name",
 
     events:
@@ -122,15 +122,24 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
         if e
             e.preventDefault()
 
-        valid = @model.save(
+        valid = @model.save({
             name: @$('input.name').val()
-            active: @$('input.active').prop('checked')
-            notes: $.trim(@$('textarea.notes').val())
+        },
+            complete: (xhr, textStatus) =>
+                if xhr.status == 400
+                    valid = 'exits'
         )
-        if valid == false
-            return false
+        setTimeout(( =>
+            if valid == false
+                return false
 
-        return super()
+            if valid == 'exits'
+                App.Util.Form.hideAlert()
+                App.Util.Form.showAlert("Error!", "Duplicate group names not allowed.", "alert-warning")
+                return false
+
+            return super()
+        ), 300)
 
     render: (asModal) =>
         el = @$el
@@ -190,17 +199,6 @@ class App.SOSBeacon.View.GroupList extends App.Skel.View.ListView
                 prop: 'flike_name'
                 default: false
                 control: App.Ui.Datagrid.InputFilter
-            }
-        ))
-
-        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
-            {
-                name: 'Is Active'
-                type: 'checkbox'
-                prop: 'feq_active'
-                default: true
-                control: App.Ui.Datagrid.CheckboxFilter
-                default_value: true
             }
         ))
 

@@ -94,6 +94,12 @@ indexes:
 
 - kind: Event
   properties:
+  - name: sc
+  - name: m_
+    direction: desc
+
+- kind: Event
+  properties:
   - name: sch
   - name: m_
     direction: desc
@@ -103,6 +109,22 @@ indexes:
   - name: a
   - name: n_
 
+- kind: Group
+  properties:
+  - name: a
+  - name: sc
+  - name: n_
+
+- kind: Group
+  properties:
+  - name: sc
+  - name: a_
+
+- kind: Group
+  properties:
+  - name: sc
+  - name: n_
+
 - kind: Message
   properties:
   - name: e
@@ -124,6 +146,11 @@ indexes:
   - name: g
   - name: n_
     direction: desc
+
+- kind: Student
+  properties:
+  - name: sc
+  - name: n_
 
 - kind: StudentMarker
   properties:

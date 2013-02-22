@@ -17,7 +17,6 @@ student_schema = {
     'name': basestring,
 #    'identifier': basestring,
     'groups': [voluptuous.ndbkey()],
-    'school': [voluptuous.ndbkey()],
     'contacts': [{
         'name': basestring,
         'type': voluptuous.any('p', 'o', 'd'),
@@ -30,8 +29,9 @@ student_schema = {
 student_query_schema = {
     'flike_name': basestring,
     'feq_groups': voluptuous.any('', voluptuous.ndbkey()),
+    'feq_school': voluptuous.ndbkey(),
+    'feq_is_direct': voluptuous.boolean()
 }
-
 
 class Student(EntityBase):
     """Represents a student."""
@@ -59,7 +59,8 @@ class Student(EntityBase):
     notes = ndb.TextProperty()
 
 #   filter default student
-    default_student = ndb.BooleanProperty(default=False)
+    default_student = ndb.BooleanProperty('ids', default=False)
+    is_direct = ndb.BooleanProperty('id')
 
     @classmethod
     def from_dict(cls, data):
@@ -70,10 +71,12 @@ class Student(EntityBase):
             student = key.get()
 
         if not student:
-            student = cls()
+            student = cls(namespace='_x_')
 
         student.name = data.get('name')
 #        student.identifier = data.get('identifier')
+#       check student is direct contact or student contact
+        student.is_direct = data.get('is_direct')
         student.notes = data.get('notes')
 
         student.groups = data.get('groups')
@@ -94,6 +97,9 @@ class Student(EntityBase):
         student['contacts'] = self.contacts if self.contacts else []
         student['groups'] = [key.urlsafe() for key in self.groups]
         student['notes'] = self.notes or ''
+
+        student['is_direct'] = self.is_direct
+        student['default_student'] = self.default_student
 
         return student
 

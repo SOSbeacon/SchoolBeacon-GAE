@@ -64,7 +64,7 @@ handlers:
 
 - url: /service/.*
   script: service.app
-  login: required
+#  login: required
 
 - url: /task/.*
   script: task.app

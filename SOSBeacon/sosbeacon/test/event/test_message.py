@@ -38,19 +38,6 @@ class TestMessageModel(unittest.TestCase):
             Exception, "Event not found",
             Message.from_dict, {'event': event_key})
 
-    def test_from_dict_namespace_mismatch(self):
-        """Ensure event school matches current namespace."""
-        from sosbeacon.event.event import Event
-        from sosbeacon.event.message import Message
-
-        event = Event(school='12345')
-        event_key = Mock()
-        event_key.get.return_value = event
-
-        self.assertRaisesRegexp(
-            Exception, "Security violation",
-            Message.from_dict, {'event': event_key})
-
     @patch('sosbeacon.event.message.Message.allocate_ids')
     def test_from_dict_comment_payload(self, message_alloc_ids_mock):
         """Ensure message with comment payload and type works OK."""
@@ -61,7 +48,7 @@ class TestMessageModel(unittest.TestCase):
 
         message_alloc_ids_mock.return_value = 1, 1
 
-        event = Event(school=unicode(namespace_manager.get_namespace()))
+        event = Event()
         event_key = Mock()
         event_key.get.return_value = event
 
@@ -91,7 +78,7 @@ class TestMessageModel(unittest.TestCase):
 
         message_alloc_ids_mock.return_value = 1, 1
 
-        event = Event(school=unicode(namespace_manager.get_namespace()))
+        event = Event()
         event_key = Mock()
         event_key.get.return_value = event
 
@@ -120,8 +107,7 @@ class TestMessageModel(unittest.TestCase):
 
         message_alloc_ids_mock.return_value = 1, 1
 
-        event = Event(title='test',
-                      school=unicode(namespace_manager.get_namespace()))
+        event = Event(title='test')
         event_key = Mock()
         event_key.get.return_value = event
 
@@ -155,7 +141,7 @@ class TestMessageModel(unittest.TestCase):
 
         message_alloc_ids_mock.return_value = 1, 1
 
-        event = Event(school=unicode(namespace_manager.get_namespace()))
+        event = Event()
         event_key = Mock()
         event_key.get.return_value = event
 
@@ -238,7 +224,7 @@ class TestBroadcastToGroups(unittest.TestCase):
         """Ensure passing in the all groups group, results in a query."""
         from sosbeacon.event.message import broadcast_to_groups
 
-        from sosbeacon.group import ALL_GROUPS_ID
+        from sosbeacon.group import ADMIN_GROUPS_ID
         from sosbeacon.group import Group
 
         group_order_mock = group_query_mock.return_value.order
@@ -246,7 +232,7 @@ class TestBroadcastToGroups(unittest.TestCase):
         group_iter_mock.return_value = []
 
         group_key = Mock()
-        group_key.id.return_value = ALL_GROUPS_ID
+        group_key.id.return_value = ADMIN_GROUPS_ID
 
         event_key = Mock()
 

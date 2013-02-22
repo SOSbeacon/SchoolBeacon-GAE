@@ -64,7 +64,9 @@ class App.Skel.View.ModelApp extends App.Skel.View.App
         @listView.addOne(model)
     
     add: =>
-        if @searchMode
+#        if @searchMode
+#            @addOpen()
+        if $("#add_area form").length < 1 or @searchMode
             @addOpen()
         else
             @addClose()
@@ -176,6 +178,9 @@ class App.Skel.View.EditView extends Backbone.View
             App.Util.Form.showAlert(
                 "Successs!", "Save successful", "alert-success")
 
+        $('#add_area').empty()
+        $("#add_new").text('Add Mode')
+            .focus()
         return false
 
     updateOnEnter: (e) =>

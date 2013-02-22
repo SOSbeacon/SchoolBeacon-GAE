@@ -1,21 +1,26 @@
 <td>
-  <%- name %>
+  <%- name %> (<%- number_student %>)
 </td>
 <td>
-  <%- (active) ? "Yes": "No" %>
+  <%- added %>
 </td>
 <td>
-  <div class="grid-row btn-toolbar">
-    <div class="grid-buttons btn-group">
+  <%- modified %>
+</td>
+<td class="manage-button">
+  <% if (default_group) { %>
       <button class="students-button btn">
-        <i class="icon-list"></i> Manage Students
+        <i class="icon-list"></i> Manage Contacts
       </button>
-      <button class="edit-button btn">
-        <i class="icon-pencil"></i> Edit
-      </button>
+    <% } else { %>
       <button class="remove-button btn">
-        <i class="icon-trash"></i> Remove
-      </button>
-    </div>
-  </div>
+          <i class="icon-trash"></i> Remove
+        </button>
+        <button class="edit-button btn" style="margin: 0 -2px">
+          <i class="icon-pencil"></i> Edit
+        </button>
+        <button class="students-button btn">
+          <i class="icon-list"></i> Manage Contacts
+        </button>
+    <% } %>
 </td>

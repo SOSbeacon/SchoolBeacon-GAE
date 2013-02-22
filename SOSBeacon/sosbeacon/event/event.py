@@ -35,6 +35,7 @@ event_schema = {
     'last_broadcast_date': voluptuous.any(None, basestring,
                                           voluptuous.datetime()),
     'groups': [voluptuous.ndbkey()],
+    'school': [voluptuous.ndbkey()],
     'type': voluptuous.any('e', 'n'),
     'counts': {
         'contacts': int,
@@ -45,7 +46,8 @@ event_schema = {
 
 event_query_schema = {
     'flike_title': basestring,
-    'feq_groups': voluptuous.any('', voluptuous.ndbkey())
+    'feq_groups': voluptuous.any('', voluptuous.ndbkey()),
+    'feq_school': voluptuous.any('', voluptuous.ndbkey()),
 }
 
 
@@ -60,6 +62,7 @@ class Event(EntityBase):
     _query_properties = {
         'title': RestQueryRule('title_', lambda x: x.lower() if x else ''),
         'groups': RestQueryRule('groups', lambda x: None if x == '' else x),
+        'school': RestQueryRule('school', lambda x: None if x == '' else x),
     }
 
     # Store the schema version, to aid in migrations.
@@ -77,6 +80,7 @@ class Event(EntityBase):
     content = ndb.TextProperty('c')
 
     groups = ndb.KeyProperty('g', repeated=True)
+    school = ndb.KeyProperty('sc', kind='School')
 
     student_count = ndb.IntegerProperty('sc', default=0, indexed=False)
     contact_count = ndb.IntegerProperty('cc', default=0, indexed=False)
@@ -93,9 +97,7 @@ class Event(EntityBase):
             event = key.get()
 
         if not event:
-            from google.appengine.api import namespace_manager
-            school = namespace_manager.get_namespace()
-            event = cls(namespace='_x_', school=unicode(school))
+            event = cls(namespace='_x_')
 
         event.title = data.get('title')
         event.event_type = data.get('event_type')
@@ -108,6 +110,7 @@ class Event(EntityBase):
             event.status = EVENT_STATUS_CLOSED
 
         event.content = data.get('content')
+        event.school = data.get('school')
 
         for key in data.get('groups'):
             if isinstance(key, basestring):

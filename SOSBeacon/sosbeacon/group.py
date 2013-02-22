@@ -5,18 +5,20 @@ import voluptuous
 from skel.datastore import EntityBase
 from skel.rest_api.rules import RestQueryRule
 
-ALL_GROUPS_ID = "all__"
+ADMIN_GROUPS_ID = "admin__"
+STAFF_GROUPS_ID = "staff__"
 
 group_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'name': basestring,
-    'active': voluptuous.boolean(),
-    'notes': basestring
+    'notes': basestring,
+    'default': voluptuous.boolean(),
 }
 
 group_query_schema = {
     'flike_name': basestring,
-    'feq_active': voluptuous.boolean()
+    'feq_default': voluptuous.boolean(),
+    'feq_school': voluptuous.ndbkey()
 }
 
 
@@ -30,12 +32,16 @@ class Group(EntityBase):
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
+    # Useful timestamps.
+    added = ndb.DateTimeProperty('a_', auto_now_add=True)
+    modified = ndb.DateTimeProperty('m_', auto_now=True)
+
     name = ndb.StringProperty('n')
     name_ = ndb.ComputedProperty(lambda self: self.name.lower(), name='n_')
 
-    active = ndb.BooleanProperty('a')
+    school = ndb.KeyProperty('sc', kind='School')
 
-    notes = ndb.TextProperty('nt')
+    default = ndb.BooleanProperty('df', default=False)
 
     @classmethod
     def from_dict(cls, data):
@@ -46,11 +52,10 @@ class Group(EntityBase):
             group = key.get()
 
         if not group:
-            group = cls()
+            group = cls(namespace='_x_')
 
         group.name = data.get('name')
-        group.active = data.get('active')
-        group.notes = data.get('notes')
+        group.school = data.get('school')
 
         return group
 
@@ -61,8 +66,13 @@ class Group(EntityBase):
         group = self._default_dict()
         group["version"] = self.version_
         group['name'] = self.name
-        group['active'] = self.active
-        group['notes'] = self.notes
+        group['default_group'] = self.default
+
+        number_student, next_curs, more = get_student_keys(self.key)
+        group['number_student'] = len(number_student) + 1
+
+        group['added'] = self.added.strftime('%Y-%m-%d %H:%M'),
+        group['modified'] = self.modified.strftime('%Y-%m-%d %H:%M'),
 
         return group
 

@@ -34,6 +34,57 @@ class ProcessMixin(object):
         self.response.out.write(json.dumps(out))
 
 
+class SchoolRestApiListHandler(rest_handler.RestApiListHandler):
+    """Filter student, group end event for current school which user choose"""
+    def get(self, *args, **kwargs):
+        from google.appengine.api import namespace_manager
+        namespace_manager.set_namespace('_x_')
+
+        session_store = sessions.get_store(request=self.request)
+        session = session_store.get_session()
+
+        if not 'u' in session:
+            self.abort(403)
+            return
+
+        self.request.GET['feq_school'] = session.get('s')
+
+        super(SchoolRestApiListHandler, self).get(
+            self, *args, **kwargs)
+
+    def process(self, resource_id, *args, **kwargs):
+        from voluptuous import Schema
+        from google.appengine.api import namespace_manager
+
+        namespace_manager.set_namespace('_x_')
+
+        session_store = sessions.get_store(request=self.request)
+        session = session_store.get_session()
+
+        if not 'u' in session:
+            self.about(403)
+            return
+
+        obj = json.loads(self.request.body)
+        schema = Schema(self.schema, extra=True)
+
+        try:
+            obj = schema(obj)
+        except:
+            logging.exception('validation failed')
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+
+        school_key = ndb.Key(urlsafe = session.get('s'))
+
+        obj['school'] = school_key
+
+        entity = self.entity.from_dict(obj)
+        entity.put()
+
+        self.write_json_response(entity.to_dict())
+
 def process_messages(request, schema, entity):
     from voluptuous import Schema
 
@@ -72,7 +123,7 @@ def process_messages(request, schema, entity):
     return message
 
 
-class MessageHandler(rest_handler.RestApiHandler):
+class MessageHandler(SchoolRestApiListHandler):
 
     def __init__(self, request, response):
         from sosbeacon.event.message import Message
@@ -86,7 +137,7 @@ class MessageHandler(rest_handler.RestApiHandler):
         self.write_json_response(message.to_dict())
 
 
-class MessageListHandler(rest_handler.RestApiListHandler):
+class MessageListHandler(SchoolRestApiListHandler):
 
     def __init__(self, request, response):
         from sosbeacon.event.message import Message
@@ -112,7 +163,7 @@ class StudentHandler(rest_handler.RestApiHandler, ProcessMixin):
             Student, student_schema, request, response)
 
 
-class StudentListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+class StudentListHandler(SchoolRestApiListHandler, ProcessMixin):
 
     def __init__(self, request, response):
         from sosbeacon.student import Student
@@ -122,6 +173,47 @@ class StudentListHandler(rest_handler.RestApiListHandler, ProcessMixin):
         super(StudentListHandler, self).__init__(
             Student, student_schema, request, response,
             query_schema=student_query_schema)
+
+
+def process_group(request, schema, entity):
+    from voluptuous import Schema
+    from sosbeacon.group import Group
+
+    session_store = sessions.get_store()
+    session = session_store.get_session()
+
+    if not 'u' in session:
+        return False
+
+    if not 's' in session:
+        return False
+
+    obj = json.loads(request.body)
+    schema = Schema(schema, extra=True)
+
+    if obj['name'] == '':
+        return False
+
+    #check group duplicate
+    check_name = Group.query(Group.name == obj['name'], namespace = '_x_')
+
+    if check_name.get():
+        return False
+
+    try:
+        obj = schema(obj)
+    except:
+        logging.exception('validation failed')
+        logging.info(obj)
+
+    school_key = ndb.Key(urlsafe = session.get('s'))
+    obj['school'] = school_key
+
+    group = entity.from_dict(obj)
+    to_put = [group]
+    ndb.put_multi(to_put)
+
+    return group
 
 
 class GroupHandler(rest_handler.RestApiHandler, ProcessMixin):
@@ -135,36 +227,52 @@ class GroupHandler(rest_handler.RestApiHandler, ProcessMixin):
 
     def process(self, resource_id, *args, **kwargs):
         if self.resource_is_all_groups(resource_id):
+            self.abort(400)
             return
 
         return super(GroupHandler, self).process(resource_id, *args, **kwargs)
 
     def delete(self, resource_id, *args, **kwargs):
         if self.resource_is_all_groups(resource_id):
+            self.abort(400)
             return
 
         return super(GroupHandler, self).delete(resource_id, *args, **kwargs)
 
     def resource_is_all_groups(self, resource_id):
         """Ensure they don't mess with the 'All Groups' group."""
-        from sosbeacon.group import ALL_GROUPS_ID
+        from sosbeacon.group import ADMIN_GROUPS_ID
+        from sosbeacon.group import STAFF_GROUPS_ID
 
         key = ndb.Key(urlsafe=resource_id)
 
-        if key.id() == ALL_GROUPS_ID:
+        if key.id() == (ADMIN_GROUPS_ID) \
+            or (key.id() == STAFF_GROUPS_ID):
             return True
 
 
-class GroupListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+class GroupListHandler(SchoolRestApiListHandler, ProcessMixin):
 
     def __init__(self, request=None, response=None):
         from sosbeacon.group import Group
         from sosbeacon.group import group_schema
         from sosbeacon.group import group_query_schema
 
+        from google.appengine.api import namespace_manager
+        namespace_manager.set_namespace('_x_')
+
         super(GroupListHandler, self).__init__(
             Group, group_schema, request, response,
             query_schema=group_query_schema)
+
+    def process(self, resource_id, *args, **kwargs):
+        group = process_group(self.request, self.schema, self.entity)
+
+        if group is False:
+            self.abort(400)
+            return
+
+        self.write_json_response(group.to_dict())
 
 
 def process_school(request, schema, entity):
@@ -185,14 +293,23 @@ def process_school(request, schema, entity):
     if not obj.get('key'):
         # this is a new school. add the all groups group
         from sosbeacon.group import Group
-        from sosbeacon.group import ALL_GROUPS_ID
-        group = Group(key=ndb.Key(Group, ALL_GROUPS_ID,
-                                  namespace="_%s" % (school.key.id())),
-                      active=True,
-                      notes='This is a special group, it may not be removed.')
-        group.name = "All Groups"
-        group.active = True
-        to_put.append(group)
+        from sosbeacon.group import ADMIN_GROUPS_ID
+        from sosbeacon.group import STAFF_GROUPS_ID
+
+        group_admin = Group(key=ndb.Key(Group, ADMIN_GROUPS_ID + "%s" % (school.key.id()),
+            namespace="_x_"))
+        group_admin.name = "Admin"
+        group_admin.school = school.key
+        group_admin.default = True
+
+        group_staff = Group(key=ndb.Key(Group, STAFF_GROUPS_ID + "%s" % (school.key.id()),
+            namespace="_x_"))
+        group_staff.name = "Staff"
+        group_staff.school = school.key
+        group_staff.default = True
+
+        to_put.append(group_admin)
+        to_put.append(group_staff)
 
     ndb.put_multi(to_put)
 
@@ -241,22 +358,17 @@ class EventHandler(rest_handler.RestApiHandler):
             Event, event_schema, request, response)
 
 
-class EventListHandler(rest_handler.RestApiListHandler, ProcessMixin):
+class EventListHandler(SchoolRestApiListHandler, ProcessMixin):
 
     def __init__(self, request, response):
         from sosbeacon.event import Event
         from sosbeacon.event import event_schema
         from sosbeacon.event import event_query_schema
 
-        from google.appengine.api import namespace_manager
-        school = namespace_manager.get_namespace()
-        school_filter = Event.school == unicode(school)
-
         # TODO: Lock event (or restrict some fields) if sending is in progress?
         super(EventListHandler, self).__init__(
             Event, event_schema, request, response,
             query_schema=event_query_schema,
-            default_filters=(school_filter,),
             query_options={'namespace': '_x_'})
 
 

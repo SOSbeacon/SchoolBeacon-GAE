@@ -8,6 +8,7 @@ import voluptuous
 
 from skel.datastore import EntityBase
 from skel.rest_api.rules import RestQueryRule
+from sosbeacon.group import Group
 
 
 EVENT_STATUS_CLOSED = 'cl'
@@ -35,7 +36,7 @@ event_schema = {
     'last_broadcast_date': voluptuous.any(None, basestring,
                                           voluptuous.datetime()),
     'groups': [voluptuous.ndbkey()],
-    'school': [voluptuous.ndbkey()],
+    'school': voluptuous.ndbkey(),
     'type': voluptuous.any('e', 'n'),
     'counts': {
         'contacts': int,
@@ -47,7 +48,7 @@ event_schema = {
 event_query_schema = {
     'flike_title': basestring,
     'feq_groups': voluptuous.any('', voluptuous.ndbkey()),
-    'feq_school': voluptuous.any('', voluptuous.ndbkey()),
+    'feq_school': voluptuous.ndbkey()
 }
 
 
@@ -62,13 +63,10 @@ class Event(EntityBase):
     _query_properties = {
         'title': RestQueryRule('title_', lambda x: x.lower() if x else ''),
         'groups': RestQueryRule('groups', lambda x: None if x == '' else x),
-        'school': RestQueryRule('school', lambda x: None if x == '' else x),
     }
 
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
-
-    school = ndb.StringProperty('sch')
 
     title = ndb.StringProperty('t')
     title_ = ndb.ComputedProperty(lambda self: self.title.lower(), name='t_')
@@ -80,7 +78,7 @@ class Event(EntityBase):
     content = ndb.TextProperty('c')
 
     groups = ndb.KeyProperty('g', repeated=True)
-    school = ndb.KeyProperty('sc', kind='School')
+    school = ndb.KeyProperty('sch', kind='School')
 
     student_count = ndb.IntegerProperty('sc', default=0, indexed=False)
     contact_count = ndb.IntegerProperty('cc', default=0, indexed=False)
@@ -144,7 +142,7 @@ class Event(EntityBase):
 
         event['content'] = self.content
 
-        event['groups'] = [key.urlsafe() for key in self.groups]
+        event['groups'] = [key.urlsafe() for key in self.groups if key.get()]
 
         event['student_count'] = self.student_count
         event['contact_count'] = self.contact_count
@@ -261,4 +259,3 @@ def _apply_count_updates(event_key, counts):
     event.responded_count += counts['responded_count']
 
     event.put()
-

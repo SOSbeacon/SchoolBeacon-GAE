@@ -7466,7 +7466,7 @@ wysihtml5.Commands = Base.extend(
       return image && image.src;
     }
   };
-    var NODE_NAME_AUDIO = "AUDIO";
+    var NODE_NAME_AUDIO = "embed";
     wysihtml5.commands.insertAudio = {
         /**
          * Inserts an <img>
@@ -7506,11 +7506,18 @@ wysihtml5.Commands = Base.extend(
             }
 
             audio = doc.createElement(NODE_NAME_AUDIO);
-            audio.setAttribute('controls', 'controls')
-            for (i in value) {
-                audio[i] = value[i];
+            audio.setAttribute('height', '28')
+            audio.setAttribute('width','348px')
+            audio.setAttribute('bgcolor','#000000')
+            audio.setAttribute('tabindex','0')
 
+            for (i in value) {
+                audio.setAttribute('type', 'application/x-shockwave-flash')
+                audio.setAttribute('src', 'http://www.google.com/reader/ui/3523697345-audio-player.swf')
+                audio.setAttribute('flashvars', 'audioUrl=' + value[i])
+                audio.setAttribute('quality', 'best')
             }
+
             composer.selection.insertNode(audio);
             textNode = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
             composer.selection.insertNode(textNode);

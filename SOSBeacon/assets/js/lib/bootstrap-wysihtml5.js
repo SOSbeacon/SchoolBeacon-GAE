@@ -75,7 +75,7 @@
                     "<a href='#' class='btn btn-primary' data-dismiss='modal'>" + locale.audio.insert + "</a>" +
                     "</div>" +
                     "</div>" +
-                    "<a class='btn' data-wysihtml5-command='createAudio' title='" + locale.audio.insert + "'><i class='icon-audio'></i></a>" +
+                    "<a class='btn' data-wysihtml5-command='createAudio' title='" + locale.audio.insert + "'><i class='icon-volume-up'></i></a>" +
                     "</li>",
 
             "image":
@@ -282,7 +282,7 @@
                       'onUploadSuccess' : function(file, data, response) {
                         self.editor.currentView.element.focus();
 
-                        var url = window.location.origin + data;
+                        var url = window.location.protocol + data;
                         urlInput.val(url);
                         $("#file").css('display', 'none');
                         $("#file-queue").css('display', 'none');
@@ -425,7 +425,7 @@
                             },
                             'onUploadSuccess' : function(file, data, response) {
                                 self.editor.currentView.element.focus();
-                                var url = window.location.origin + data;
+                                var url = window.location.protocol + data;
                                 urlInput.val(url);
                                 $("#files").css('display', 'none');
                                 $("#files-queue").css('display', 'none');

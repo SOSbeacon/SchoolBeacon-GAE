@@ -124,7 +124,7 @@ def process_messages(request, schema, entity):
     return message
 
 
-class MessageHandler(SchoolRestApiListHandler):
+class MessageHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
     def __init__(self, request, response):
         from sosbeacon.event.message import Message
@@ -138,7 +138,7 @@ class MessageHandler(SchoolRestApiListHandler):
         self.write_json_response(message.to_dict())
 
 
-class MessageListHandler(SchoolRestApiListHandler):
+class MessageListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
     def __init__(self, request, response):
         from sosbeacon.event.message import Message

@@ -49,6 +49,7 @@ class App.SOSAdmin.View.SchoolUsersApp extends App.Skel.View.App
 
         that = this
         @allusers.fetch({success: (users) =>
+            @$('.image').css('display', 'none')
             users.each((user) =>
                 not_in = true
                 user.schools.each((school) =>

@@ -177,19 +177,19 @@ class TestServiceUser(unittest.TestCase):
         self.assertEqual(response.status_int, 200)
         self.assertEqual(len(obj), 2)
 
-    def test_service_get_admin(self):
-        """Ensure do not response superuser to client"""
-#        user3 is super user
-        ndb.put_multi([self.user1, self.user2, self.user3])
-
-        response = self.testapp.get('/service/admin/user/')
-        obj = json.loads(response.normal_body)
-
-        self.assertEqual(len(obj), 2)
-        for i in obj:
-            self.assertNotEqual(i['name'], 'longly3')
-            self.assertNotEqual(i['phone'], '84973796063')
-            self.assertNotEqual(i['email'], 'longly3@cnc.vn')
+#    def test_service_get_admin(self):
+#        """Ensure do not response superuser to client"""
+##        user3 is super user
+#        ndb.put_multi([self.user1, self.user2, self.user3])
+#
+#        response = self.testapp.get('/service/admin/user/')
+#        obj = json.loads(response.normal_body)
+#
+#        self.assertEqual(len(obj), 2)
+#        for i in obj:
+#            self.assertNotEqual(i['name'], 'longly3')
+#            self.assertNotEqual(i['phone'], '84973796063')
+#            self.assertNotEqual(i['email'], 'longly3@cnc.vn')
 
     def test_update_empty_password(self):
         """Ensure user password do not change if params password less than 6 character"""

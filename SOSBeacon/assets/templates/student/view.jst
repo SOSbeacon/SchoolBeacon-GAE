@@ -1,12 +1,23 @@
 <div class="top_view row-fluid ">
-  <h1 class="span2">Students</h1>
-  <div class="top-alert span5 row-fluid status-bar"></div>
-  <div class="span5 btn_holder">
-    <button id="add_new" class="add-button btn-large btn-primary">
-      <i class="icon-plus icon-white"></i> Add Student
+  <h1 class="span2">Contacts</h1>
+  <div class="top-alert span5 row-fluid status-bar" style="width: 10%"></div>
+  <div class="span4 btn_holder" style="width: 69%">
+    <button id="add_new" class="add-button-student btn-small btn-primary" style="float: right; display:none">
+      <i class="icon-plus icon-white"></i> Add Student Contact
     </button>
-    <button id="import" class="import-button btn-large btn">
-      <i class="icon-download-alt"></i> Import Students
+    <button id="add_new_contact" class="add-button-contact btn-small btn-primary" style="margin-right: 5px; float: right">
+      <i class="icon-plus icon-white"></i> Add Direct Contact
+    </button>
+    <button id="import" class="import-direct-contact btn-small btn" style="margin-right: 5px; float: right"
+        onclick="location.href='/import/contacts/upload/'">
+      <i class="icon-download-alt"></i> Import Direct Contact
+    </button>
+    <button id="import" class="import-student-contact btn-small btn" style="margin-right: 5px; float: right; display:none"
+        onclick="location.href='/import/students/upload/'">
+      <i class="icon-download-alt"></i> Import Student Contact
+    </button>
+    <button class="export-student-contact btn-small btn" style="margin-right: 5px; float: right; display: none">
+      <i class="icon-download-alt"></i> Export Student Contact
     </button>
   </div>
 </div>

@@ -14,6 +14,11 @@ class App.SOSBeacon.Collection.GroupStudentList extends Backbone.Paginator.reque
         totalPages: 100
     }
 
+    query_defaults: {
+        orderBy: 'added'
+        feq_is_direct: true
+    }
+
     server_api: {}
 
 
@@ -36,26 +41,35 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
 
         @studentList = new App.SOSBeacon.View.SelectableStudentList(@students)
         App.Skel.Event.bind("studentlist:filter:#{@studentList.cid}", @filterStudents, this)
+        App.Skel.Event.bind("filter_student", @filter_group, this)
 
         @groupStudentList = new App.SOSBeacon.View.SelectableStudentList(@groupstudents)
         App.Skel.Event.bind("studentlist:filter:#{@groupStudentList.cid}", @groupFilterStudents, this)
 
+    filter_group:(filter) =>
+        @groupStudentList.run({feq_is_direct:filter})
+        @studentList.run({feq_is_direct:filter})
+
     filterStudents: (filters) =>
         @students.reset()
-        @allstudents.server_api = {}
+        @allstudents.server_api = {feq_is_direct:true}
 
         if filters
             _.extend(@allstudents.server_api, filters)
 
         that = this
         @allstudents.fetch({success: (students) =>
+            @$('.image').css('display', 'none')
             students.each((student) =>
                 not_in = true
                 student.groups.each((group) =>
                     if group.id == @model.id
                         not_in = false
                 )
+
                 if not_in
+                    if student.get('default_student') == true
+                        return
                     that.students.add(student)
             )
         })
@@ -83,7 +97,9 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
                 groups = groupstudent.get('groups')
                 groups.pop(that.model.id)
                 groupstudent.save({groups: groups})
+                groupstudent.selected = false
         )
+
         _.each(students_to_move, (student) ->
             that.students.add(student)
             that.groupstudents.remove(student)
@@ -101,6 +117,7 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
                 groups = student.get('groups')
                 groups.push(that.model.id)
                 student.save({groups: groups})
+                student.selected = false
         )
 
         _.each(students_to_move, (student) ->
@@ -108,6 +125,71 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
             that.students.remove(student)
         )
         @students.trigger('reset')
+
+    onClose: =>
+        @studentList.close()
+
+
+class App.SOSBeacon.View.GroupStudentsEdit extends App.Skel.View.EditView
+    id: "editgroupstudent"
+    tagName:'div'
+    template: JST['group_students/edit']
+    studentList: null
+
+    events:
+    #        'click button#moveToStudent': 'moveToStudent'
+    #        'click button#moveToGroup': 'moveToGroup'
+        "hidden": "close"
+
+    initialize: (id) =>
+        @model = new App.SOSBeacon.Model.Group({key: id})
+        @model.fetch({async: false})
+
+        @allstudents = new App.SOSBeacon.Collection.StudentList()
+        @groupstudents = new App.SOSBeacon.Collection.GroupStudentList()
+        @students = new App.SOSBeacon.Collection.StudentList()
+
+        @studentList = new App.SOSBeacon.View.SelectableStudentList(@students)
+        App.Skel.Event.bind("studentlist:filter:#{@studentList.cid}", @filterStudents, this)
+
+        @groupStudentList = new App.SOSBeacon.View.SelectableStudentList(@groupstudents)
+        App.Skel.Event.bind("studentlist:filter:#{@groupStudentList.cid}", @groupFilterStudents, this)
+
+    filterStudents: (filters) =>
+        @students.reset()
+        @allstudents.server_api = {feq_is_direct:true}
+
+        if filters
+            _.extend(@allstudents.server_api, filters)
+
+        that = this
+        @allstudents.fetch({success: (students) =>
+            students.each((student) =>
+                not_in = true
+                student.groups.each((group) =>
+                    if group.id == @model.id
+                        not_in = false
+                )
+
+                if not_in
+                    if student.get('default_student') == true
+                        return
+                    that.students.add(student)
+            )
+        })
+
+    groupFilterStudents: (filters) =>
+        @groupstudents.server_api['feq_groups'] = @model.id
+        @groupstudents.fetch()
+
+    render: =>
+        @$el.html(@template(@model.toJSON()))
+
+        @$("#studentlist").append(@studentList.render().el)
+        @$("#groupstudentlist").append(@groupStudentList.render().el)
+        $('.selected').hide()
+
+        return this
 
     onClose: =>
         @studentList.close()

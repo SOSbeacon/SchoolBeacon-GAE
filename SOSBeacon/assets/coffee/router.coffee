@@ -19,12 +19,16 @@ class App.SOSBeacon.Router extends Backbone.Router
     menu: null
 
     routes:
-        "": "showStudent"
+        "": "showContacts"
         "groupstudents/:id": "showGroupStudents"
-        "student": "showStudent"
-        "student/new": "addStudent"
-        "student/edit/:id": "editStudent"
-        "student/import": "showImportStudents"
+        "contacts": "showContacts"
+        "contacts/student/view": "showStudentContact"
+        "contacts/student/new": "addStudent"
+        "contacts/contact/new": "addContact"
+        "contacts/contact/edit/:id": "editContact"
+        "contacts/student/edit/:id": "editStudent"
+        "contacts/import/student": "showImportStudents"
+        "contacts/import/contact": "showImportContacts"
         "group": "showGroup"
         "broadcast": "showBroadcast"
         "broadcast/send": "showSendBroadcast"
@@ -50,14 +54,23 @@ class App.SOSBeacon.Router extends Backbone.Router
         @currentView = new newView(args)
         $(@el).append(@currentView.render().el)
 
-    showStudent: () =>
+    showContacts: () =>
         @swap(App.SOSBeacon.View.StudentApp)
+
+    showStudentContact: () =>
+        @swap(App.SOSBeacon.View.StudentContactApp)
 
     addStudent: () =>
         @swap(App.SOSBeacon.View.StudentEditApp)
 
+    addContact: () =>
+        @swap(App.SOSBeacon.View.ContactEditApp)
+
     editStudent: (id) =>
         @swap(App.SOSBeacon.View.StudentEditApp, id)
+
+    editContact: (id) =>
+        @swap(App.SOSBeacon.View.ContactEditApp, id)
 
     showGroup: () =>
         @swap(App.SOSBeacon.View.GroupApp)
@@ -76,6 +89,9 @@ class App.SOSBeacon.Router extends Backbone.Router
 
     showImportStudents: () =>
         @swap(App.SOSBeacon.View.ImportStudentsApp)
+
+    showImportContacts: () =>
+        @swap(App.SOSBeacon.View.ImportContactsApp)
 
     showEventCenter: () =>
         @swap(App.SOSBeacon.View.EventCenterApp)

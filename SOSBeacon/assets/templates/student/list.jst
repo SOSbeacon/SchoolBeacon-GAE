@@ -1,19 +1,38 @@
-<td>
-  <%- name %>
-</td>
+<% if(default_student) { %>
+  <td>
+    <b><%- name %></b>
+  </td>
+<%} else {%>
+  <td>
+    <%- name %>
+  </td>
+<% } %>
 <td>
   <%- group_list %>
 </td>
 <td>
-  <div class="grid-row btn-toolbar">
-    <div class="grid-buttons btn-group">
-      <!--<button class="view-button btn">View</button>-->
-      <button class="edit-button btn">
-        <i class="icon-pencil"></i> Edit
-      </button>
+  <%- added %>
+</td>
+<td>
+  <%- modified %>
+</td>
+<td class="manage-button">
+  <% if (default_student) { %>
+  <button class="edit-button-contact btn">
+    <i class="icon-eye-open icon-white"></i> View
+  </button>
+  <% } else { %>
       <button class="remove-button btn">
         <i class="icon-trash"></i> Remove
       </button>
-    </div>
-  </div>
+      <% if (is_direct) {%>
+          <button class="edit-button-contact btn" style="margin-right: -2px">
+            <i class="icon-pencil"></i> Edit
+          </button>
+      <% } else { %>
+          <button class="edit-button-student btn" style="margin-right: -2px">
+            <i class="icon-pencil"></i> Edit
+          </button>
+      <% } %>
+  <% } %>
 </td>

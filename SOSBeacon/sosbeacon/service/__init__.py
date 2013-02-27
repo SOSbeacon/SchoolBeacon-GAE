@@ -1,9 +1,10 @@
 import datetime
 import json
 import logging
-
+import re
 
 from google.appengine.ext import ndb
+from google.appengine.ext.webapp import blobstore_handlers
 
 import webapp2
 from webapp2_extras import sessions
@@ -174,6 +175,38 @@ class StudentListHandler(SchoolRestApiListHandler, ProcessMixin):
             Student, student_schema, request, response,
             query_schema=student_query_schema)
 
+    def get(self, resource_id, *args, **kwargs):
+        from sosbeacon.student import Student
+        from sosbeacon.student import DEFAULT_STUDENT_ID
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+
+        if not 'u' in session:
+            self.abort(403)
+            return
+
+        self.request.GET['feq_school'] = session.get('s')
+
+        resources = self.query.fetch(
+            self.entity, self.request.params, self.query_schema)
+
+        response = [entity.to_dict() for entity in resources]
+
+        if self.request.GET['feq_is_direct'] == 'false':
+            self.write_json_response(response)
+            return
+
+        user_key = ndb.Key(urlsafe = session.get('u'))
+
+        student_key = ndb.Key(
+            Student, "%s-%s" % (DEFAULT_STUDENT_ID, user_key.id()),
+            namespace='_x_')
+
+        response.insert(0, student_key.get().to_dict())
+
+        self.write_json_response(response)
+
 
 def process_group(request, schema, entity):
     from voluptuous import Schema
@@ -221,6 +254,8 @@ class GroupHandler(rest_handler.RestApiHandler, ProcessMixin):
     def __init__(self, request=None, response=None):
         from sosbeacon.group import Group
         from sosbeacon.group import group_schema
+        from google.appengine.api import namespace_manager
+        namespace_manager.set_namespace('_x_')
 
         super(GroupHandler, self).__init__(
             Group, group_schema, request, response)
@@ -230,7 +265,13 @@ class GroupHandler(rest_handler.RestApiHandler, ProcessMixin):
             self.abort(400)
             return
 
-        return super(GroupHandler, self).process(resource_id, *args, **kwargs)
+        group = process_group(self.request, self.schema, self.entity)
+
+        if group is False:
+            self.abort(400)
+            return
+
+        self.write_json_response(group.to_dict())
 
     def delete(self, resource_id, *args, **kwargs):
         if self.resource_is_all_groups(resource_id):
@@ -476,15 +517,16 @@ class UserListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
         self.write_json_response(user.to_dict())
 
-    def get(self, resource_id, *args, **kwargs):
-        """"""
-        self.request.GET['feq_is_admin'] = False
+#    def get(self, resource_id, *args, **kwargs):
+#        """"""
+#        self.request.GET['feq_is_admin'] = False
+#
+#        resources = self.query.fetch(
+#            self.entity, self.request.params, self.query_schema)
+#        response = [entity.to_dict() for entity in resources]
+#
+#        self.write_json_response(response)
 
-        resources = self.query.fetch(
-            self.entity, self.request.params, self.query_schema)
-        response = [entity.to_dict() for entity in resources]
-
-        self.write_json_response(response)
 
 def process_post_user(request, schema, entity):
     from voluptuous import Schema
@@ -545,3 +587,79 @@ def process_put_user(request, schema, entity):
     ndb.put_multi(to_put)
 
     return user
+
+
+class ExportStudentHandler(blobstore_handlers.BlobstoreDownloadHandler):
+
+    def get(self):
+        """Export all student contact of current school"""
+        from sosbeacon.student import Student
+        from google.appengine.ext import blobstore
+        from google.appengine.api import files
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+
+        school_urlsafe = session.get('s')
+        school_key = ndb.Key(urlsafe = school_urlsafe)
+        logging.info(school_key)
+
+        file_name = files.blobstore.create(mime_type='text/csv',_blobinfo_uploaded_filename='export_student.csv')
+        students = Student.query(ndb.AND(Student.school == school_key,
+                                         Student.is_direct == False),
+                                namespace = '_x_').fetch()
+
+        headers = ['group_name', 'contacts_name','parent1', 'parent1_email', 'parent1_text_phone',
+                   'parent1_voice_phone', 'parent2', 'parent2_email', 'parent2_text_phone',
+                   'parent2_voice_phone']
+
+        headers = ','.join(headers)
+
+        with files.open(file_name, 'a') as f:
+            f.write(headers)
+            f.write('\n')
+
+        for student in students:
+            with files.open(file_name, 'a') as f:
+                info = self.get_info_student(student)
+                info = ','.join(info)
+                f.write(info)
+                f.write('\n')
+
+        files.finalize(file_name)
+        blob_key = files.blobstore.get_blob_key(file_name)
+
+        blob_info = blobstore.BlobInfo.get(blob_key)
+        if not blobstore.get(blob_key):
+            self.error(404)
+        else:
+            self.send_blob(blob_info, save_as=blob_info.filename)
+
+    def get_info_student(self, student):
+        info_student = []
+        info_student.append("")
+        info_student.append(student.name)
+
+        for contact in student.contacts:
+            info_student.append(contact['name'])
+            if len(contact['methods'][0]['value']) > 0:
+                info_student.append(contact['methods'][0]['value'])
+            if len(contact['methods'][0]['value']) == 0:
+                info_student.append("")
+
+            if len(contact['methods']) > 1:
+                info_student.append(regex_phone(contact['methods'][1]['value']))
+            if len(contact['methods']) <= 1:
+                info_student.append("")
+
+            if len(contact['methods']) > 2:
+                info_student.append(regex_phone(contact['methods'][2]['value']))
+            if len(contact['methods']) <= 2:
+                info_student.append("")
+
+        return info_student
+
+def regex_phone(phone):
+    p = re.compile(r"\D+")
+    phones = p.sub("",phone)
+    return phones

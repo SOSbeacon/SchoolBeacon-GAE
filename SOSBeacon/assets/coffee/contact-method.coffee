@@ -14,7 +14,7 @@ class App.SOSBeacon.Model.ContactMethod extends Backbone.Model
 
     @validateEmail: (value) =>
         # Is it possibly a valid email?
-        if not /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+        if not /^\b[A-Z0-9._%-]+@[A-Z0-9.-]+\.[A-Z]{2,4}\b$/i.test(value)
             return false
         return true
 

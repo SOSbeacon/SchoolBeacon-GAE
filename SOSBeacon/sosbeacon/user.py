@@ -3,6 +3,7 @@ from google.appengine.ext import ndb
 
 import voluptuous
 import os
+import uuid
 
 from skel.rest_api.rules import RestQueryRule
 from webapp2_extras import security
@@ -131,6 +132,34 @@ class User(ndb.Model):
             The raw password which will be hashed and stored
         """
         self.password = security.generate_password_hash(raw_password, length=12)
+
+def forgot_password(user):
+    """reset password for user"""
+    import settings
+    import sendgrid
+
+    new_password = uuid.uuid4().hex[:6]
+
+    user.set_password(new_password)
+    user.put()
+
+    body = """
+    Dear %s, Your login is email address: %s, Your password is: %s . All the best, SOSbeacon
+    """ % (user.name, user.email, new_password)
+
+    s = sendgrid.Sendgrid(settings.SENDGRID_ACCOUNT,
+        settings.SENDGRID_PASSWORD,
+        secure=True)
+
+    subject='School Beacon - Your login details here'
+
+    message = sendgrid.Message(
+        settings.SENDGRID_SENDER,
+        subject,
+        body)
+    message.add_to(str(user.email))
+    s.web.send(message)
+
 
 def send_invitation_email(name, email, password):
     """Send user and inviation to join the School Admins."""

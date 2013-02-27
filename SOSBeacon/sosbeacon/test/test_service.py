@@ -12,6 +12,7 @@ from sosbeacon.user import User
 from login import LoginUserHandler
 
 from google.appengine.ext import testbed
+from google.appengine.ext import ndb
 
 class TestGroupService(unittest.TestCase):
     """Test service of group"""
@@ -28,9 +29,13 @@ class TestGroupService(unittest.TestCase):
 
         url_map = [
             webapp2.Route(r'/service/group/<resource_id:.+>',
-                handler='sosbeacon.service.GroupHandler'),
+                          handler='sosbeacon.service.GroupHandler'),
             webapp2.Route(r'/service/group<:/?>',
-                handler='sosbeacon.service.GroupListHandler'),
+                          handler='sosbeacon.service.GroupListHandler'),
+
+            webapp2.Route(r'/service/admin/user<:/?>',
+                          handler='sosbeacon.service.UserListHandler'),
+
             ('/authentication/login', LoginUserHandler)
         ]
 
@@ -39,14 +44,6 @@ class TestGroupService(unittest.TestCase):
             config=webapp_config
         )
         self.testapp = webtest.TestApp(app)
-
-        self.user = User(
-            id='1',
-            name='longly',
-            password = 'f14c30f4f19d7810c44801fc0f93ac1d890b1b3a$sha1$QIhZGsYB2JHF',
-            email = 'longly@cnc.vn',
-            phone = '84973796065'
-        )
 
         self.school1 = School(
             id='100',
@@ -59,8 +56,15 @@ class TestGroupService(unittest.TestCase):
         )
 
         self.school1.put()
-        self.user.schools = [self.school1.key]
-        self.user.put()
+
+        params = {
+            'name': 'longly',
+            'email': 'longly@cnc.vn',
+            'phone': '84973796065',
+            'password': '123456',
+            'schools': [self.school1.key.urlsafe()]
+        }
+        self.testapp.post_json('/service/admin/user/', params)
 
         email = 'longly@cnc.vn'
         password = '123456'
@@ -128,7 +132,6 @@ class TestGroupService(unittest.TestCase):
 
     def test_service_get_filter_group(self):
         """Ensure server response group which same school"""
-        from google.appengine.ext import ndb
         to_put = [self.group1, self.group2, self.group3, self.group4]
         ndb.put_multi(to_put)
 
@@ -149,6 +152,16 @@ class TestGroupService(unittest.TestCase):
 
         self.assertEqual(response.status_int, 200)
         self.assertEqual(obj['name'], params['name'])
+
+#    def test_service_edit_duplicate_group(self):
+#        """Ensure user can not edit duplication group name"""
+#        self.group1.put()
+#        params = {
+#            'name':'Group 1'
+#        }
+#        response = self.testapp.put_json('/service/group/%s' % self.group1.key.urlsafe(), params)
+#        logging.info(response)
+#        self.assertEqual(response.status_int, 400)
 
     def test_service_edit_default_group(self):
         """Ensure can not update information of default group"""
@@ -173,4 +186,237 @@ class TestGroupService(unittest.TestCase):
         self.group_admin.put()
         response = self.testapp.delete('/service/group/%s' % self.group_admin.key.urlsafe(), status=400)
         self.assertEqual(response.status_int, 400)
+
+    def test_number_student_of_group(self):
+        """Ensure number student of group always > 1"""
+        to_put = [self.group1, self.group2, self.group3, self.group4]
+        ndb.put_multi(to_put)
+
+        response = self.testapp.get('/service/group')
+        obj = json.loads(response.normal_body)
+
+        for i in obj:
+            self.assertGreaterEqual(1, i['number_student'])
+
+
+class TestServiceContact(unittest.TestCase):
+    """Test service contact"""
+    def setUp(self):
+        from sosbeacon.school import School
+        from sosbeacon.student import Student
+        from sosbeacon.student import DEFAULT_STUDENT_ID
+
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+        self.testbed.init_datastore_v3_stub()
+        self.testbed.init_memcache_stub()
+
+        url_map = [
+            webapp2.Route(r'/service/student/<resource_id:.+>',
+                          handler='sosbeacon.service.StudentHandler'),
+            webapp2.Route(r'/service/student<:/?>',
+                          handler='sosbeacon.service.StudentListHandler'),
+
+            webapp2.Route(r'/service/admin/user<:/?>',
+                          handler='sosbeacon.service.UserListHandler'),
+
+            ('/authentication/login', LoginUserHandler)
+        ]
+
+        app = webapp2.WSGIApplication(
+            url_map,
+            config=webapp_config
+        )
+        self.testapp = webtest.TestApp(app)
+
+        self.school1 = School(
+            id='100',
+            name='School_Test',
+        )
+
+        self.school2 = School(
+            id='200',
+            name='School_Test_2',
+        )
+
+        self.school1.put()
+        self.school2.put()
+
+        params = {
+            'name': 'longly',
+            'email': 'longly@cnc.vn',
+            'phone': '84973796065',
+            'password': '123456',
+            'schools': [self.school1.key.urlsafe()]
+        }
+        self.testapp.post_json('/service/admin/user/', params)
+
+        email = 'longly@cnc.vn'
+        password = '123456'
+
+        params1 = {'email': email, 'password': password}
+        self.testapp.post('/authentication/login', params1)
+
+
+        self.student1 = Student(
+            id = '1',
+            name = 'Student 1',
+            contacts = [{
+                            'name': 'contact 1',
+                            'methods': ['123432', 'me@earth.com']
+                        },
+                        {
+                            'name': 'contact 2',
+                            'methods': ['123432', 'me@earth.com']
+                        }
+            ],
+            school = self.school1.key,
+            is_direct = False
+        )
+
+        self.student2 = Student(
+            id = '2',
+            name = 'Student 2',
+            contacts = [{
+                            'name': 'contact 1',
+                            'methods': ['123432', 'me@earth.com']
+                        },
+                        {
+                            'name': 'contact 2',
+                            'methods': ['123432', 'me@earth.com']
+                        }
+            ],
+            school = self.school1.key,
+            is_direct = False
+        )
+
+        self.student3 = Student(
+            id = '3',
+            name = 'Student 3',
+            contacts = [{
+                            'name': 'contact 1',
+                            'methods': ['123432', 'me@earth.com']
+                        },
+                        {
+                            'name': 'contact 2',
+                            'methods': ['123432', 'me@earth.com']
+                        }
+            ],
+            school = self.school1.key,
+            is_direct = True
+        )
+
+        self.student4 = Student(
+            id = '4',
+            name = 'Student 4',
+            contacts = [{
+                            'name': 'contact 1',
+                            'methods': ['123432', 'me@earth.com']
+                        },
+                        {
+                            'name': 'contact 2',
+                            'methods': ['123432', 'me@earth.com']
+                        }
+            ],
+            school = self.school2.key,
+            is_direct = True
+        )
+
+        self.student5 = Student(
+            id = '5',
+            name = 'Student 5',
+            contacts = [{
+                            'name': 'contact 1',
+                            'methods': ['123432', 'me@earth.com']
+                        },
+                        {
+                            'name': 'contact 2',
+                            'methods': ['123432', 'me@earth.com']
+                        }
+            ],
+            school = self.school2.key,
+            is_direct = False
+        )
+
+    def test_service_create_student(self):
+        """Ensure create success new student with json object send from client"""
+        params = {
+            'name': 'Student Test',
+            'groups': [],
+            'contacts': [{
+                             'name': 'contact 1',
+                             'methods': ['123432', 'me@earth.com']
+                         },
+                         {
+                             'name': 'contact 2',
+                             'methods': ['123432', 'me@earth.com']
+                         }
+            ]
+        }
+
+        response = self.testapp.post_json('/service/student', params)
+        obj = json.loads(response.normal_body)
+
+        self.assertEqual(response.status_int, 200)
+        self.assertEqual(obj['name'], params['name'])
+        self.assertEqual(obj['groups'], params['groups'])
+        self.assertFalse(obj['is_direct'])
+
+    def test_service_get_filter_student_contact(self):
+        """Ensure server response student contact which same school"""
+        from google.appengine.ext import ndb
+        to_put = [self.student1, self.student2, self.student3, self.student4, self.student5]
+        ndb.put_multi(to_put)
+
+        response = self.testapp.get('/service/student?feq_is_direct=false')
+        obj = json.loads(response.normal_body)
+
+        self.assertEqual(len(obj), 2)
+
+    def test_service_get_filter_direct_contact(self):
+        """Ensure server response student contact which same school and default student"""
+        from google.appengine.ext import ndb
+        to_put = [self.student1, self.student2, self.student3, self.student4, self.student5]
+        ndb.put_multi(to_put)
+
+        response = self.testapp.get('/service/student?feq_is_direct=true')
+        obj = json.loads(response.normal_body)
+
+        self.assertEqual(len(obj), 2)
+        self.assertTrue(obj[0]['default_student'])
+
+
+    def test_service_edit_student(self):
+        """Ensure student will be update new data"""
+        self.student1.put()
+        params = {
+            'name': 'Update Student',
+            'groups': [],
+            'contacts': [{
+                             'name': 'contact 1',
+                             'methods': ['123432', 'me@earth.com']
+                         },
+                         {
+                             'name': 'contact 2',
+                             'methods': ['123432', 'me@earth.com']
+                         }
+            ]
+        }
+
+        response = self.testapp.put_json('/service/student/%s' % self.student1.key.urlsafe(), params)
+        obj = json.loads(response.normal_body)
+
+        self.assertEqual(response.status_int, 200)
+        self.assertEqual(obj['name'], params['name'])
+        self.assertEqual(obj['groups'], params['groups'])
+
+    def test_service_delete_student(self):
+        """Ensure this student will be None object"""
+        from google.appengine.ext import ndb
+        self.student1.put()
+        response = self.testapp.delete('/service/student/%s' %self.student1.key.urlsafe())
+        query_event = ndb.Key(urlsafe=self.student1.key.urlsafe())
+        self.assertIsNone(query_event.get())
+        self.assertEqual(response.status_int, 200)
 

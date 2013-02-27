@@ -139,6 +139,13 @@ indexes:
 - kind: Student
   properties:
   - name: g
+  - name: id
+  - name: sc
+  - name: a_
+
+- kind: Student
+  properties:
+  - name: g
   - name: n_
 
 - kind: Student
@@ -146,6 +153,12 @@ indexes:
   - name: g
   - name: n_
     direction: desc
+
+- kind: Student
+  properties:
+  - name: id
+  - name: sc
+  - name: n_
 
 - kind: Student
   properties:

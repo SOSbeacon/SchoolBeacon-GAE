@@ -1,5 +1,5 @@
-application: sosbeacon
-version: 1
+application: sos-beacon-dev
+version: 8
 runtime: python27
 api_version: 1
 threadsafe: true

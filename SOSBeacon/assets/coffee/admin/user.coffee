@@ -144,6 +144,7 @@ class App.SOSAdmin.Collection.UserList extends Backbone.Paginator.requestPager
     query_defaults:
         {
             orderBy: 'added'
+            feq_is_admin:false
         }
 
     server_api: {}

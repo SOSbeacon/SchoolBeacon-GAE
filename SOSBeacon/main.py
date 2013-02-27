@@ -30,6 +30,7 @@ if libs_dir not in sys.path:
 
 import webapp2
 from webapp2_extras import sessions
+from webapp2_extras.security import check_password_hash
 
 from google.appengine.api import memcache
 from google.appengine.ext import blobstore
@@ -46,6 +47,7 @@ from sosbeacon.event import acknowledge_event
 from sosbeacon.event.contact_marker import ContactMarker
 
 from sosbeacon.school import School
+from sosbeacon.user import User
 
 EVENT_DOES_NOT_EXIST = "-!It's a Trap!-"
 
@@ -64,7 +66,7 @@ def user_required(handler):
         try:
             if not 'u' in session:
                 try:
-                    self.redirect('/authentication/login')
+                    self.redirect('/school')
 
                 except (AttributeError, KeyError), e:
                     self.abort(403)
@@ -238,7 +240,7 @@ class ChooseSchoolHandler(TemplateHandler):
 
 #TODO: Move to it's own app?
 class AdminHandler(TemplateHandler):
-    @admin_required
+#    @admin_required
     def get(self):
         out = self.render('admin.mako')
         self.response.out.write(out)
@@ -311,23 +313,129 @@ class EventHandler(TemplateHandler):
 
 class StudentImportHandler(MainHandler):
     @user_required
-    def post(self):
-        file_ = self.request.get('students_file')
-        if not file_:
-            #TODO: flag as error and report to user somehow
-            return webapp2.redirect("/#/student")
-
-        from sosbeacon.student import import_students
+    def get(self):
         results = {'success': [], 'failures': []}
+        results_contact = 'false'
+        count = 0
+        host = os.environ['HTTP_HOST']
+        value = 'student'
+        download = "http://%s/static/file/sample_student.csv" % (host)
+        out = self.render(
+            'import_student.mako', school_name=self.school_name,
+            user_name = self.user_name,
+            schools = self.list_school, results_contact=results_contact, count=count, download=download, value=value, **results)
+        self.response.out.write(out)
+
+    @user_required
+    def post(self):
+        from sosbeacon.student import preview_import_students
+        from sosbeacon.student import import_students
+
+        file_ = self.request.get('students_file')
+
+        import_list = self.request.get('importListString')
+
+        results_contact = 'true'
+        host = os.environ['HTTP_HOST']
+        download = "http://%s/static/file/sample_student.csv" % (host)
+
+        school_urlsafe = self.session.get('s')
+        value = file_
+
         try:
-            results = import_students(file_)
+            is_direct = False
+            if import_list == 'student':
+                results = preview_import_students(file_, is_direct)
+                out = self.render(
+                    'import_student.mako', school_name=self.school_name,
+                    user_name = self.user_name,
+                    schools = self.list_school, results_contact=results_contact, download=download,
+                        count='Total records saved: 0', value=value, **results)
+                self.response.out.write(out)
+
+            else:
+                results = import_students(import_list, school_urlsafe, is_direct)
+                out = self.render(
+                    'import_student.mako', school_name=self.school_name,
+                    user_name = self.user_name,
+                    schools = self.list_school, results_contact=results_contact, download=download,
+                        count='Import contacts success. Total records saved: %d' % len(results['success']),
+                        value='student', **results)
+                self.response.out.write(out)
+
         except Exception:
             #TODO: give a nice error page
             logging.exception("Unable to import students")
+            results = {'success': [], 'failures': []}
+            out = self.render(
+                'import_student.mako', school_name=self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school, results_contact = results_contact, count='Import contacts success. Total records saved: 0', download=download, value=value, **results)
+            self.response.out.write(out)
 
+
+class ContactImportHandler(MainHandler):
+
+    def get(self):
+        results = {'success': [], 'failures': []}
+        results_contact = 'false'
+        count = 0
+        host = os.environ['HTTP_HOST']
+        value = 'direct'
+        download = "http://%s/static/file/sample_direct.csv" % (host)
         out = self.render(
-            'import.mako', school_name=self.school_name, **results)
+            'import_direct.mako', school_name=self.school_name,
+            user_name = self.user_name,
+            schools = self.list_school, results_contact=results_contact, count=count,
+                download=download, value=value, **results)
         self.response.out.write(out)
+
+    def post(self):
+        from sosbeacon.student import preview_import_students
+        from sosbeacon.student import import_students
+
+        file_ = self.request.get('contacts_file')
+        import_list = self.request.get('importListString')
+
+        results_contact = 'true'
+        host = os.environ['HTTP_HOST']
+        download = "http://%s/static/file/sample_direct.csv" % (host)
+
+        school_urlsafe = self.session.get('s')
+        value = file_
+
+        try:
+            is_direct = True
+            if import_list == 'direct':
+                results = preview_import_students(file_, is_direct)
+                out = self.render(
+                    'import_direct.mako', school_name=self.school_name,
+                    user_name = self.user_name,
+                    schools = self.list_school, results_contact=results_contact, download=download,
+                        count='Total records saved: 0', value=value, **results)
+                self.response.out.write(out)
+
+            else:
+                results = import_students(import_list, school_urlsafe, is_direct)
+                out = self.render(
+                    'import_direct.mako', school_name=self.school_name,
+                    user_name = self.user_name,
+                    schools = self.list_school, results_contact=results_contact, download=download,
+                        count='Import contacts success. Total records saved: %d' % len(results['success']),
+                        value='direct', **results)
+                self.response.out.write(out)
+
+        except Exception:
+            #TODO: give a nice error page
+            logging.exception("Unable to import students")
+            results = {'success': [], 'failures': []}
+            error = "Unable to import students"
+            out = self.render(
+                'import_direct.mako', school_name=self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school, results_contact=results_contact, count='Import contacts success. Total records saved: 0',
+                download=download, value=value, **results)
+            self.response.out.write(out)
 
 
 class FileUploadHandler(MainHandler):
@@ -352,16 +460,256 @@ class FileUplaodViewHandler(blobstore_handlers.BlobstoreDownloadHandler):
         self.send_blob(blob_info, content_type="image/png")
 
 
+class HomeLoginHandler(TemplateHandler):
+    """Home page"""
+    def get(self, *args, **kwargs):
+        if not 'u' in self.session:
+            self.render_user_login(is_loggedin=False, error="")
+            return
+
+        urlsafe = self.session.get('u')
+        user_key = ndb.Key(urlsafe=urlsafe)
+
+        user = user_key.get()
+        school = self.session.get('s')
+
+        if len(user.schools) == 1 or school:
+            self.redirect("/")
+            return
+
+        if len(user.schools) > 1:
+            schools = [school_key.get() for school_key in user.schools]
+            self.render_user_login(is_loggedin = True, schools = schools)
+            return
+
+        self.render_user_login(is_loggedin = True, schools = None, error="You don't have any schools!.")
+
+    def post(self, *args, **kwargs):
+        if not 'u' in self.session:
+            email    = self.request.POST['email']
+            password = self.request.POST['password']
+
+            user = User.query(ndb.AND(User.email == email),
+                namespace = '_x_')
+
+            if user.get() is None:
+                self.render_user_login(is_loggedin = False, error='Email or Password is wrong!.')
+                return
+
+            if user.get().is_admin:
+                self.render_user_login(is_loggedin = False, error='Email or Password is wrong!.')
+                return
+
+            else:
+                if check_password_hash(password, user.get().password):
+                    self.delete_session()
+                    self.set_current_user(user)
+                else:
+                    self.render_user_login(is_loggedin = False, error='Email or Password is wrong!.')
+                    return
+
+        user_key = self.session.get('u')
+        user = ndb.Key(urlsafe=user_key).get()
+        school_length = len(user.schools)
+
+        #check schools that user was asigned
+        if school_length == 1:
+            school_key = user.schools[0]
+            school_key = school_key.get().key.urlsafe()
+            self.set_current_school(school_key)
+            self.redirect("/")
+            return
+
+        if school_length == 0:
+            self.render_user_login(is_loggedin = False, error="You don't have any schools!. Please contact with admin for this reason.")
+            self.delete_session()
+            return
+
+        if school_length > 1 and 'school' not in self.request.POST:
+            schools = [school_key.get() for school_key in user.schools]
+            self.render_user_login(is_loggedin = True, schools=schools)
+            return
+
+        school_key = self.request.POST['school']
+        self.set_current_school(school_key)
+        self.redirect("/")
+
+    def set_current_user(self, user):
+        """set session for current user"""
+        self.session['u'] = user.get().key.urlsafe()
+
+    def set_current_school(self, school_key):
+        """set session for current school that user choose when login"""
+        self.session['s'] = school_key
+
+    def render_user_login(self, **context):
+        out = self.render(template_name='home_login.mako', **context)
+        self.response.out.write(out)
+
+    def delete_session(self):
+        """delete all session"""
+        for key in self.session.keys():
+            if key != 'tz':
+                del self.session[key]
+
+
+class HomeLogoutHandler(TemplateHandler):
+    """Home logout page"""
+    def get(self, *args, **kwargs):
+        if self.session:
+            for key in self.session.keys():
+                if key != 'tz':
+                    del self.session[key]
+
+        self.redirect("/school/web/users/login/")
+
+
+class HomeHandler(TemplateHandler):
+    def get(self):
+        if not 'u' in self.session or not 's' in self.session:
+            out = self.render('home.mako', is_loggedin=False)
+            self.response.out.write(out)
+        else:
+            out = self.render('home.mako', school_name = self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school,
+                timezone = '',
+                is_loggedin = True)
+            self.response.out.write(out)
+
+
+class AboutHandler(TemplateHandler):
+    """render template about sosbeacon"""
+    def get(self):
+        if not 'u' in self.session or not 's' in self.session:
+            out = self.render('about.mako',is_loggedin=False)
+            self.response.out.write(out)
+        else:
+            out = self.render('about.mako', school_name = self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school,
+                timezone = '',
+                is_loggedin = True)
+            self.response.out.write(out)
+
+
+class FeaturesHandler(TemplateHandler):
+    """render template features sosbeacon"""
+    def get(self):
+        if not 'u' in self.session or not 's' in self.session:
+            out = self.render('features.mako',is_loggedin=False)
+            self.response.out.write(out)
+        else:
+            out = self.render('features.mako', school_name = self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school,
+                timezone = '',
+                is_loggedin = True)
+            self.response.out.write(out)
+
+
+class TestimonialsHandler(TemplateHandler):
+    """render template testimonials sosbeacon"""
+    def get(self):
+        if not 'u' in self.session or not 's' in self.session:
+            out = self.render('testimonials.mako',is_loggedin=False)
+            self.response.out.write(out)
+        else:
+            out = self.render('testimonials.mako', school_name = self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school,
+                timezone = '',
+                is_loggedin = True)
+            self.response.out.write(out)
+
+
+#class ContactHandler(TemplateHandler):
+#    """render template testimonials sosbeacon"""
+#    def get(self):
+#        logging.info("asdf")
+#        if not 'u' in self.session or not 's' in self.session:
+#            out = self.render('contact.mako',is_loggedin=False)
+#            self.response.out.write(out)
+#        else:
+#            out = self.render('contact.mako', school_name = self.school_name,
+#                user_name = self.user_name,
+#                schools = self.list_school,
+#                timezone = '',
+#                is_loggedin = True)
+#            self.response.out.write(out)
+#
+#    def post(self):
+#        """Sent a email to admin of school beacon"""
+#        import json
+#        self.response.headers['Content-type'] = 'application/json'
+#        self.response.out.write(json.dumps({}))
+
+
+class ForgotPasswordHandler(TemplateHandler):
+    """render template testimonials sosbeacon"""
+    def get(self):
+        if not 'u' in self.session or not 's' in self.session:
+            out = self.render('forgot_password.mako',is_loggedin=False, message="")
+            self.response.out.write(out)
+        else:
+            out = self.render('forgot_password.mako', school_name = self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school,
+                timezone = '',
+                is_loggedin = True,
+                message="")
+            self.response.out.write(out)
+
+    def post(self):
+        """sent email to admin of sosbeacon school"""
+        from sosbeacon.user import forgot_password
+        email    = self.request.POST['email']
+
+        if not email:
+            out = self.render('contact.mako', is_loggedin=False,
+                message="Please enter your email address.")
+            self.response.out.write(out)
+            return
+
+        user_key = User.query(User.email == email)
+        user = user_key.get()
+
+        if user:
+            forgot_password(user)
+            out = self.render('contact.mako', is_loggedin=False,
+                message="Your new password has been sent to you by email message. "
+                        "You will now be returned to where you were before.")
+            self.response.out.write(out)
+        else:
+            out = self.render('contact.mako', is_loggedin=False,
+                message="""
+                You have not entered a email address that we recognize, or your account has not been activated or you
+                have not set a password in settings in your SOSbeacon app on your mobile phone. Please try again.
+                """)
+            self.response.out.write(out)
+
+
 url_map = [
     ('/', MainHandler),
+    ('/school/web/users/login/', HomeLoginHandler),
+    ('/school/web/users/logout/', HomeLogoutHandler),
+    ('/school', HomeHandler),
+    ('/school/web/about/index', AboutHandler),
+    ('/school/web/about/features', FeaturesHandler),
+    ('/school/web/about/testimonials', TestimonialsHandler),
+#    ('/school/web/about/contact', ContactHandler),
+    ('/school/web/users/forgot', ForgotPasswordHandler),
     ('/admin/', AdminHandler),
     ('/e/(.*)/(.*)', EventHandler),
-    ('/import/student/upload/', StudentImportHandler),
+    ('/import/students/upload/', StudentImportHandler),
+    ('/import/contacts/upload/', ContactImportHandler),
     ('/uploads/new', FileUploadHandler),
     ('/uploads/post', FileUploadPostHandler),
     ('/uploads/view/([^/]+)?', FileUplaodViewHandler),
     webapp2.Route(r'/school/<resource_id:.+>',
         handler='main.ChooseSchoolHandler'),
+#    webapp2.Route(r'/contact',
+#        handler='main.ContactHandler'),
 ]
 app = webapp2.WSGIApplication(
     url_map,

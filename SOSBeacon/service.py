@@ -85,6 +85,10 @@ url_map = [
     webapp2.Route(r'/service/admin/user<:/?>',
                   handler='sosbeacon.service.UserListHandler'),
 
+    # Export Student contact to csv file
+    webapp2.Route(r'/service/export/student',
+                  handler='sosbeacon.service.ExportStudentHandler'),
+
     ]
 
 app = webapp2.WSGIApplication(

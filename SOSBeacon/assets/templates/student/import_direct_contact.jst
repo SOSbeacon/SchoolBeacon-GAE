@@ -1,0 +1,32 @@
+<div class="top_view row-fluid">
+  <form action="/import/contacts/upload/" enctype="multipart/form-data" method="post"
+    class="import containter-fluid well form-horizontal">
+    <div class="row-fluid">
+      <div class="modal-header">
+        <h3>Import Direct Contact</h3>
+      </div>
+      <div class="modal-body">
+        <fieldset>
+          <div class="control-group">
+            <label class="control-label" for="students_file">Contacts CSV</label>
+            <div class="controls">
+              <input type="file" name="contacts_file" id="contacts_file" value="direct"/>
+            </div>
+          </div>
+          <div class="control-group">
+            <div class="controls">
+              <p>CSV file format like this:
+                 Group Name | Contact name | Email | Text phone | Voice phone
+                 <br>(Not import first row (heading))</p>
+            </div>
+          </div>
+        </fieldset>
+      </div>
+    </div>
+    <div class="modal-footer form-actions">
+      <button class="save btn btn-primary">
+        <i class="icon-download-alt icon-white"></i> Import
+      </button>
+    </div>
+  </form>
+</div>

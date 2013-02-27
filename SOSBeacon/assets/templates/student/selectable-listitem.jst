@@ -1,4 +1,11 @@
-<td class="select-col"><input class="selected" type="checkbox" /></td>
-<td class="student">
-  <%- name %>
-</td>
+<% if (default_student) { %>
+    <td class="select-col"></td>
+    <td class="student">
+      <%- name %>
+    </td>
+<% } else { %>
+    <td class="select-col"><input class="selected" type="checkbox" /></td>
+    <td class="student">
+      <%- name %> &nbsp;&nbsp; <em style="font-size: 11px;color: #666;font-style: italic;"><%- group_list %></em>
+    </td>
+<% } %>

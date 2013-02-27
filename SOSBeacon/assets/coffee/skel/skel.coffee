@@ -209,6 +209,8 @@ class App.Skel.View.ListView extends Backbone.View
 
     render: =>
         @$el.html(@template())
+#        image loading before collection is loaded
+        @$el.append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 50%" class="image">')
 
         if @headerView
             @$("table.table").prepend(new @headerView().render().el)
@@ -219,8 +221,8 @@ class App.Skel.View.ListView extends Backbone.View
                 collection: @collection
                 id: @cid
             })
-            @$("div.gridfilters").html(@filter.render().el)
-            @$("div.gridFooter").html(@footer_template())
+#            @$("div.gridfilters").html(@filter.render().el)
+#            @$("div.gridFooter").html(@footer_template())
             App.Skel.Event.bind("filter:run:#{@filter.cid}", @run, this)
 
             @filter.runFilter()
@@ -229,14 +231,20 @@ class App.Skel.View.ListView extends Backbone.View
 
     run: (filters) =>
         @collection.server_api = {
-            limit: @$("div.gridFooter > .filter-controls > .controls > .size-select").val() ? 25
+            limit: @$("div.gridFooter > .filter-controls > .controls > .size-select").val() ? 200
         }
         if @collection.query_defaults
             _.extend(@collection.server_api, @collection.query_defaults)
         _.extend(@collection.server_api, filters)
 
-        @collection.fetch()
-
+        @collection.fetch(
+            success: =>
+#                remove loading image when collection loading successful
+                @$('.image').css('display', 'none')
+            error: =>
+#                reidrect login page if user not login
+                window.location = '/school'
+        )
         return false
 
     addOne: (object) =>

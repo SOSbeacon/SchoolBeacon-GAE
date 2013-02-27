@@ -56,8 +56,8 @@ class App.SOSBeacon.Collection.GroupList extends Backbone.Paginator.requestPager
     paginator_ui: {
         firstPage: 0
         currentPage: 0
-        perPage: 100
-        totalPages: 100
+        perPage: 3
+        totalPages: 2
     }
 
     query_defaults: {
@@ -122,12 +122,41 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
         if e
             e.preventDefault()
 
+        if @model.get('key')
+            if @model.get('name') == @$('input.name').val()
+                return super()
+            else
+                data = {
+                    added: [@model.get('added')],
+                    name: @$('input.name').val(),
+                    modified: [@model.get('modified')],
+                    default_group: false,
+                    key: @model.get('key'),
+                    number_student: @model.get('number_student'),
+                }
+                $.ajax({
+                    type: 'PUT'
+                    dataType: 'json'
+                    url: '/service/group/' + @model.get('key')
+                    data: JSON.stringify(data)
+                    complete: (xhr) ->
+                        if xhr.status == 400
+                            App.Util.Form.hideAlert()
+                            App.Util.Form.showAlert("Error!", "Duplicate group names not allowed.", "alert-warning")
+                            $(".modal").hide()
+                            $(".modal-backdrop").hide()
+                        if xhr.status == 200
+                            location.reload()
+                })
+                return false
+
         valid = @model.save({
             name: @$('input.name').val()
         },
             complete: (xhr, textStatus) =>
                 if xhr.status == 400
                     valid = 'exits'
+                    return false
         )
         setTimeout(( =>
             if valid == false
@@ -139,7 +168,7 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
                 return false
 
             return super()
-        ), 300)
+        ), 500)
 
     render: (asModal) =>
         el = @$el

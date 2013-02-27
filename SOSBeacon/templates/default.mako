@@ -10,12 +10,18 @@
             <a class="brand" href="/">School Beacon</a>
             <div id="sosbeaconheader" class="nav-collapse">
                 <ul id="sosbeacon-menu" class="nav">
-                    <li class="menu" id="menu-item-settings" style="float: right">
-                        <a href="/settings" id="settings">
-                            <i class="icon-wrench"></i>
-                            Settings
+                    <li class="menu" id="menu-item-home" style="float: left">
+                        <a href="/school" id="home">
+                            <i class="icon-home"></i>
+                            Home
                         </a>
                     </li>
+##                    <li class="menu" id="menu-item-settings" style="float: right">
+##                        <a href="/settings" id="settings">
+##                            <i class="icon-wrench"></i>
+##                            Settings
+##                        </a>
+##                    </li>
                 </ul>
                 <ul class="nav pull-right">
                     <li id="prefs" class="dropdown">
@@ -36,8 +42,8 @@
                                         %endfor
                                 </ul>
                             </li>
-                            <li class="divider"></li>
-                            <li><a id="account">Account Preferences</a></li>
+##                            <li class="divider"></li>
+##                            <li><a id="account">Account Preferences</a></li>
                             <li class="divider"></li>
                             <li><a id="logout">Log Out</a></li>
                         </ul>
@@ -50,7 +56,9 @@
 </div>
 
 <div id="sosbeacon">
-    <div id="sosbeaconcontainer" class="container"></div>
+    <div id="sosbeaconcontainer" class="container">
+##        <img src="/static/img/spinner_squares_circle.gif" id="image" style="margin-top: 50px; display: none">
+    </div>
 </div>
 
 <%block name="body_script">
@@ -74,7 +82,7 @@
         current_school = "${school_name}"
 
         $("#logout").click(function() {
-            window.location = "/authentication/logout"
+            window.location = "/school/web/users/logout/"
         })
 
         $("#account").click(function() {

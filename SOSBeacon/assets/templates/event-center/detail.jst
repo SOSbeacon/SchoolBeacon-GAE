@@ -1,8 +1,11 @@
-<div class="span8 event-detail">
+<div class="span8 event-detail" style="width: 55%">
   <div class="header-container">
     <h2 class="header"><i class="icon-share"></i> Event</h2>
     <button id="edit-event-button" class="btn btn-small btn-primary">
       <i class="icon-edit icon-white"></i> Edit
+    </button>
+    <button id="email-download-button" class="btn btn-small btn-primary" style = "margin-right: 5px">
+      <i class="icon-edit icon-white"></i> Email Downloads
     </button>
   </div>
   <div class="title">
@@ -39,7 +42,10 @@
       <a href="#not-responded">Not Responded</a>
     </li>
     <li data-toggle="tab">
-      <a href="#no-students">Students with No Responders</a>
+      <a href="#no-students">Non-Responders<br>Student Contacts</a>
+    </li>
+    <li data-toggle="tab">
+      <a href="#no-directs">Non-Responder <br>Direct Contacts</a>
     </li>
   </ul>
   <div class="tab-content">
@@ -51,18 +57,26 @@
     <div class="tab-pane" id="responded"></div>
     <div class="tab-pane" id="not-responded"></div>
     <div class="tab-pane" id="no-students"></div>
+    <div class="tab-pane" id="no-directs"></div>
   </div>
 </div>
-<div id="event-center-message" class="span4">
+<div id="event-center-message" class="span4" style="width: 42%">
   <h2><i class="icon-th-list"></i> Messages</h2>
-  <div class="event-buttons btn-group">
-    <button class="event-add-comment btn">
-      <i class="icon-comment"></i> New Comment
+    <button class="event-add-email btn">
+      <i class="icon-comment"></i> Email Only
     </button>
     <button class="event-add-broadcast btn">
-      <i class="icon-bullhorn"></i> New Broadcast
+      <i class="icon-bullhorn"></i> Email + SMS
     </button>
-  </div>
+    <button class="event-add-emergency btn">
+      <i class="icon-comment"></i> Emergency Alert
+    </button>
+    <button class="event-add-call btn">
+      <i class="icon-comment"></i> Email + Call
+    </button>
+  <button class="event-add-comment btn" style="margin: 10px 0;">
+    <i class="icon-comment"></i> Comment
+  </button>
   <div class="message-entry"></div>
   </div>
 </div>

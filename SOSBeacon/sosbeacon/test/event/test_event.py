@@ -35,7 +35,6 @@ class TestEventModel(unittest.TestCase):
         event_dict = {
             'title': 'Test Title',
             'event_type': 'e',
-            'date': datetime(2012, 8, 30, 7, 37),
             'status': EVENT_STATUS_DRAFT,
             'content': 'This is some test content',
             'groups': []
@@ -47,7 +46,6 @@ class TestEventModel(unittest.TestCase):
 
         self.assertEqual(event_dict['title'], event.title)
         self.assertEqual(event_dict['event_type'], event.event_type)
-        self.assertEqual(event_dict['date'], event.date)
         self.assertEqual(event_dict['status'], event.status)
         self.assertEqual(event_dict['content'], event.content)
         self.assertEqual(event_dict['groups'], event.groups)

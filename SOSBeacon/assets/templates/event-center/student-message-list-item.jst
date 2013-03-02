@@ -1,0 +1,43 @@
+<% if (type == "c") { %>
+  <% if (is_admin == true) { %>
+    <div class="message-item-admin">
+  <% } else { %>
+    <div class="message-item-comment">
+  <% } %>
+<% } else { %>
+  <div class="message-item-broadcast">
+<% } %>
+<div class="message-item">
+  <div class="header row-fluid">
+    <div class="comment-author">
+      <% if (user_name == null) { %>
+      Guest
+      <% } else { %>
+      <%- user_name %>
+      <% } %>
+    </div>
+    <div class="comment-meta" initvalue="<%- initmodified %>">- <%- modified %>, wrote</div>
+  </div>
+  <% if (type == "c") { %>
+  <div class="message-content">
+    <%= message.body %>
+    <div id='<%= key%>' style='margin-left: 5%; width: 80%; color: blue'></div>
+    <% } else { %>
+    <div class="message-broadcast">
+      <% if (message.sms == '') {%>
+        <div class="broadcast-sms">
+          <h5>
+        </div>
+      <% } else { %>
+        <div class="broadcast-sms">
+          <h5>SMS:</h5><%= message.sms %>
+        </div>
+      <% } %>
+      <div class="broadcast-email">
+        <h5>Email:</h5><%= message.email %>
+        <div class='mapView' id='mapCanvasView<%= key %>'></div>
+      </div>
+      <% } %>
+    </div>
+  </div>
+</div>

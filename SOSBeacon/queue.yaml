@@ -30,3 +30,16 @@ queue:
 - name: event-updator
   rate: 100/s
 
+# broadcast to current user
+- name: user-tx
+  rate: 100/s
+
+# send an email to user when broadcast is robocall
+- name: user-robocall
+  rate: 100/s
+
+# Robocall
+- name: robocall
+  rate: 100/s
+  retry_parameters:
+     task_retry_limit: 10

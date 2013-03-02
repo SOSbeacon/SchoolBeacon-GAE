@@ -159,7 +159,7 @@ def get_marker_for_methods(event_key, search_methods):
     return place_holder
 
 
-def create_or_update_marker(event_key, student_key, contact, search_methods):
+def create_or_update_marker(event_key, student_key, message_key, contact, search_methods):
     """Look for a marker for the requested methods.  If one is found, return
     its short_id, if multiple are found, request a merge, then return one's
     short_id.
@@ -177,6 +177,9 @@ def create_or_update_marker(event_key, student_key, contact, search_methods):
 
     if not event_key:
         raise ValueError('event_key is required.')
+
+    if not message_key:
+        raise ValueError('message_key is required.')
 
     marker = get_marker_for_methods(event_key, search_methods)
 
@@ -196,7 +199,7 @@ def create_or_update_marker(event_key, student_key, contact, search_methods):
             methods=search_methods)
         marker.put()
 
-    insert_count_update_task(event_key, marker.key, 'contact')
+    insert_count_update_task(event_key, marker.key, message_key, 'contact')
 
     return marker.short_id
 
@@ -352,5 +355,5 @@ def mark_as_acknowledged(event_key, marker_key):
     for student_id in marker.students:
         acknowledge_student(event_key, student_id)
 
-    insert_count_update_task(event_key, marker.key, 'ack')
+    insert_count_update_task(event_key, marker.key, None, 'ack')
 

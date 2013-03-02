@@ -15,13 +15,15 @@ marker_schema = {
     'acknowledged': voluptuous.boolean(),
     'name': basestring,
     'responded': [basestring],
+    'is_direct': voluptuous.boolean(),
 }
 
 marker_query_schema = {
     'feq_acknowledged': voluptuous.boolean(),
     'feq_event': voluptuous.ndbkey(),
     'fan_key': voluptuous.ndbkey(),
-    'name': basestring
+    'name': basestring,
+    'feq_is_direct': voluptuous.boolean(),
 }
 
 
@@ -49,6 +51,8 @@ class StudentMarker(EntityBase):
     # Has EVERYone acknowledged?
     all_acknowledged = ndb.BooleanProperty('aa', default=False)
     all_acknowledged_at = ndb.IntegerProperty('at', indexed=False)
+
+    is_direct = ndb.BooleanProperty('id')
 
     def merge(self, other):
         """Merge this StudentMarker entity with another StudentMarker."""
@@ -118,11 +122,12 @@ class StudentMarker(EntityBase):
         _handle_date('acknowledged_at', self.acknowledged_at)
         marker['all_acknowledged'] = self.acknowledged
         _handle_date('all_acknowledged_at', self.all_acknowledged_at)
+        marker['is_direct'] = self.is_direct
 
         return marker
 
 
-def create_or_update_marker(event_key, student):
+def create_or_update_marker(event_key, student, message_key):
     """Create a StudentMarker if one doesn't exist, otherwise update the
     last_broadcast timestamp if one does.
     """
@@ -132,12 +137,22 @@ def create_or_update_marker(event_key, student):
     marker_key = ndb.Key(
         StudentMarker, "%s:%s" % (event_key.id(), student.key.id()))
 
-    new_marker = StudentMarker(
-        key=marker_key,
-        event=event_key,
-        name=student.name,
-        contacts=_build_contact_map(student.contacts[:])
-    )
+    if student.is_direct:
+        new_marker = StudentMarker(
+            key=marker_key,
+            event=event_key,
+            name=student.name,
+            contacts=_build_contact_map(student.contacts[:]),
+            is_direct=True
+        )
+    else:
+        new_marker = StudentMarker(
+            key=marker_key,
+            event=event_key,
+            name=student.name,
+            contacts=_build_contact_map(student.contacts[:]),
+            is_direct=False
+        )
 
     @ndb.transactional
     def txn(new_marker):
@@ -154,7 +169,7 @@ def create_or_update_marker(event_key, student):
 
     txn(new_marker)
 
-    insert_count_update_task(event_key, student.key, 'student')
+    insert_count_update_task(event_key, student.key, message_key, 'student')
 
 
 def _build_contact_map(contacts):

@@ -15,6 +15,8 @@ if libs_dir not in sys.path:
 import webapp2
 
 url_map = [
+    ('.*/event/tx/user', 'sosbeacon.task.UserTxHandler'),
+    ('.*/event/tx/user/method', 'sosbeacon.task.UserMethodTxHandler'),
     ('.*/event/tx/start', 'sosbeacon.task.GroupsTxHandler'),
     ('.*/event/tx/group', 'sosbeacon.task.GroupTxHandler'),
     ('.*/event/tx/student', 'sosbeacon.task.StudentTxHandler'),
@@ -27,6 +29,11 @@ url_map = [
     ('.*/event/merge/contact_marker',
      'sosbeacon.task.MergeContactMarkerHandler'),
     ('.*/event/ack/contact_marker', 'sosbeacon.task.AckContactMarkerHandler'),
+
+    ('.*/event/tx/robocall', 'sosbeacon.task.EmailRobocallHander'),
+    ('.*/event/robo/start', 'sosbeacon.task.RobocallStartHandler'),
+    ('.*/event/robo/process', 'sosbeacon.task.RobocallProcessHandler'),
+    ('.*/event/robo/sentemail', 'sosbeacon.task.RobocallSentEmailHandler'),
 ]
 
 app = webapp2.WSGIApplication(url_map)

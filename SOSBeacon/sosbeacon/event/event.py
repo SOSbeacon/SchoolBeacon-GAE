@@ -32,7 +32,6 @@ event_schema = {
     'title': basestring,
     'status': voluptuous.any('', EVENT_STATUS_DRAFT, EVENT_STATUS_CLOSED,
                              EVENT_STATUS_SENT),
-    'date': voluptuous.datetime(),
     'last_broadcast_date': voluptuous.any(None, basestring,
                                           voluptuous.datetime()),
     'groups': [voluptuous.ndbkey()],
@@ -72,6 +71,8 @@ class Event(EntityBase):
     title_ = ndb.ComputedProperty(lambda self: self.title.lower(), name='t_')
 
     event_type = ndb.StringProperty('et')
+    message_type = ndb.StringProperty('mt')
+
     date = ndb.DateTimeProperty('d')
     status = ndb.StringProperty('st', default='dr')
 
@@ -82,7 +83,7 @@ class Event(EntityBase):
 
     student_count = ndb.IntegerProperty('sc', default=0, indexed=False)
     contact_count = ndb.IntegerProperty('cc', default=0, indexed=False)
-    responded_count = ndb.IntegerProperty('rc', default=0, indexed=False)
+    responded_count = ndb.IntegerProperty('rc', default=1, indexed=False)
 
     last_broadcast_date = ndb.DateTimeProperty('lb')
 
@@ -99,16 +100,19 @@ class Event(EntityBase):
 
         event.title = data.get('title')
         event.event_type = data.get('event_type')
-        event.date = data.get('date')
+
         if not event.date:
             event.date = datetime.utcnow()
+        else:
+            event.date = datetime.strptime(data.get('date'), "%Y-%m-%d %H:%M")
 
         status = data.get('status', EVENT_STATUS_DRAFT)
         if status == EVENT_STATUS_CLOSED:
             event.status = EVENT_STATUS_CLOSED
 
         event.content = data.get('content')
-        event.school = data.get('school')
+        if data.get('school'):
+            event.school = data.get('school')
 
         for key in data.get('groups'):
             if isinstance(key, basestring):
@@ -133,6 +137,7 @@ class Event(EntityBase):
 
         event['title'] = self.title
         event['type'] = self.event_type
+        event['message_type'] = self.message_type
 
         event['date'] = None
         if self.date:
@@ -155,11 +160,12 @@ class Event(EntityBase):
         return event
 
 
-def insert_count_update_task(event_key, source_key, count_type):
+def insert_count_update_task(event_key, source_key, message_key, count_type):
     """Inserts a marker in the event's queue and attempts to insert
     a worker to apply the update.
     """
     import time
+    from .message import broadcast_email_robocall_task
 
     if count_type not in COUNT_TYPE_MAP:
         return
@@ -199,6 +205,17 @@ def insert_count_update_task(event_key, source_key, count_type):
                 'event': event_key
             }
         )
+    except (taskqueue.TombstonedTaskError,
+            taskqueue.TaskAlreadyExistsError):
+        pass
+
+    try:
+        if message_key:
+            if message_key.get():
+                if message_key.get().message_type == 'ec':
+                    event = ndb.Key(urlsafe = event_key)
+                    broadcast_email_robocall_task(message_key, event)
+
     except (taskqueue.TombstonedTaskError,
             taskqueue.TaskAlreadyExistsError):
         pass

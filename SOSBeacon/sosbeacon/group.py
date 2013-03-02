@@ -71,8 +71,8 @@ class Group(EntityBase):
         number_student, next_curs, more = get_student_keys(self.key)
         group['number_student'] = len(number_student) + 1
 
-        group['added'] = self.added.strftime('%Y-%m-%d %H:%M'),
-        group['modified'] = self.modified.strftime('%Y-%m-%d %H:%M'),
+        group['added'] = self.added.strftime('%Y-%m-%d %H:%M')
+        group['modified'] = self.modified.strftime('%Y-%m-%d %H:%M')
 
         return group
 

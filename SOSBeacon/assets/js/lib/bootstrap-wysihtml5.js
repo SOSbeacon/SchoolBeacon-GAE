@@ -270,6 +270,7 @@
                     $("#file-queue").css('display', 'block');
                     $("#file-queue").html('');
                     $("#file").uploadify({
+                      'file_size_limit' : "2 MB",
                       'swf': '/static/img/uploadify.swf',
                       'uploader': response,
                       'buttonText': 'Upload Image',

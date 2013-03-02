@@ -81,6 +81,47 @@ class App.SOSBeacon.Collection.StudentMarkerList extends Backbone.Paginator.requ
     server_api: {}
 
 
+class App.SOSBeacon.Model.DirectMarker extends Backbone.Model
+    idAttribute: 'key'
+    urlRoot: '/service/student_marker'
+    defaults: ->
+        return {
+            key: null,
+            contacts: {},
+            last_broadcast: null,
+            name: "",
+            acknowledged: false,
+            acknowledged_at: 0,
+            all_acknowledged: false,
+            all_acknowledged_at: 0,
+        }
+
+
+class App.SOSBeacon.Collection.DirectMarkerList extends Backbone.Paginator.requestPager
+    model: App.SOSBeacon.Model.DirectMarker
+
+    paginator_core: {
+        type: 'GET',
+        dataType: 'json'
+        url: '/service/student_marker'
+    }
+
+    paginator_ui: {
+        firstPage: 0
+        currentPage: 0
+        perPage: 100
+        totalPages: 100
+    }
+
+    query_defaults: {
+        orderBy: 'name'
+        orderDirection: 'desc'
+        limit: 200
+    }
+
+    server_api: {}
+
+
 class App.SOSBeacon.View.MarkerListItem extends App.Skel.View.ListItemView
     template: JST['responders/list']
 
@@ -100,17 +141,6 @@ class App.SOSBeacon.View.MarkerList extends App.Skel.View.ListView
         @ackFlag = ackFlag
 
         @gridFilters = new App.Ui.Datagrid.FilterList()
-
-        @gridFilters.add(new App.Ui.Datagrid.FilterItem(
-            {
-                name: 'Name'
-                type: 'text'
-                prop: 'flike_name'
-                default: false
-                control: App.Ui.Datagrid.InputFilter
-            }
-        ))
-
         super(collection)
 
     run: (filters) =>
@@ -126,8 +156,206 @@ class App.SOSBeacon.View.MarkerList extends App.Skel.View.ListView
         #add filter to always flag by the ack type
         _.extend(@collection.server_api, filters)
 
-        @collection.fetch()
+        @collection.fetch(
+            success: =>
+                #remove loading image when collection loading successful
+                @$('.image').css('display', 'none')
+            error: =>
+                #reidrect login page if user not login
+                window.location = '/school'
+        )
+        return false
+
+
+class App.SOSBeacon.View.DirectMarkerListItem extends App.Skel.View.ListItemView
+    template: JST['responders/directlist']
+
+    render: =>
+        model_props = @model.toJSON()
+        contacts = @model.get('contacts')
+        emails = []
+        text_phone = []
+        voice_phone = []
+
+        $.each contacts, (key, value) ->
+            $.each value, (key, value) ->
+                if key == 'methods'
+                    for method in value
+                        if method.type == 'e'
+                            emails.push(method.value)
+                        if method.type == 't'
+                            text_phone.push(method.value)
+                        if method.type == 'p'
+                            voice_phone.push(method.value)
+
+        model_props['email'] = emails
+        model_props['text_phone'] = text_phone
+        model_props['voice_phone'] = voice_phone
+        @$el.html(@template(model_props))
+        return this
+
+
+class App.SOSBeacon.View.DirectMarkerListHeader extends App.Skel.View.ListItemHeader
+    template: JST['responders/direct-listheader']
+
+
+class App.SOSBeacon.View.MarkerListDirect extends App.Skel.View.ListView
+    itemView: App.SOSBeacon.View.DirectMarkerListItem
+    headerView: App.SOSBeacon.View.DirectMarkerListHeader
+    gridFilters: null
+    ackFlag: false
+
+    initialize: (collection, eventKey, ackFlag) =>
+        @eventKey = eventKey
+        @ackFlag = ackFlag
+
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+        super(collection)
+
+    render: =>
+        @$el.html(@template())
+        #        image loading before collection is loaded
+        @$el.append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 50%" class="image">')
+
+        if @headerView
+            @$("table.table").prepend(new @headerView().render().el)
+
+        if @gridFilters
+            @filter = new App.Ui.Datagrid.GridView({
+                gridFilters: @gridFilters
+                collection: @collection
+                id: @cid
+            })
+            @$("div.gridfilters").html(@filter.render().el)
+            App.Skel.Event.bind("filter:run:#{@filter.cid}", @run, this)
+
+            @filter.runFilter()
+
+        return this
+
+    run: (filters) =>
+        @collection.server_api = {
+            limit: @$("div.gridFooter > .filter-controls > .controls > .size-select").val() ? 200
+        }
+        if @collection.query_defaults
+            _.extend(@collection.server_api, @collection.query_defaults)
+
+        filters['feq_acknowledged'] = @ackFlag
+        filters['feq_event'] = @eventKey
+        filters['feq_is_direct'] = true
+
+        #add filter to always flag by the ack type
+        _.extend(@collection.server_api, filters)
+
+        @collection.fetch(
+            success: =>
+                #remove loading image when collection loading successful
+                @$('.image').css('display', 'none')
+            error: =>
+                #reidrect login page if user not login
+#                window.location = '/school'
+                console.log 'direct contact'
+        )
 
         return false
 
 
+class App.SOSBeacon.View.StudentMarkerListItem extends App.Skel.View.ListItemView
+    template: JST['responders/studentlist']
+
+    render: =>
+        model_props = @model.toJSON()
+        contacts = @model.get('contacts')
+        emails = []
+        text_phone = []
+        voice_phone = []
+        names = []
+
+        $.each contacts, (key, value) ->
+            $.each value, (key, value) ->
+                if key == 'name'
+                    names.push(value)
+                if key == 'methods'
+                    for method in value
+                        if method.type == 'e'
+                            emails.push(method.value)
+                        if method.type == 't'
+                            text_phone.push(method.value)
+                        if method.type == 'p'
+                            voice_phone.push(method.value)
+
+        model_props['email1'] = emails[0]
+        model_props['text_phone1'] = text_phone[0]
+        model_props['voice_phone1'] = voice_phone[0]
+        model_props['names1'] = names[0]
+        model_props['email2'] = emails[1]
+        model_props['text_phone2'] = text_phone[1]
+        model_props['voice_phone2'] = voice_phone[1]
+        model_props['names2'] = names[1]
+        @$el.html(@template(model_props))
+        return this
+
+
+class App.SOSBeacon.View.StudentMarkerListHeader extends App.Skel.View.ListItemHeader
+    template: JST['responders/student-listheader']
+
+
+class App.SOSBeacon.View.MarkerListStudent extends App.Skel.View.ListView
+    itemView: App.SOSBeacon.View.StudentMarkerListItem
+    headerView: App.SOSBeacon.View.StudentMarkerListHeader
+    gridFilters: null
+    ackFlag: false
+
+    initialize: (collection, eventKey, ackFlag) =>
+        @eventKey = eventKey
+        @ackFlag = ackFlag
+
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+        super(collection)
+
+    render: =>
+        @$el.html(@template())
+        #        image loading before collection is loaded
+        @$el.append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 50%" class="image">')
+
+        if @headerView
+            @$("table.table").prepend(new @headerView().render().el)
+
+        if @gridFilters
+            @filter = new App.Ui.Datagrid.GridView({
+                gridFilters: @gridFilters
+                collection: @collection
+                id: @cid
+            })
+            @$("div.gridfilters").html(@filter.render().el)
+            App.Skel.Event.bind("filter:run:#{@filter.cid}", @run, this)
+
+            @filter.runFilter()
+
+        return this
+
+    run: (filters) =>
+        @collection.server_api = {
+            limit: @$("div.gridFooter > .filter-controls > .controls > .size-select").val() ? 200
+        }
+        if @collection.query_defaults
+            _.extend(@collection.server_api, @collection.query_defaults)
+
+        filters['feq_acknowledged'] = @ackFlag
+        filters['feq_event'] = @eventKey
+        filters['feq_is_direct'] = false
+
+        #add filter to always flag by the ack type
+        _.extend(@collection.server_api, filters)
+
+        @collection.fetch(
+            success: =>
+                #remove loading image when collection loading successful
+                @$('.image').css('display', 'none')
+            error: =>
+                #reidrect login page if user not login
+#                window.location = '/school'
+                console.log 'student contact'
+        )
+
+        return false

@@ -85,8 +85,14 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
     events:
         "click .event-add-comment": "addComment"
         "click .event-add-broadcast": "addBroadcast"
+        "click .event-add-emergency": "addEmergency"
+        "click .event-add-call": "addCall"
+        "click .event-add-email": "addEmail"
         "click #edit-event-button": "editEvent"
         "click #details-tabs a": "triggerTab"
+        "click #no-students #robocall": "robocallToStudent"
+        "click #no-directs #robocall": "robocallToDirect"
+        "click #email-download-button": "downloadEvent"
 
     initialize: (id) =>
         @groupViews = []
@@ -95,6 +101,9 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @respondedView = null
         @nonRespondedView = null
         @noStudentsView = null
+        @noDirectsView = null
+        @studentMarkerList = new App.SOSBeacon.Collection.StudentMarkerList()
+        @directMarkerList = new App.SOSBeacon.Collection.DirectMarkerList()
 
         @model = new App.SOSBeacon.Model.Event({key: id})
         @model.fetch({async: false})
@@ -137,6 +146,11 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
             @groupViews.push(groupView)
         )
 
+    downloadEvent: =>
+        @downloadEmail = new App.SOSBeacon.View.EventDownloadEmail(@model)
+        el = @downloadEmail.render(true).$el
+        el.modal('show')
+
     messageAdd: (message) =>
         @collection.add(message, {at: 0})
 
@@ -162,6 +176,40 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         @$(".message-entry").append(@broadcastView.render().el)
 
+    addEmail: =>
+        if @messageView
+            @messageView.hide()
+
+        if @broadcastView
+            @broadcastView.close()
+
+        @broadcastView = new App.SOSBeacon.View.AddEmail({event: @model})
+
+        @$(".message-entry").append(@broadcastView.render().el)
+
+    addEmergency: =>
+        if @messageView
+            @messageView.hide()
+
+        if @broadcastView
+            @broadcastView.close()
+
+        @broadcastView = new App.SOSBeacon.View.AddEmergency({event: @model})
+
+        @$(".message-entry").append(@broadcastView.render().el)
+
+    addCall: =>
+        if @messageView
+            @messageView.hide()
+
+        if @broadcastView
+            @broadcastView.close()
+
+        @broadcastView = new App.SOSBeacon.View.AddCall({event: @model})
+
+        @$(".message-entry").append(@broadcastView.render().el)
+
+
     editEvent: =>
         App.SOSBeacon.router.navigate(
             "/eventcenter/edit/#{@model.id}", {trigger: true})
@@ -172,30 +220,59 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         if href == "#responded" and not @respondedView
             @respondedView = new App.SOSBeacon.View.MarkerList(
                 new App.SOSBeacon.Collection.ContactMarkerList,
-                @model.id, true)
+            @model.id, true)
+
             @$("#responded").append(@respondedView.render().el)
 
         else if href == "#not-responded" and not @nonRespondedView
             @nonRespondedView = new App.SOSBeacon.View.MarkerList(
                 new App.SOSBeacon.Collection.ContactMarkerList,
-                @model.id, false)
+            @model.id, false)
+
             @$("#not-responded").append(@nonRespondedView.render().el)
 
         else if href == "#no-students" and not @noStudentsView
-            @noStudentsView = new App.SOSBeacon.View.MarkerList(
-                new App.SOSBeacon.Collection.StudentMarkerList,
-                @model.id, false)
-            @$("#no-students").append(@noStudentsView.render().el)
+            @model.fetch({async: false})
+            @model.initialize()
 
+            @noStudentsView = new App.SOSBeacon.View.MarkerListStudent(
+                @studentMarkerList,
+            @model.id, false)
+
+            @$("#no-students").append(@noStudentsView.render().el)
+            if @model.get('message_type') == 'rc'
+                @$("#no-students fieldset").append("<button class='btn btn-primary' id='robocall'>Robocall non-responders parents</button>")
+
+        else if href == "#no-directs" and not @noDirectsView
+            @model.fetch({async: false})
+            @model.initialize()
+
+            @noDirectsView = new App.SOSBeacon.View.MarkerListDirect(
+                @directMarkerList,
+            @model.id, false)
+
+            @$("#no-directs").append(@noDirectsView.render().el)
+            if @model.get('message_type') == 'rc'
+                @$("#no-directs fieldset").append("<button class='btn btn-primary' id='robocall'>Robocall non-responders contacts</button>")
         el.tab('show')
 
+    robocallToStudent: =>
+        if !confirm("Do you really to make calls to students contact?")
+            return
+        $.ajax '/service/event/' + @model.id + '/robocall/student',  {'type':'POST'}
+        return false
 
+    robocallToDirect: =>
+        if !confirm("Do you really to make calls to directs contact?")
+            return
+        $.ajax '/service/event/' + @model.id + '/robocall/direct',  {'type':'POST'}
+        return false
 
     onClose: =>
         App.SOSBeacon.Event.unbind(null, null, this)
 
         for view in [@messageView, @broadcastView, @respondedView,
-                     @nonRespondedView, @noStudentsView]
+            @nonRespondedView, @noStudentsView, @noDirectsView]
             if view
                 view.close()
 
@@ -205,14 +282,69 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @messageListView.close()
 
 
+class App.SOSBeacon.View.EventDownloadEmail extends Backbone.View
+    id: "downloademail"
+    tagName:'div'
+    template: JST['event-center/download-email']
+
+    events:
+        "click #send-email-select #email-download-button": "downloadEmail"
+
+    initialize: (model) =>
+        @model = model
+
+    render: =>
+        @$el.html(@template(@model.toJSON()))
+        return this
+
+    downloadEmail: =>
+
+        downloadOptions = $(".de-option")
+        selectCount = ""
+        $.each downloadOptions, ->
+            if $(this).is(":checked")
+                selectCount = selectCount + $(this).val()
+
+        if selectCount.length > 0
+            if confirm("Are you sure you want to send phone website data to your email?")
+                $(".message-info").html "<h4 style='color: blue'>Start sending email, please wait and don't reload your browser ...</h4>"
+                $.ajax
+                    url: '/service/event/' + @model.id + '/' + selectCount + '/download',
+                    type: "GET",
+                    async: false,
+                    success: (data) ->
+                        selectCount = ""
+                        $('.message-info').hide()
+                        App.Util.Form.showAlert(
+                            "Successs!", "Sent successful to your email", "alert-success")
+            else
+                false
+        else
+            alert "Please select your download options."
+            false
+
+        return false
+
+
 class App.SOSBeacon.View.EventGroup extends Backbone.View
+    tagName:'a'
+    className:'editGroup'
+
+    events:
+        "click": "editGroup"
 
     initialize: (model) =>
         @model = model
 
     render: =>
         @$el.html("#{@model.get('name')} <br />")
+        #        @$el.attr('href','/#groupstudents/'+@model.get('key'))
         return this
+
+    editGroup: =>
+        @groupEdit = new App.SOSBeacon.View.GroupStudentsEdit(@model.id)
+        el = @groupEdit.render(true).$el
+        el.modal('show')
 
 
 class App.SOSBeacon.View.EventCenterEditApp extends Backbone.View
@@ -373,18 +505,48 @@ class App.SOSBeacon.View.EventCenterApp extends Backbone.View
 
     events:
         "click .add-button": "add"
+        "change #selectTimeZone" : "timezone"
 
     initialize: =>
         @collection = new App.SOSBeacon.Collection.EventList()
         @listView = new App.SOSBeacon.View.EventCenterList(@collection)
+        _.extend(@collection.server_api, {
+            'limit': 200
+            'orderBy': 'added'
+            'orderDirection': 'desc'
+        })
+        @collection.fetch()
 
     render: =>
         @$el.html(@template())
         @$el.append(@listView.render().el)
+        #
+        select = @$el.find("#selectTimeZone")
+        select.val(default_timezone)
 
         $("#add_new").focus()
 
         return this
+
+    timezone: =>
+        select = @$el.find("#selectTimeZone")
+        default_timezone = select.val()
+
+        url = '/service/timezone/' + default_timezone
+        default_timezone = @sendAjax(url)
+
+        location.reload()
+        return false
+
+    sendAjax: (url) ->
+        result = null
+        $.ajax
+            url: url,
+            type: "GET",
+            async: false,
+            success: (data) ->
+                result = data
+        return result
 
     add: =>
         App.SOSBeacon.router.navigate("/eventcenter/new", {trigger: true})

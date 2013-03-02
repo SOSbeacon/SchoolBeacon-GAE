@@ -135,6 +135,8 @@ def _bundle_app_coffee(app, debug=False):
         path.join(COFFEE_PATH, 'group_students.coffee'),
         path.join(COFFEE_PATH, 'menu.coffee'),
         path.join(COFFEE_PATH, 'router.coffee'),
+        path.join(COFFEE_PATH, 'map.coffee'),
+        path.join(COFFEE_PATH, 'reply_message.coffee'),
     )
 
     return Bundle(

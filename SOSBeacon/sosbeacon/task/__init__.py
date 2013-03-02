@@ -18,6 +18,10 @@ from sosbeacon.event.message import broadcast_to_groups
 from sosbeacon.event.message import broadcast_to_method
 from sosbeacon.event.message import broadcast_to_student
 
+from sosbeacon.error_log import create_error_log
+
+from sosbeacon.event.robocall import robocall_phone
+from sosbeacon.event.robocall import robocall_start
 
 class GroupsTxHandler(webapp2.RequestHandler):
     """Start the process of sending a message to every Contact associated
@@ -75,7 +79,7 @@ class GroupsTxHandler(webapp2.RequestHandler):
                           message_key, event_key)
             return
 
-        if message.message_type != 'b':
+        if message.message_type == 'c' :
             logging.error('Message %s is not a broadcast!', message_key)
             return
 
@@ -136,7 +140,7 @@ class GroupTxHandler(webapp2.RequestHandler):
                           message_key, event_key)
             return
 
-        if message.message_type != 'b':
+        if message.message_type == 'c' :
             logging.error('Message %s is not a broadcast!', message_key)
             return
 
@@ -205,7 +209,7 @@ class StudentTxHandler(webapp2.RequestHandler):
                           message_key, event_key)
             return
 
-        if message.message_type != 'b':
+        if message.message_type == 'c' :
             logging.error('Message %s is not a broadcast!', message_key)
             return
 
@@ -276,7 +280,7 @@ class ContactTxHandler(webapp2.RequestHandler):
                           message_key, event_key)
             return
 
-        if message.message_type != 'b':
+        if message.message_type == 'c' :
             logging.error('Message %s is not a broadcast!', message_key)
             return
 
@@ -345,7 +349,7 @@ class MethodTxHandler(webapp2.RequestHandler):
                           message_key, event_key)
             return
 
-        if message.message_type != 'b':
+        if message.message_type == 'c' :
             logging.error('Message %s is not a broadcast!', message_key)
             return
 
@@ -502,3 +506,180 @@ class UpdateEventCountsHandler(webapp2.RequestHandler):
 
         update_event_counts(event_key)
 
+
+class UserTxHandler(webapp2.RequestHandler):
+#    broadcast email to user
+    def post(self):
+        from sosbeacon.event.message import create_marker_user
+        from sosbeacon.event.event import EVENT_STATUS_CLOSED
+
+        event_urlsafe = self.request.get('event')
+        user_urlsafe = self.request.get('user')
+        message_urlsafe = self.request.get('message')
+
+        if not event_urlsafe:
+            logging.error('No event key given.')
+            return
+
+        # TODO: Use event id rather than key here for namespacing purposes?
+        event_key = ndb.Key(urlsafe=event_urlsafe)
+        event = event_key.get()
+
+        if not event:
+            logging.error('Event %s not found!', event_key)
+            error = 'Event %s not found!' % event_key
+            create_error_log(error, 'ERR')
+            return
+
+        if event.status == EVENT_STATUS_CLOSED:
+            logging.error('Event %s closed!', event_key)
+            error = 'Event %s not found!' % event_key
+            create_error_log(error, 'ERR')
+            return
+
+        user_key = ndb.Key(urlsafe = user_urlsafe)
+        user = user_key.get()
+
+        if not user:
+            logging.error('User %s not found!', user_key)
+            error = 'User %s not found!' % user_key
+            create_error_log(error, 'ERR')
+            return
+
+        message_key = ndb.Key(urlsafe = message_urlsafe)
+        message = message_key.get()
+
+        if not message:
+            logging.error('Message %s not found!', message_key)
+            error = 'Message %s not found!' % message_key
+            create_error_log(error, 'ERR')
+            return
+
+        create_marker_user(event_key, message_key, user_key)
+
+
+class UserMethodTxHandler(webapp2.RequestHandler):
+    def post(self):
+        from sosbeacon.event.event import EVENT_STATUS_CLOSED
+
+        event_urlsafe = self.request.get('event')
+        user_urlsafe = self.request.get('user')
+        message_urlsafe = self.request.get('message')
+        method = self.request.get('method')
+
+        if not event_urlsafe:
+            logging.error('No event key given.')
+            return
+
+        # TODO: Use event id rather than key here for namespacing purposes?
+        event_key = ndb.Key(urlsafe=event_urlsafe)
+        event = event_key.get()
+
+        if not event:
+            logging.error('Event %s not found!', event_key)
+            error = 'Event %s not found!' % event_key
+            create_error_log(error, 'ERR')
+            return
+
+        if event.status == EVENT_STATUS_CLOSED:
+            logging.error('Event %s closed!', event_key)
+            error = 'Event %s not found!' % event_key
+            create_error_log(error, 'ERR')
+            return
+
+        user_key = ndb.Key(urlsafe = user_urlsafe)
+        user = user_key.get()
+
+        if not user:
+            logging.error('User %s not found!', user_key)
+            error = 'User %s not found!' % user_key
+            create_error_log(error, 'ERR')
+            return
+
+        message_key = ndb.Key(urlsafe = message_urlsafe)
+        message = message_key.get()
+
+        if not message:
+            logging.error('Message %s not found!', message_key)
+            error = 'Message %s not found!' % message_key
+            create_error_log(error, 'ERR')
+            return
+
+        broadcast_to_method(event_key, message_key, user_key.id(), method)
+
+
+class EmailRobocallHander(webapp2.RequestHandler):
+#    broadcast email to user
+    def post(self):
+        from sosbeacon.event.message import send_email_robocall_to_user
+        from sosbeacon.event.event import EVENT_STATUS_CLOSED
+
+        event_urlsafe = self.request.get('event')
+        message_urlsafe = self.request.get('message')
+
+        if not event_urlsafe:
+            logging.error('No event key given.')
+            return
+
+        # TODO: Use event id rather than key here for namespacing purposes?
+        event_key = ndb.Key(urlsafe=event_urlsafe)
+        event = event_key.get()
+
+        if not event:
+            logging.error('Event %s not found!', event_key)
+            error = 'Event %s not found!' % event_key
+            create_error_log(error, 'ERR')
+            return
+
+        if event.status == EVENT_STATUS_CLOSED:
+            logging.error('Event %s closed!', event_key)
+            error = 'Event %s not found!' % event_key
+            create_error_log(error, 'ERR')
+            return
+
+        message_key = ndb.Key(urlsafe = message_urlsafe)
+        message = message_key.get()
+
+        if not message:
+            logging.error('Message %s not found!', message_key)
+            error = 'Message %s not found!' % message_key
+            create_error_log(error, 'ERR')
+            return
+
+        send_email_robocall_to_user(message_key, event_key)
+
+
+class RobocallStartHandler(webapp2.RequestHandler):
+#    Robocall TWILIO
+    def post(self):
+        event_urlsafe = self.request.get('event')
+        event_key = ndb.Key(urlsafe=event_urlsafe)
+        event = event_key.get()
+
+        if not event:
+            logging.error('Event %s not found!', event_key)
+            error = 'Event %s not found!' % event_key
+            create_error_log(error, 'ERR')
+            return
+
+        is_direct = self.request.get('is_direct')
+        robocall_start(event_urlsafe, is_direct)
+
+
+class RobocallProcessHandler(webapp2.RequestHandler):
+
+    def post(self):
+        event_urlsafe = self.request.get('event')
+        phone_markers = self.request.get('phone')
+
+        robocall_phone(event_urlsafe, phone_markers)
+
+
+class RobocallSentEmailHandler(webapp2.RequestHandler):
+    def post(self):
+        from sosbeacon.event.robocall import send_email_robocall_to_user
+
+        event_urlsafe = self.request.get('event')
+        user_urlsafe = self.request.get('user')
+
+        send_email_robocall_to_user(event_urlsafe, user_urlsafe)

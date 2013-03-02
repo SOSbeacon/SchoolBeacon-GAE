@@ -1,4 +1,7 @@
 import logging
+import os
+import sys
+
 from datetime import datetime
 
 from google.appengine.api import taskqueue
@@ -7,7 +10,15 @@ from google.appengine.ext import ndb
 import voluptuous
 
 from skel.datastore import EntityBase
+from sosbeacon.error_log import create_error_log
 
+
+USER_TX_ENDPOINT = '/task/event/tx/user'
+USER_SEND_METHOD = '/task/event/tx/user/method'
+USER_TX_QUEUE = "user-tx"
+
+USER_ROBOCALL_EMAIL_ENDPOINT = '/task/event/tx/robocall'
+USER_ROBOCALL_EMAIL_QUEUE = 'user-robocall'
 
 GROUPS_TX_ENDPOINT = '/task/event/tx/start'
 GROUP_TX_ENDPOINT = '/task/event/tx/group'
@@ -38,7 +49,8 @@ message_schema = {
 }
 
 message_query_schema = {
-    'feq_event': voluptuous.ndbkey()
+    'feq_event': voluptuous.ndbkey(),
+    'feq_user' : voluptuous.any(None, voluptuous.ndbkey(), '')
 }
 
 
@@ -57,6 +69,10 @@ class Message(EntityBase):
     user = ndb.KeyProperty('u')
     user_name = ndb.StringProperty('un')
     is_admin = ndb.BooleanProperty('ia')
+
+    # longitude and latitude of geo
+    longitude = ndb.StringProperty()
+    latitude = ndb.StringProperty()
 
     @classmethod
     def from_dict(cls, data):
@@ -90,15 +106,19 @@ class Message(EntityBase):
         if message_type == 'c':
             assert ['body'] == message_data.keys(), "Invalid comment payload."
 
-        if message_type == 'b':
-            assert ['sms', 'email', 'title'] == message_data.keys(),\
-                "Invalid broadcast payload."
+        if message_type == 'b' or message_type == 'em' or\
+           message_type == 'eo' or message_type == 'ec':
+            assert ['sms', 'email'] == message_data.keys(),\
+            "Invalid broadcast payload."
 
             # TODO: Ensure user is an admin.
             broadcast_message(event_key, message.key)
 
         message.user_name = data.get('user_name')
         message.user = data.get('user')
+
+        message.longitude = data.get('longitude')
+        message.latitude = data.get('latitude')
 
         message.message = message_data
 
@@ -119,6 +139,9 @@ class Message(EntityBase):
         message['user_name'] = self.user_name or ''
         message['user'] = None
         message['is_admin'] = self.is_admin
+
+        message['longitude'] = self.longitude
+        message['latitude'] = self.latitude
 
         if self.user:
             message['user'] = self.user.urlsafe()
@@ -308,7 +331,7 @@ def broadcast_to_student(student_key, event_key, message_key, batch_id=''):
     if tasks:
         insert_tasks(tasks, CONTACT_TX_QUEUE)
 
-    create_or_update_marker(event_key, student)
+    create_or_update_marker(event_key, student, message_key)
 
 
 def get_contact_broadcast_task(event_key, message_key, student_key, contact,
@@ -378,7 +401,7 @@ def broadcast_to_contact(event_key, message_key, student_key, contact,
         return
 
     short_id = create_or_update_marker(
-        event_key, student_key, contact, methods)
+        event_key, student_key, message_key, contact, methods)
 
     method_tasks = []
     for method in methods:
@@ -418,8 +441,14 @@ def broadcast_to_method(event_key, message_key, short_id, method):
     import os
 
     from sosbeacon import utils
+    from sosbeacon.event.contact_marker import ContactMarker
+    from sosbeacon.event.student_marker import StudentMarker
+    from sosbeacon.responde_sms import create_responder_student_sms
+    from sosbeacon.responde_sms import create_responder_user_sms
+    from sosbeacon.log import create_log
 
     message = message_key.get()
+    event = event_key.get()
 
     encoded_event = utils.number_encode(event_key.id())
     encoded_method = utils.number_encode(short_id)
@@ -428,67 +457,271 @@ def broadcast_to_method(event_key, message_key, short_id, method):
 
     url = "http://%s/e/%s/%s" % (host, encoded_event, encoded_method)
 
+    message_log = message.to_dict()
+    log_sms = message_log['message']['sms']
+    log_email = message_log['message']['email']
+
+    froms = message.user.get().email
+    phones = message.user.get().phone
+    user = message.user
+    school = event.school
+
     if '@' not in method:
-        broadcast_sms(method, message, url)
+        if message.message_type == 'ec':
+            broadcast_call(method)
+            return
+
+        if message.message_type == 'eo':
+            return
+
+        broadcast_sms(method, message, url, user.get().name, school.get().name)
+        create_log(phones, method, 's', log_sms, user.get().name, school.get().name, url)
+
+        if short_id == user.id():
+            create_responder_user_sms(user.get().phone, user.get().name, url, event_key)
+        else:
+            create_responder_student_sms(method, short_id, url, event_key)
+
         return
 
-    broadcast_email(method, message, url)
+    broadcast_email(method, message, url, user, school)
+    create_log(froms, method, 'e', log_email, user.get().name, school.get().name, url)
 
 
-def broadcast_sms(number, message, url):
+def broadcast_sms(number, message, url, user_name, school_name):
     """Send a message to a given phone number."""
     from twilio.rest import TwilioRestClient
-
     import settings
 
     logging.debug('Sending notice to %s via twilio.', number)
+    logging.info('Sending notice to %s via twilio.', number)
 
     body = message.message['sms']
-    body = "%s - %s" % (body, url)
+    body = "Broadcast from %s (School %s). Link %s. Message: %s" % (user_name, school_name, url, body)
 
     client = TwilioRestClient(settings.TWILIO_ACCOUNT,
-                              settings.TWILIO_TOKEN)
+        settings.TWILIO_TOKEN)
 
-    client.sms.messages.create(
-        to="+%s" % (number), from_=settings.TWILIO_FROM, body=body)
+    try:
+        client.sms.messages.create(
+            to="+%s" % (number), from_=settings.TWILIO_FROM, body=body)
+    except:
+        error = "The 'To' number %s is not a valid phone number" % number
+        create_error_log(error, 'ERR')
 
 
-def broadcast_email(address, message, url):
+def broadcast_email(address, message, url, user, school):
     """Send an email to a given email address."""
 
     logging.info('Sending notice to %s via mail api.', address)
 
-    #sender = "SBeacon <noreply@sosbeacon.org>"
-    sender = "noreply@sosbeacon.org"
-    subject = message.message['title']
+    #    if message.message['title']:
+    #        subject = message.message['title']
+    #    else:
+    if message.message_type == 'em':
+        subject = "Emergency Alert from %s (%s)" % (user.get().name, school.get().name)
+    else:
+        subject = "School Notice message from %s (%s)" % (user.get().name, school.get().name)
 
-    body = "%s\n\n%s" % (message.message['email'], url)
-    # App Engine Built In Email
-    #from google.appengine.api import mail
-    #email_message = mail.EmailMessage(sender=sender,
-    #                                  subject=subject)
-
-    #email_message.to = address
-
-    #email_message.body = body
-
-    #email_message.send()
+    if message.message['email']:
+        body = "%s (%s) sent a Event Broadcast. Detail here: %s. \nMessage: %s" %\
+               (user.get().name, school.get().name, url, message.message['email'])
+    else:
+        body = "%s (%s) sent a Event Broadcast. Detail here: %s. \nMessage: %s" %\
+               (user.get().name, school.get().name, url, message.message['sms'])
 
     #TODO: it might make sense to group emails as we can add more than one to
     # address per email sent
     import sendgrid
-
     import settings
 
     s = sendgrid.Sendgrid(settings.SENDGRID_ACCOUNT,
-                          settings.SENDGRID_PASSWORD,
-                          secure=True)
+        settings.SENDGRID_PASSWORD,
+        secure=True)
 
-    message = sendgrid.Message(
-        settings.SENDGRID_SENDER,
+    try:
+        message = sendgrid.Message(
+            user.get().email,
+            subject,
+            body)
+        message.add_to(address)
+        s.web.send(message)
+
+    except:
+        error = "The 'To' email %s is not a valid email" % address
+        create_error_log(error, 'ERR')
+
+
+def broadcast_call(number):
+    """Send a message to a given phone number."""
+    from twilio.rest import TwilioRestClient
+    import settings
+
+    logging.debug('Call notice to %s via twilio.', number)
+
+    client = TwilioRestClient(settings.TWILIO_ACCOUNT,
+        settings.TWILIO_TOKEN)
+
+    try:
+        client.calls.create(to = number,
+            from_ = settings.TWILIO_FROM,
+            url = "http://8.sos-beacon-dev.appspot.com/broadcast/record")
+    except:
+        error = 'Can not make a call to phone number: %s' % number
+        create_error_log(error, 'ERR')
+
+
+def get_sendemail_user_task(event_key, message_key, user_urlsafe, school_urlsafe):
+    """Insert a task to initiate the broadcast."""
+
+    event_urlsafe = event_key.urlsafe()
+    message_urlsafe = message_key.urlsafe()
+
+    name = "u-%s-%s-%s" % (message_urlsafe, user_urlsafe, school_urlsafe)
+    task = taskqueue.Task(
+        url=USER_TX_ENDPOINT,
+        name=name,
+        params={
+            'event': event_urlsafe,
+            'message': message_urlsafe,
+            'user': user_urlsafe,
+            },
+        countdown=2  # TODO: Need something better than this for sure.
+    )
+    taskqueue.Queue(name=USER_TX_QUEUE).add(task)
+
+
+def create_marker_user(event_key, message_key, user_key):
+    """Scan over the given set of groups, sending the broadcast to everyone
+    in those groups.
+    """
+    from sosbeacon.utils import insert_tasks
+    from sosbeacon.event.contact_marker import ContactMarker
+    from sosbeacon.event.contact_marker import get_marker_for_methods
+    from sosbeacon.student import Student
+    from sosbeacon.student import DEFAULT_STUDENT_ID
+
+    methods = set()
+    if message_key.get().message_type == 'eo':
+        methods.add(user_key.get().email)
+    else:
+        methods.add(user_key.get().phone)
+        methods.add(user_key.get().email)
+
+    marker = get_marker_for_methods(event_key, methods)
+
+    student_key = ndb.Key(
+        Student, "%s-%s" % (DEFAULT_STUDENT_ID, user_key.id()),
+        namespace='_x_')
+
+    if not marker:
+        # TODO: What needs set?
+        short_id = str(ContactMarker.allocate_ids(size=1, parent=event_key)[0])
+        key_id = "%s:%s" % (event_key.id(), short_id)
+        marker = ContactMarker(
+            id=key_id,
+            event=event_key,
+            name=user_key.get().name,
+            students={str(student_key.id()): []},
+            short_id=short_id,
+            methods=[user_key.get().email,user_key.get().phone])
+        marker.acknowledged = True
+        marker.put()
+
+    tasks = []
+    for method in methods:
+        # TODO: Batch tasks or start
+        tasks.append(
+            get_broadcast_method_to_user_task(
+                event_key, message_key, user_key, method))
+
+        if len(tasks) > 10:
+            insert_tasks(tasks, USER_TX_QUEUE)
+            tasks = []
+
+    if tasks:
+        insert_tasks(tasks, USER_TX_QUEUE)
+
+
+def get_broadcast_method_to_user_task(event_key, message_key, user_key, method):
+    """Get a task to scan and broadcast messages to all students in group."""
+    import hashlib
+
+    user_urlsafe = user_key.urlsafe()
+    event_urlsafe = event_key.urlsafe()
+    message_urlsafe = message_key.urlsafe()
+
+    method_ident = hashlib.sha1(method).hexdigest()
+
+    name = "user-%s-%s-%s-%s" % (
+        user_urlsafe, event_urlsafe, message_urlsafe, method_ident)
+    return taskqueue.Task(
+        url=USER_SEND_METHOD,
+        name=name,
+        params={
+            'user': user_urlsafe,
+            'event': event_urlsafe,
+            'message': message_urlsafe,
+            'method': method
+        }
+    )
+
+
+def broadcast_email_robocall_task(message_key, event_key, batch_id=""):
+    from sosbeacon.event.event import EVENT_STATUS_CLOSED
+    from sosbeacon.event.event import EVENT_STATUS_SENT
+
+    event_urlsafe = event_key.urlsafe()
+    message_urlsafe = message_key.urlsafe()
+
+    name = "tx-s-%s-%s" % (message_urlsafe, batch_id)
+    task = taskqueue.Task(
+        url=USER_ROBOCALL_EMAIL_ENDPOINT,
+        name=name,
+        params={
+            'event': event_urlsafe,
+            'message': message_urlsafe,
+            'batch': batch_id
+        },
+        countdown=2  # TODO: Need something better than this for sure.
+    )
+    taskqueue.Queue(name=USER_ROBOCALL_EMAIL_QUEUE).add(task)
+
+
+def send_email_robocall_to_user(message_key, event_key):
+    from sosbeacon.event.contact_marker import ContactMarker
+    import sendgrid
+    import settings
+
+    user_key = message_key.get().user
+    message = message_key.get()
+
+    logging.info('Sending notice to %s via mail api.', user_key.get().email)
+
+    contact_markers = ContactMarker.query(ContactMarker.event == event_key)
+    string_date = "%s %s, %s at %s:%s %s (GMT)" % (message.added.strftime("%B"), message.added.strftime("%d"),
+                                                   message.added.strftime("%Y"),message.added.strftime("%I"),
+                                                   message.added.strftime("%M"), message.added.strftime("%p"))
+
+    subject = "School Beacon ROBOCALL service for alert %s was requested by you" % message_key.id()
+    body = "School Beacon ROBOCALL service for alert <span style='color: red'>%s</span> was requested by you" % event_key.id()
+    body = body + " on " + "<br><span style='color:red'>" + string_date + "</span>.<br><br>" + " The following numbers were called: <br>"
+
+    for contact_marker in contact_markers:
+        for method in contact_marker.methods:
+            if '@' not in method:
+                body += str(method) + '<br>'
+
+    body += "<br><br>The following text was delivered:<br> <span style='color:red'>%s</span>" % message.message['email']
+
+    s = sendgrid.Sendgrid(settings.SENDGRID_ACCOUNT,
+        settings.SENDGRID_PASSWORD,
+        secure=True)
+
+    email = sendgrid.Message(
+        user_key.get().email,
         subject,
-        message.message['sms'],
+        body,
         body)
-    message.add_to(address)
-    s.web.send(message)
-
+    email.add_to(user_key.get().email)
+    s.web.send(email)

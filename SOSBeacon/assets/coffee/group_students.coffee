@@ -164,6 +164,7 @@ class App.SOSBeacon.View.GroupStudentsEdit extends App.Skel.View.EditView
 
         that = this
         @allstudents.fetch({success: (students) =>
+            @$('.image').css('display', 'none')
             students.each((student) =>
                 not_in = true
                 student.groups.each((group) =>
@@ -180,7 +181,14 @@ class App.SOSBeacon.View.GroupStudentsEdit extends App.Skel.View.EditView
 
     groupFilterStudents: (filters) =>
         @groupstudents.server_api['feq_groups'] = @model.id
-        @groupstudents.fetch()
+        @groupstudents.fetch(
+            success: =>
+                #  remove loading image when collection loading successful
+                @$('.image').css('display', 'none')
+            error: =>
+                # reidrect login page if user not login
+                window.location = '/school'
+        )
 
     render: =>
         @$el.html(@template(@model.toJSON()))

@@ -89,6 +89,26 @@ url_map = [
     webapp2.Route(r'/service/export/student',
                   handler='sosbeacon.service.ExportStudentHandler'),
 
+    # Quick Reply Message
+    webapp2.Route(r'/service/reply_message/<resource_id:.+>',
+                  handler='sosbeacon.service.ReplyMessageHandler'),
+    webapp2.Route(r'/service/reply_message<:/?>',
+                  handler='sosbeacon.service.ReplyMessageListHandler'),
+
+    # Timezone
+    webapp2.Route(r'/service/timezone/<resource_id:.+>',
+                  handler='sosbeacon.service.TimeZoneHandler'),
+
+    ## robocall
+    webapp2.Route(r'/service/event/<resource_id>/robocall/student',
+                  handler='sosbeacon.service.StudentRobocallHandler'),
+    webapp2.Route(r'/service/event/<resource_id>/robocall/direct',
+                  handler='sosbeacon.service.DirectRobocallHandler'),
+
+    # Download Email
+    webapp2.Route(r'/service/event/<event_id>/<number>/download',
+                  handler='sosbeacon.service.DownloadHandler'),
+
     ]
 
 app = webapp2.WSGIApplication(

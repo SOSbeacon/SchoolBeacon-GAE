@@ -569,7 +569,7 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
 
         self.assertRaisesRegexp(
             ValueError, "value for search_methods is required.",
-            create_or_update_marker, object(), object(), {'a': True}, [])
+            create_or_update_marker, object(), object(), object(), {'a': True}, [])
 
     def test_no_contact(self):
         """Ensure error is raised if no contact is provided."""
@@ -577,7 +577,7 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
 
         self.assertRaisesRegexp(
             ValueError, "Contact is required.",
-            create_or_update_marker, object(), object(), {}, ['a'])
+            create_or_update_marker, object(), object(), object(), {}, ['a'])
 
     def test_no_student_key(self):
         """Ensure error is raised if no student is provided."""
@@ -585,7 +585,7 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
 
         self.assertRaisesRegexp(
             ValueError, "student_key is required.",
-            create_or_update_marker, object(), None, {'a': True}, ['a'])
+            create_or_update_marker, object(), None, object(), {'a': True}, ['a'])
 
     def test_no_event_key(self):
         """Ensure error is raised if no event is provided."""
@@ -593,7 +593,15 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
 
         self.assertRaisesRegexp(
             ValueError, "event_key is required.",
-            create_or_update_marker, None, object(), {'a': True}, ['a'])
+            create_or_update_marker, None, object(), object(), {'a': True}, ['a'])
+
+    def test_no_message_key(self):
+        """Ensure error is raised if no event is provided."""
+        from sosbeacon.event.contact_marker import create_or_update_marker
+
+        self.assertRaisesRegexp(
+            ValueError, "message_key is required.",
+            create_or_update_marker, object(), object(), None, {'a': True}, ['a'])
 
     @mock.patch('sosbeacon.event.contact_marker.insert_update_marker_task',
                 autospec=True)
@@ -606,16 +614,18 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
 
         from sosbeacon.event.contact_marker import create_or_update_marker
         from sosbeacon.event.event import Event
+        from sosbeacon.event.message import Message
 
         find_markers_for_methods_mock.return_value = ()
 
         event_key = ndb.Key(Event, 'EVENTKEY')
+        message_key = ndb.Key(Message, 'MESSAGEKEY')
 
         student_key = mock.Mock()
         student_key.id.return_value = "STUDENTKEY"
 
         ret_value = create_or_update_marker(
-            event_key, student_key, {'a': True}, ['123'])
+            event_key, student_key, message_key, {'a': True}, ['123'])
 
         self.assertIsNotNone(ret_value)
 
@@ -635,6 +645,7 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
         from sosbeacon.event.contact_marker import ContactMarker
         from sosbeacon.event.contact_marker import create_or_update_marker
         from sosbeacon.event.event import Event
+        from sosbeacon.event.message import Message
         from sosbeacon.student import Student
 
         marker1_key = mock.Mock(spec=ndb.Key)
@@ -650,8 +661,10 @@ class TestCreateOrUpdateMarker(unittest.TestCase):
 
         student_key = ndb.Key(Student, 'STUDENTKEY')
 
+        message_key = ndb.Key(Message, 'MESSAGEKEY')
+
         ret_value = create_or_update_marker(
-            event_key, student_key, {'a': True}, ['123'])
+            event_key, student_key, message_key, {'a': True}, ['123'])
 
         self.assertEqual('A', ret_value)
 

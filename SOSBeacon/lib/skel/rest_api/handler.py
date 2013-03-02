@@ -110,8 +110,48 @@ class RestApiListHandler(RestApiSaveHandler):
             self.entity, self.request.params, self.query_schema)
 
         response = [entity.to_dict() for entity in resources]
+        self.changeTimezone(response)
 
         self.write_json_response(response)
+
+    def changeTimezone(self, response):
+        from webapp2_extras import sessions
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+
+        if 'tz' in session:
+            tz = session.get('tz')
+            for value in response:
+                value['added'] = self.convertTimeZone(tz, value['added'])
+                value['modified'] = self.convertTimeZone(tz, value['modified'])
+                if 'date' in value:
+                    value['date'] = self.convertTimeZone(tz, value['date'])
+                    value['last_broadcast_date'] = self.convertTimeZone(tz, value['last_broadcast_date'])
+
+        else :
+            tz = "America/Los_Angeles"
+            session['tz'] = tz
+            for value in response:
+                value['added'] = self.convertTimeZone(tz, value['added'])
+                value['modified'] = self.convertTimeZone(tz, value['modified'])
+                if 'date' in value:
+                    value['date'] = self.convertTimeZone(tz, value['date'])
+                    value['last_broadcast_date'] = self.convertTimeZone(tz, value['last_broadcast_date'])
+
+    def convertTimeZone(self, tz, created_at):
+        from datetime import datetime
+        from pytz import timezone
+
+        fmt = "%Y-%m-%d %H:%M"
+        fmt_utc = "%Y-%m-%d %H:%M %Z%z"
+
+        create_at_obj = datetime.strptime(created_at, fmt)
+        create_at_obj_utc = create_at_obj.replace(tzinfo=timezone('UTC'))
+
+        now_pacific = create_at_obj_utc.astimezone(timezone(tz))
+
+        return now_pacific.strftime(fmt)
 
 
 class RestQuery(object):

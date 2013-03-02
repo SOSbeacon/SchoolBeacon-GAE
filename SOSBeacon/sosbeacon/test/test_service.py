@@ -97,9 +97,16 @@ class TestGroupService(unittest.TestCase):
         )
 
         self.group_admin = Group(
-            id=ADMIN_GROUPS_ID,
+            id=ADMIN_GROUPS_ID + "%s" % (self.school1.key.id()),
             name='Group Admin',
-            school=self.school2.key,
+            school=self.school1.key,
+            default = True
+        )
+
+        self.group_staff = Group(
+            id=STAFF_GROUPS_ID + "%s" % (self.school1.key.id()),
+            name='Group Staff',
+            school=self.school1.key,
             default = True
         )
 
@@ -132,13 +139,13 @@ class TestGroupService(unittest.TestCase):
 
     def test_service_get_filter_group(self):
         """Ensure server response group which same school"""
-        to_put = [self.group1, self.group2, self.group3, self.group4]
+        to_put = [self.group1, self.group2, self.group3, self.group4, self.group_admin, self.group_staff]
         ndb.put_multi(to_put)
 
         response = self.testapp.get('/service/group')
         obj = json.loads(response.normal_body)
 
-        self.assertEqual(len(obj), 3)
+        self.assertEqual(len(obj), 5)
 
     def test_service_edit_group(self):
         """Ensure group will be update new data"""
@@ -189,7 +196,7 @@ class TestGroupService(unittest.TestCase):
 
     def test_number_student_of_group(self):
         """Ensure number student of group always > 1"""
-        to_put = [self.group1, self.group2, self.group3, self.group4]
+        to_put = [self.group1, self.group2, self.group3, self.group4, self.group_admin, self.group_staff]
         ndb.put_multi(to_put)
 
         response = self.testapp.get('/service/group')
@@ -197,6 +204,17 @@ class TestGroupService(unittest.TestCase):
 
         for i in obj:
             self.assertGreaterEqual(1, i['number_student'])
+
+    def test_sort_admin_staff_group(self):
+        """Ensure admin and staff always at position 1 and 2"""
+        to_put = [self.group1, self.group2, self.group3, self.group4, self.group_admin, self.group_staff]
+        ndb.put_multi(to_put)
+
+        response = self.testapp.get('/service/group')
+        obj = json.loads(response.normal_body)
+
+        self.assertEqual(obj[0]['name'], self.group_admin.name)
+        self.assertEqual(obj[1]['name'], self.group_staff.name)
 
 
 class TestServiceContact(unittest.TestCase):

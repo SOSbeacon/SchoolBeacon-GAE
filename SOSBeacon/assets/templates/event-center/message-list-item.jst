@@ -12,7 +12,7 @@
     <!--<button id="message-item-button-edit" class="btn btn-mini">-->
       <!--<i class="icon-edit"></i>-->
     <!--</button>-->
-    <button id="message-item-button-remove" class="btn btn-mini">
+    <button id="message-item-button-remove" class="btn btn-mini" style="display: none">
       <i class="icon-trash"></i>
     </button>
   </div>
@@ -24,21 +24,29 @@
       <%- user_name %>
       <% } %>
     </div>
-    <div class="comment-meta">- <%- modified %>, wrote</div>
+    <div class="comment-meta"">- <%- modified %>, wrote</div>
   </div>
   <% if (type == "c") { %>
   <div class="message-content">
     <%= message.body %>
+    <div id='<%= key%>' style='margin-left: 10%; width: 90%; color: blue'></div>
     <% } else { %>
     <div class="message-broadcast">
-      <div class="broadcast-sms">
-        <h5>SMS:</h5><%= message.sms %>
-      </div>
-      <div class="broadcast-title">
+      <% if (message.sms == '') {%>
+        <div class="broadcast-sms">
+          <h5>
+        </div>
+      <% } else { %>
+        <div class="broadcast-sms">
+          <h5>SMS:</h5><%= message.sms %>
+        </div>
+      <% } %>
+      <!--<div class="broadcast-title">
         <h5>Title:</h5><%- message.title %>
-      </div>
+      </div>-->
       <div class="broadcast-email">
         <h5>Email:</h5><%= message.email %>
+        <div class='mapView' id='mapCanvasView<%= key %>'></div>
       </div>
       <% } %>
     </div>

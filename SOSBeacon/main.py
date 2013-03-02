@@ -253,8 +253,14 @@ class EventHandler(TemplateHandler):
 
         event_id = utils.number_decode(event_id)
         method_id = str(utils.number_decode(method_id))
-
         event_key = ndb.Key(Event, int(event_id), namespace='_x_')
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+
+        if 'u' in session:
+            self.redirect("/#eventcenter/view/%s" % event_key.get().key.urlsafe())
+            return
 
         event_mc_key = 'Event:%s' % (int(event_id),)
         event_html = memcache.get(event_mc_key)
@@ -277,19 +283,24 @@ class EventHandler(TemplateHandler):
         #Get the school id (ie namespace) and grab the event marker
         marker_key = ndb.Key(
             ContactMarker, "%s:%s" % (event_id, method_id),
-            namespace=event.school)
+            namespace='_x_')
 
         marker = marker_key.get()
         if not marker:
-            # TODO: Can this happen in a legitimate way?
-            self.error(404)
-            return
+            if 'u' in session:
+                self.redirect("/#eventcenter/view/%s" % event_key.get().key.urlsafe())
+                return
+            else:
+                event_html = self.render('event.mako', event=event, contact_marker = False)
+                self.response.out.write(event_html)
+                return
 
         if marker.place_holder:
             marker_key = marker.place_holder
 
-        self.setup_session(marker_key, event)
+        self.setup_session_marker(marker_key, event)
 
+        event_html = self.render('event.mako', event=event, contact_marker = True, contact_name = marker.name)
         self.response.out.write(event_html)
 
         # Try to mark this event as acknowledged.
@@ -300,14 +311,11 @@ class EventHandler(TemplateHandler):
             logging.exception('Ack failed for marker %s.', marker_key)
             pass
 
-    def setup_session(self, marker_key, event):
+    def setup_session_marker(self, marker_key, event):
         """Setup the session vars."""
         session_store = sessions.get_store()
         session = session_store.get_session()
         session['cm'] = marker_key.id()
-        school_id = event.school.strip('_')
-        session['n'] = school_id
-        session['s'] = ndb.Key(School, int(school_id)).urlsafe()
         session_store.save_sessions(self.response)
 
 
@@ -689,6 +697,52 @@ class ForgotPasswordHandler(TemplateHandler):
             self.response.out.write(out)
 
 
+class SMSResponderHandler(TemplateHandler):
+    def post(self):
+        from sosbeacon.responde_sms import Responder
+        from sosbeacon.event.message import Message
+        from sosbeacon.event.contact_marker import mark_as_acknowledged
+
+        from_number = self.request.get('From', None)
+        from_body = self.request.get('Body', None)
+
+        responder_sms_list = Responder.query(Responder.contact_number == from_number)
+        responder_sms_filter = responder_sms_list.order(Responder.added).fetch()
+        responder_sms = responder_sms_filter[-1]
+
+        if responder_sms.is_admin == True:
+            message = {
+                'event': responder_sms.event,
+                'type': 'c',
+                'is_student': False,
+                'user_name': responder_sms.contact_name + " - " + str(from_number),
+                'message': {'body': from_body},
+                'longitude': '',
+                'latitude': '',
+            }
+            entity = Message.from_dict(message)
+            entity.is_admin = True
+            entity.user = None
+            entity.put()
+            return
+
+        mark_as_acknowledged(responder_sms.event, responder_sms.contact_marker)
+
+        message = {
+            'event': responder_sms.event,
+            'type': 'c',
+            'is_student': False,
+            'user_name': responder_sms.contact_name + " - " + str(from_number),
+            'message': {'body': from_body},
+            'longitude': '',
+            'latitude': '',
+        }
+        entity = Message.from_dict(message)
+        entity.is_admin = False
+        entity.user = None
+        entity.put()
+
+
 url_map = [
     ('/', MainHandler),
     ('/school/web/users/login/', HomeLoginHandler),
@@ -708,8 +762,7 @@ url_map = [
     ('/uploads/view/([^/]+)?', FileUplaodViewHandler),
     webapp2.Route(r'/school/<resource_id:.+>',
         handler='main.ChooseSchoolHandler'),
-#    webapp2.Route(r'/contact',
-#        handler='main.ContactHandler'),
+    ('/sms-response', SMSResponderHandler),
 ]
 app = webapp2.WSGIApplication(
     url_map,

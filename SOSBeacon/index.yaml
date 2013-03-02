@@ -101,6 +101,12 @@ indexes:
 - kind: Event
   properties:
   - name: sch
+  - name: a_
+    direction: desc
+
+- kind: Event
+  properties:
+  - name: sch
   - name: m_
     direction: desc
 
@@ -114,6 +120,12 @@ indexes:
   - name: a
   - name: sc
   - name: n_
+
+- kind: Group
+  properties:
+  - name: df
+  - name: sc
+  - name: a_
 
 - kind: Group
   properties:
@@ -134,6 +146,12 @@ indexes:
   properties:
   - name: e
   - name: ts
+    direction: desc
+
+- kind: ReplyMessage
+  properties:
+  - name: m
+  - name: a_
     direction: desc
 
 - kind: Student

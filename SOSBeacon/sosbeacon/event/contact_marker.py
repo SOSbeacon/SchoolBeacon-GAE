@@ -63,6 +63,11 @@ class ContactMarker(EntityBase):
 
     place_holder = ndb.KeyProperty('p', indexed=False)
 
+#    count user visit link
+    count_visit = ndb.IntegerProperty('vn', default=0)
+#    count user comment
+    count_comment = ndb.IntegerProperty('cc', default=0)
+
     def merge(self, other):
         """Merge this MethodMarker entity with another MethodMarker."""
         other.place_holder = self.key
@@ -111,6 +116,9 @@ class ContactMarker(EntityBase):
         marker['acknowledged'] = self.acknowledged
         marker['last_viewed_date'] = self.last_viewed_date
         marker['students'] = self.students.keys()
+        marker['count_visit'] = self.count_visit
+        marker['count_comment'] = self.count_comment
+        marker['methods'] = self.methods
 
         return marker
 
@@ -187,6 +195,7 @@ def create_or_update_marker(event_key, student_key, message_key, contact, search
         insert_update_marker_task(
             marker.key, student_key, contact, search_methods)
     else:
+        import logging
         # TODO: What needs set?
         short_id = str(ContactMarker.allocate_ids(size=1, parent=event_key)[0])
         key_id = "%s:%s" % (event_key.id(), short_id)
@@ -345,6 +354,7 @@ def mark_as_acknowledged(event_key, marker_key):
 
         marker.acknowledged = True
         marker.last_viewed_date = int(time.time())
+        marker.count_visit += 1
         marker.put()
         return marker
     marker = txn()

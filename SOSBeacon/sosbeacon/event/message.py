@@ -104,6 +104,8 @@ class Message(EntityBase):
 
         message_data = data.get('message')
         if message_type == 'c':
+            event = event_key.get()
+            event.total_comment += 1
             assert ['body'] == message_data.keys(), "Invalid comment payload."
 
         if message_type == 'b' or message_type == 'em' or\
@@ -543,6 +545,7 @@ def broadcast_email(address, message, url, user, school):
         message = sendgrid.Message(
             user.get().email,
             subject,
+            body,
             body)
         message.add_to(address)
         s.web.send(message)
@@ -565,7 +568,8 @@ def broadcast_call(number):
     try:
         client.calls.create(to = number,
             from_ = settings.TWILIO_FROM,
-            url = "http://8.sos-beacon-dev.appspot.com/broadcast/record")
+            url = "http://4.sos-beacon-dev.appspot.com/broadcast/record",
+            method="GET")
     except:
         error = 'Can not make a call to phone number: %s' % number
         create_error_log(error, 'ERR')
@@ -617,14 +621,17 @@ def create_marker_user(event_key, message_key, user_key):
     if not marker:
         # TODO: What needs set?
         short_id = str(ContactMarker.allocate_ids(size=1, parent=event_key)[0])
-        key_id = "%s:%s" % (event_key.id(), short_id)
+        key_id = "%s:%s" % (event_key.id(), user_key.id())
         marker = ContactMarker(
             id=key_id,
             event=event_key,
             name=user_key.get().name,
             students={str(student_key.id()): []},
             short_id=short_id,
-            methods=[user_key.get().email,user_key.get().phone])
+            methods=[user_key.get().email,user_key.get().phone],
+            count_comment = 0,
+            count_visit = 0
+        )
         marker.acknowledged = True
         marker.put()
 

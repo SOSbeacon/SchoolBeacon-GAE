@@ -1,43 +1,33 @@
 <td>
 <b><%- name %></b> <br>
-Paren1: <% if (names1 != '') { %>
-                <%- names1 %>
+Parent 1: <% if (names1 != '') { %>
+                <span style="color:#1959AC"><%- names1 %></span>
             <% } else { %>
-                empty
-            <% } %> -
-    <% if (text_phone1 != undefined) { %>
-        <%- text_phone1 %>
-    <% } else { %>
-        empty
-    <% } %> -
+                &nbsp;
+            <% } %>
     <% if (voice_phone1 != undefined) { %>
         <%- voice_phone1 %>
     <% } else { %>
-        empty
-    <% } %> -
+        &nbsp;
+    <% } %>
     <% if (email1 != '') { %>
         <%- email1 %>
     <% } else { %>
-        empty
+        &nbsp;
     <% } %> <br />
-Paren2: <% if (names2 != '') { %>
-                <%- names2 %>
+Parent 2: <% if (names2 != '') { %>
+                <span style="color:#1959AC"><%- names2 %></span>
             <% } else { %>
-                empty
-            <% } %> -
-    <% if (text_phone2 != undefined) { %>
-        <%- text_phone2 %>
-    <% } else { %>
-        empty
-    <% } %> -
+                &nbsp;
+            <% } %>
     <% if (voice_phone2 != undefined) { %>
         <%- voice_phone2 %>
     <% } else { %>
-        empty
-    <% } %> -
+        &nbsp;
+    <% } %>
     <% if (email2 != '') { %>
         <%- email2 %>
     <% } else { %>
-        empty
+        &nbsp;
     <% } %>
 </td>

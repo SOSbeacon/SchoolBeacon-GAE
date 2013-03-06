@@ -102,6 +102,11 @@ indexes:
   properties:
   - name: sch
   - name: a_
+
+- kind: Event
+  properties:
+  - name: sch
+  - name: a_
     direction: desc
 
 - kind: Event

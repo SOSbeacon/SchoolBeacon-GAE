@@ -10,8 +10,10 @@ class App.SOSBeacon.Model.ContactMarker extends Backbone.Model
             acknowledged: false,
             last_viewed_date: null
             students: {}
-            methods: ''
+            methods: []
             place_holder: null
+            count_visit: 0
+            count_comment: 0
         }
 
 
@@ -125,6 +127,18 @@ class App.SOSBeacon.Collection.DirectMarkerList extends Backbone.Paginator.reque
 class App.SOSBeacon.View.MarkerListItem extends App.Skel.View.ListItemView
     template: JST['responders/list']
 
+    render: =>
+        model_props = @model.toJSON()
+        if @model.get('methods').length > 1
+            model_props['phone'] = @model.get('methods')[1]
+            model_props['email'] = @model.get('methods')[0]
+        else
+            model_props['phone'] = @model.get('methods')[0]
+            model_props['email'] = ''
+
+        @$el.html(@template(model_props))
+        return this
+
 
 class App.SOSBeacon.View.MarkerListHeader extends App.Skel.View.ListItemHeader
     template: JST['responders/listheader']
@@ -174,7 +188,6 @@ class App.SOSBeacon.View.DirectMarkerListItem extends App.Skel.View.ListItemView
         model_props = @model.toJSON()
         contacts = @model.get('contacts')
         emails = []
-        text_phone = []
         voice_phone = []
 
         $.each contacts, (key, value) ->
@@ -183,13 +196,10 @@ class App.SOSBeacon.View.DirectMarkerListItem extends App.Skel.View.ListItemView
                     for method in value
                         if method.type == 'e'
                             emails.push(method.value)
-                        if method.type == 't'
-                            text_phone.push(method.value)
                         if method.type == 'p'
                             voice_phone.push(method.value)
 
         model_props['email'] = emails
-        model_props['text_phone'] = text_phone
         model_props['voice_phone'] = voice_phone
         @$el.html(@template(model_props))
         return this
@@ -253,8 +263,7 @@ class App.SOSBeacon.View.MarkerListDirect extends App.Skel.View.ListView
                 @$('.image').css('display', 'none')
             error: =>
                 #reidrect login page if user not login
-#                window.location = '/school'
-                console.log 'direct contact'
+                window.location = '/school'
         )
 
         return false
@@ -267,7 +276,6 @@ class App.SOSBeacon.View.StudentMarkerListItem extends App.Skel.View.ListItemVie
         model_props = @model.toJSON()
         contacts = @model.get('contacts')
         emails = []
-        text_phone = []
         voice_phone = []
         names = []
 
@@ -279,17 +287,13 @@ class App.SOSBeacon.View.StudentMarkerListItem extends App.Skel.View.ListItemVie
                     for method in value
                         if method.type == 'e'
                             emails.push(method.value)
-                        if method.type == 't'
-                            text_phone.push(method.value)
                         if method.type == 'p'
                             voice_phone.push(method.value)
 
         model_props['email1'] = emails[0]
-        model_props['text_phone1'] = text_phone[0]
         model_props['voice_phone1'] = voice_phone[0]
         model_props['names1'] = names[0]
         model_props['email2'] = emails[1]
-        model_props['text_phone2'] = text_phone[1]
         model_props['voice_phone2'] = voice_phone[1]
         model_props['names2'] = names[1]
         @$el.html(@template(model_props))
@@ -354,8 +358,7 @@ class App.SOSBeacon.View.MarkerListStudent extends App.Skel.View.ListView
                 @$('.image').css('display', 'none')
             error: =>
                 #reidrect login page if user not login
-#                window.location = '/school'
-                console.log 'student contact'
+                window.location = '/school'
         )
 
         return false

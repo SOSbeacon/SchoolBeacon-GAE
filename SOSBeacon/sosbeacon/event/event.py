@@ -84,6 +84,7 @@ class Event(EntityBase):
     student_count = ndb.IntegerProperty('sc', default=0, indexed=False)
     contact_count = ndb.IntegerProperty('cc', default=0, indexed=False)
     responded_count = ndb.IntegerProperty('rc', default=1, indexed=False)
+    total_comment = ndb.IntegerProperty('tc', default=0)
 
     last_broadcast_date = ndb.DateTimeProperty('lb')
 
@@ -152,6 +153,10 @@ class Event(EntityBase):
         event['student_count'] = self.student_count
         event['contact_count'] = self.contact_count
         event['responded_count'] = self.responded_count
+
+#        number_student, next_curs, more = total_comment(self.key)
+#        event['total_comment'] = len(number_student)
+        event['total_comment'] = self.total_comment
 
         event['last_broadcast_date'] = None
         if self.date:
@@ -276,3 +281,17 @@ def _apply_count_updates(event_key, counts):
     event.responded_count += counts['responded_count']
 
     event.put()
+
+
+def total_comment(event_key, cursor=None, batch_size=50):
+    """count message of this event"""
+    from .message import Message
+
+    query = Message.query().order(Message.key)
+
+    query = query.filter(Message.event == event_key, Message.message_type == 'c')
+
+    start_cursor = ndb.Cursor(urlsafe=cursor)
+
+    return query.fetch_page(
+        batch_size, start_cursor=start_cursor, keys_only=True)

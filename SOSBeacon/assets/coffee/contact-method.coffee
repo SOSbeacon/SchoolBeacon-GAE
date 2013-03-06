@@ -101,13 +101,13 @@ class App.SOSBeacon.View.ContactMethodEdit extends Backbone.View
         obj_json = @model.toJSON()
         if @model.get('type') == 'e'
             obj_json.icon = 'envelope'
-            obj_json.type_name = 'email'
+            obj_json.type_name = 'Email'
         else if @model.get('type') == 'p'
             obj_json.icon = 'volume-up'
-            obj_json.type_name = 'phone'
+            obj_json.type_name = 'Voice Phone'
         else if @model.get('type') == 't'
             obj_json.icon = 'phone'
-            obj_json.type_name = 'text'
+            obj_json.type_name = 'Text Phone'
         else
             obj_json.icon = ''
             obj_json.type_name = ''

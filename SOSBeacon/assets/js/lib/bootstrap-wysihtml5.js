@@ -68,6 +68,7 @@
                     "<form enctype='multipart/form-data'>" +
                     "<input type='file' name='files' id='files' />" +
                     "</form>" +
+                    "<p>(Accept file: mp3, amr, caf, max size: 4096 KB)</p>" +
                     "</div>" +
                     "</div>" +
                     "<div class='modal-footer'>" +
@@ -91,6 +92,7 @@
                       "<form enctype='multipart/form-data'>" +
                         "<input type='file' name='file' id='file' />" +
                       "</form>" +
+                      "<p>(Accept file: jpg, jpeg, gif, png, max size: 4096 KB)</p>" +
                       "</div>" +
                     "</div>" +
                     "<div class='modal-footer'>" +
@@ -270,11 +272,11 @@
                     $("#file-queue").css('display', 'block');
                     $("#file-queue").html('');
                     $("#file").uploadify({
-                      'file_size_limit' : "2 MB",
+                      'file_size_limit' : "4 MB",
                       'swf': '/static/img/uploadify.swf',
                       'uploader': response,
                       'buttonText': 'Upload Image',
-                      'fileTypeExts' : '*.gif; *.jpg; *.png',
+                      'fileTypeExts' : '*.gif; *.jpg; *.png; *.jpeg',
                       'onUploadStart' : function() {
                         $(".bootstrap-wysihtml5-insert-image-modal>.modal-footer>.btn").each(function(val) {
                           $(this).css('display', 'None');
@@ -414,10 +416,10 @@
                         $("#files-queue").css('display', 'block');
                         $("#files-queue").html('');
                         $("#files").uploadify({
-                            'file_size_limit' : "2 MB",
+                            'file_size_limit' : "4 MB",
                             'swf': '/static/img/uploadify.swf',
                             'buttonText': 'Upload Audio',
-                            'fileTypeExts' : '*.mp3;*.ogg',
+                            'fileTypeExts' : '*.mp3;*.amr;*.caf',
                             'uploader': response,
                             'onUploadStart' : function() {
                                 $(".bootstrap-wysihtml5-insert-audio-modal>.modal-footer>.btn").each(function(val) {

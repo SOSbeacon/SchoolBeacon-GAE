@@ -8,6 +8,7 @@ class App.SOSBeacon.Model.Message extends Backbone.Model
             type: "",
             message: {},
             modified: '',
+            added: '',
             timestamp: null,
             user: null,
             user_name: "",
@@ -52,7 +53,7 @@ class App.SOSBeacon.Collection.MessageList extends Backbone.Paginator.requestPag
 
     query_defaults: {
         orderBy: 'modified'
-        orderDirection: 'desc'
+#        orderDirection: 'desc'
     }
 
     server_api: {}
@@ -87,18 +88,52 @@ class App.SOSBeacon.View.EditMessage extends Backbone.View
 
         return this
 
+    renderMessages: =>
+        @collection = new App.SOSBeacon.Collection.MessageList()
+
+        _.extend(@collection.server_api, {
+            'feq_event': @event.id
+            'orderBy': 'timestamp'
+        })
+        $(".total_comment").remove()
+        $("#view-message-area").remove()
+        $("#event-center-message").append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 45%" class="image">')
+
+        @collection.fetch(
+            success: =>
+#                remove loading image when collection loading successful
+                $('.image').css('display', 'none')
+            error: =>
+#                reidrect login page if user not login
+                window.location = '/school'
+        )
+
+        @messageListView = new App.SOSBeacon.View.MessageList(
+            @collection, false)
+
+        @event.fetch()
+        total_comment = @event.get('total_comment') + 1
+
+        $("#event-center-message").append('<p class="total_comment" style="color: #800105"></p>')
+        $('.total_comment').text("Has " + total_comment + " added comment(s)")
+        $("#event-center-message").append(@messageListView.render().el)
+
     hide: () =>
         @$el.html('')
 
     saveComment: =>
         if @$('textarea#add-message-box').val()
-            @message.save(
+            @message.save({
                 message: {
                     body: @$('textarea#add-message-box').val()
                 }
                 type: 'c' #c for comment
                 event: @event.id
                 is_admin: true
+                user_name: "#{current_user}"
+            },
+                success: (xhr) =>
+                    @renderMessages()
             )
             App.SOSBeacon.Event.trigger("message:add", @message, this)
             @hide()
@@ -131,6 +166,28 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
             })
 
         return this
+
+    renderMessages: =>
+        @collection = new App.SOSBeacon.Collection.MessageList()
+        _.extend(@collection.server_api, {
+            'feq_event': @event.id
+            'orderBy': 'timestamp'
+        })
+        $("#view-message-area").remove()
+        $("#event-center-message").append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 45%" class="image">')
+
+        @collection.fetch(
+            success: =>
+                #                remove loading image when collection loading successful
+                $('.image').css('display', 'none')
+            error: =>
+                #                reidrect login page if user not login
+                window.location = '/school'
+        )
+
+        @messageListView = new App.SOSBeacon.View.MessageList(
+            @collection, false)
+        $("#event-center-message").append(@messageListView.render().el)
 
     #render map container
     renderGoogleMap:() =>
@@ -202,16 +259,20 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
             if !confirm("Are you sure you want to send this group broadcast?")
                 return false
 
-            @model.save(
+            @model.save({
                 message: {
                     sms: @$('textarea#add-sms-box').val(),
                     email: @$('textarea#add-email-box').val()
                 },
+                user_name: "#{current_user}"
                 type: 'b', #b for broadcast
                 event: @event.id
                 latitude: ""+@position.latitude
                 longitude: ""+@position.longitude
                 is_admin: true
+            },
+                success: (xhr) =>
+                    @renderMessages()
             )
 
             App.SOSBeacon.Event.trigger("message:add", @model, this)
@@ -250,16 +311,20 @@ class App.SOSBeacon.View.AddEmergency extends App.SOSBeacon.View.AddBroadcast
             if !confirm("Are you sure you want to send this group broadcast?")
                 return false
 
-            @model.save(
+            @model.save({
                 message: {
                     sms: @$('textarea#add-sms-box').val(),
                     email: @$('textarea#add-email-box').val()
                 },
+                user_name: "#{current_user}"
                 type: 'em', #em for emergency
                 event: @event.id
                 latitude: ""+@position.latitude
                 longitude: ""+@position.longitude
                 is_admin: true
+            },
+                success: (xhr) =>
+                    @renderMessages()
             )
 
             App.SOSBeacon.Event.trigger("message:add", @model, this)
@@ -297,16 +362,20 @@ class App.SOSBeacon.View.AddCall extends App.SOSBeacon.View.AddBroadcast
             if !confirm("Are you sure you want to send this group broadcast?")
                 return false
 
-            @model.save(
+            @model.save({
                 message: {
                     sms: '',
                     email: @$('textarea#add-email-box').val()
                 },
+                user_name: "#{current_user}"
                 type: 'ec', #cl for call
                 event: @event.id
                 latitude: ""+@position.latitude
                 longitude: ""+@position.longitude
                 is_admin: true
+            },
+                success: (xhr) =>
+                    @renderMessages()
             )
 
             App.SOSBeacon.Event.trigger("message:add", @model, this)
@@ -331,16 +400,20 @@ class App.SOSBeacon.View.AddEmail extends App.SOSBeacon.View.AddBroadcast
             if !confirm("Are you sure you want to send this group broadcast?")
                 return false
 
-            @model.save(
+            @model.save({
                 message: {
                     sms: '',
                     email: @$('textarea#add-email-box').val()
                 },
+                user_name: "#{current_user}"
                 type: 'eo', #email only
                 event: @event.id
                 latitude: ""+@position.latitude
                 longitude: ""+@position.longitude
                 is_admin: true
+            },
+                success: (xhr) =>
+                    @renderMessages()
             )
 
             App.SOSBeacon.Event.trigger("message:add", @model, this)
@@ -375,7 +448,7 @@ class App.SOSBeacon.View.MessageList extends Backbone.View
 
     insertOne: (object) =>
         view = new App.SOSBeacon.View.MessageListItem({model: object})
-        @$el.prepend(view.render().el)
+        @$el.append(view.render().el)
 
     addAll: =>
         @collection.each(@addOne)
@@ -421,6 +494,7 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
                     .attr('value', reply.get('key'))
                     .attr('id', reply.get('message'))
                     .html(reply.get('content'))
+                    .css('padding-left', '5px')
             )
         )
 
@@ -482,6 +556,11 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
         if proceed
             @model.destroy()
 
+        @eventId = @model.get('event')
+        @event = new App.SOSBeacon.Model.Event({key: @eventId})
+
+        @event.fetch({async: false})
+        $('.total_comment').text("Has " + @event.get('total_comment') + " added comment(s)")
 
 class App.SOSBeacon.Model.MessageType extends Backbone.Model
     idAttribute: 'type'
@@ -569,24 +648,22 @@ App.SOSBeacon.eventTypes = new App.SOSBeacon.Collection.MessageType([
 class App.SOSBeacon.View.NewMessageListItem extends App.SOSBeacon.View.MessageListItem
     template: JST['event-center/student-message-list-item']
 
-    setDefaultValue:(defvalue)=>
-        @defvalue = defvalue
-
     render:(object) =>
         new_model = @model.toJSON()
-        time = @model.get('modified')
-        if object != undefined
-            time = object.get('modified')
-
-        new_model['initmodified'] = time
-        date = Date.parse(time)
-        if date != null
-            date.setHours(date.getHours() + @defvalue)
-            time = date.toString('yyyy-MM-dd hh:mm')
-
-        new_model['modified'] = time
+#        time = @model.get('modified')
+#        if object != undefined
+#            time = object.get('modified')
+#
+#        new_model['initmodified'] = time
+#        date = Date.parse(time)
+#        if date != null
+#            date.setHours(date.getHours())
+#            time = date.toString('yyyy-MM-dd hh:mm')
+#
+#        new_model['modified'] = time
         @$el.html(@template(new_model))
-        @loadReplyMessage(@model)
+        if @model.id
+            @loadReplyMessage(@model)
 
         key = @model.get('key')
         lat = @model.get('latitude')
@@ -611,9 +688,10 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
     events:
         'click .event-submit-comment': 'saveComment'
 
-    initialize: (id, hideButtons) =>
+    initialize: (id, total_comment, hideButtons) =>
         @hideButtons = hideButtons
         @eventId = id
+        @total_comment = total_comment
         @collection = new App.SOSBeacon.Collection.MessageList()
         _.extend(@collection.server_api, {
             'feq_event': @eventId
@@ -628,7 +706,12 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
         @collection.fetch()
 
     render: =>
-        @$el.html(@template())
+        @event = new App.SOSBeacon.Model.Event({key: @eventId})
+        @event.fetch({async: false})
+
+        @total = {}
+        @total['total_comment'] = @event.get('total_comment')
+        @$el.html(@template(@total))
         try
             @$("textarea#add-message-box").wysihtml5({
                 "image": false,
@@ -651,7 +734,9 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
                 is_student: true
             }
                 success: (data) =>
-                    console.log JSON.stringify(data)
+                    $('.view-message-item').remove()
+                    @collection.fetch()
+                    @render()
                     button = '<textarea id="add-message-box" class="span9"></textarea>'
                     input = ('<input type="text" name="user_name" class="guest" readonly="" value="">');
                     @$('.add-message-box-area').html(button)
@@ -663,6 +748,7 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
                             "audio" : false,
                             'link': false
                         })
+                    $('#add-message-box').focus()
             )
 
         else
@@ -678,6 +764,9 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
                 user_name: @$('.add-message-box-area').find('.guest').val()
             }
                 success: (data) =>
+                    $('.view-message-item').remove()
+                    @collection.fetch()
+                    @render()
                     button = '<textarea id="add-message-box" class="span9"></textarea>'
                     input = ('<input type="text" name="user_name" class="guest" value="">');
                     @$('.add-message-box-area').html(button)
@@ -689,16 +778,13 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
                             "audio" : false,
                             'link': false
                         })
+                    $('#add-message-box').focus()
             )
 
         @addOne(model)
 
-    setDefaultValue:(defvalue)=>
-        @defvalue = defvalue
-
     addOne: (object) =>
         view = new App.SOSBeacon.View.NewMessageListItem({model: object})
-        view.setDefaultValue(@defvalue)
         item = view.render().el
 
         if @hideButtons
@@ -708,7 +794,6 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
 
     insertOne: (object) =>
         view = new App.SOSBeacon.View.NewMessageListItem({model: object})
-        view.setDefaultValue(@defvalue)
         @$el.prepend(view.render().el)
 
     addAll: =>

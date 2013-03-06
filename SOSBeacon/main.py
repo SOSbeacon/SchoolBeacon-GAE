@@ -258,10 +258,6 @@ class EventHandler(TemplateHandler):
         session_store = sessions.get_store()
         session = session_store.get_session()
 
-        if 'u' in session:
-            self.redirect("/#eventcenter/view/%s" % event_key.get().key.urlsafe())
-            return
-
         event_mc_key = 'Event:%s' % (int(event_id),)
         event_html = memcache.get(event_mc_key)
         if not event_html:
@@ -280,7 +276,7 @@ class EventHandler(TemplateHandler):
             return
 
         event = event_key.get()
-        #Get the school id (ie namespace) and grab the event marker
+
         marker_key = ndb.Key(
             ContactMarker, "%s:%s" % (event_id, method_id),
             namespace='_x_')
@@ -291,16 +287,26 @@ class EventHandler(TemplateHandler):
                 self.redirect("/#eventcenter/view/%s" % event_key.get().key.urlsafe())
                 return
             else:
-                event_html = self.render('event.mako', event=event, contact_marker = False)
+                event_html = self.render('event.mako', event=event, contact_marker = False, timezone = self.session.get('tz'))
                 self.response.out.write(event_html)
                 return
+
+        if 'u' in session:
+            self.redirect("/#eventcenter/view/%s" % event_key.get().key.urlsafe())
+            try:
+                acknowledge_event(event_key, marker_key)
+            except:
+                # This is (relatively) non-critical, so log and ignore exceptions.
+                logging.exception('Ack failed for marker %s.', marker_key)
+                pass
+            return
 
         if marker.place_holder:
             marker_key = marker.place_holder
 
         self.setup_session_marker(marker_key, event)
 
-        event_html = self.render('event.mako', event=event, contact_marker = True, contact_name = marker.name)
+        event_html = self.render('event.mako', event=event, contact_marker = True, contact_name = marker.name, timezone = self.session.get('tz'))
         self.response.out.write(event_html)
 
         # Try to mark this event as acknowledged.
@@ -743,6 +749,107 @@ class SMSResponderHandler(TemplateHandler):
         entity.put()
 
 
+class AccountHandler(TemplateHandler):
+    """Change info of user"""
+    @user_required
+    def get(self):
+        user_key = self.session.get('u')
+        user = ndb.Key(urlsafe = user_key).get()
+
+        self.render_account(error = "",
+            user = user,
+            school_name = self.school_name,
+            schools = self.list_school)
+
+    @user_required
+    def post(self):
+        """Update user info"""
+        name = self.request.POST['name']
+        email = self.request.POST['email']
+        phone = self.request.POST['phone']
+
+        current_password = self.request.POST['current_password']
+        new_password = self.request.POST['new_password']
+        confirm_password = self.request.POST['confirm_password']
+
+        errors = {
+            'wrong' : 'Current password is wrong.',
+            'required' : 'Field current password is required.',
+            'not_correct' : 'Confirm password is not correct.',
+            'success' : 'Account updated successfully.'
+        }
+
+        user_key = self.session.get('u')
+        user = ndb.Key(urlsafe = user_key).get()
+
+        if not current_password:
+            self.render_account(error = errors['required'],
+                user = user,
+                school_name = self.school_name,
+                schools = self.list_school)
+
+        else:
+            if check_password_hash(current_password, user.password):
+                if new_password:
+                    if new_password != confirm_password:
+                        self.render_account(error = errors['not_correct'],
+                            user = user,
+                            school_name = self.school_name,
+                            schools = self.list_school)
+                    else:
+                        self.update_user(user, name, phone, email, new_password)
+                        self.render_account(error = errors['success'],
+                            user = user,
+                            school_name = self.school_name,
+                            schools = self.list_school)
+                else:
+                    self.update_user(user, name, phone, email, user.password)
+                    self.render_account(error = errors['success'],
+                        user = user,
+                        school_name = self.school_name,
+                        schools = self.list_school)
+            else:
+                self.render_account(error = errors['wrong'],
+                    user = user,
+                    school_name = self.school_name,
+                    schools = self.list_school)
+
+    def update_user(self, user, name, phone, email, password):
+        from sosbeacon.student import DEFAULT_STUDENT_ID
+        from sosbeacon.student import Student
+
+        student_key = ndb.Key(
+            Student, "%s-%s" % (DEFAULT_STUDENT_ID, user.key.id()),
+            namespace='_x_')
+
+        student = student_key.get()
+        student.name = name
+        student.contacts[0]['methods'][1]['value'] = phone
+        to_put = [student]
+
+        user.name = name
+        user.email = email
+        user.phone = phone
+        if user.password != password:
+            user.set_password(password)
+
+        to_put.append(user)
+        ndb.put_multi(to_put)
+
+    def render_account(self, **context):
+        out = self.render(template_name='account.mako', **context)
+        self.response.out.write(out)
+
+
+class RobocallRequestHandler(TemplateHandler):
+    def get(self):
+        from twilio import twiml
+
+        r = twiml.Response()
+        r.say("Hello")
+        print str(r)
+
+
 url_map = [
     ('/', MainHandler),
     ('/school/web/users/login/', HomeLoginHandler),
@@ -751,8 +858,8 @@ url_map = [
     ('/school/web/about/index', AboutHandler),
     ('/school/web/about/features', FeaturesHandler),
     ('/school/web/about/testimonials', TestimonialsHandler),
-#    ('/school/web/about/contact', ContactHandler),
     ('/school/web/users/forgot', ForgotPasswordHandler),
+    ('/school/webapp/account', AccountHandler),
     ('/admin/', AdminHandler),
     ('/e/(.*)/(.*)', EventHandler),
     ('/import/students/upload/', StudentImportHandler),
@@ -763,6 +870,7 @@ url_map = [
     webapp2.Route(r'/school/<resource_id:.+>',
         handler='main.ChooseSchoolHandler'),
     ('/sms-response', SMSResponderHandler),
+    ('/broadcast/record', RobocallRequestHandler),
 ]
 app = webapp2.WSGIApplication(
     url_map,

@@ -103,9 +103,6 @@ class SchoolRestApiListHandler(rest_handler.RestApiListHandler):
 def process_messages(request, schema, entity):
     from voluptuous import Schema
     from sosbeacon.event.message import get_sendemail_user_task
-    from sosbeacon.event.message import broadcast_email_robocall_task
-    from sosbeacon.event.message import broadcast_call
-    from sosbeacon.responde_sms import create_responder_user_sms
 
     session_store = sessions.get_store()
     session = session_store.get_session()
@@ -143,6 +140,8 @@ def process_messages(request, schema, entity):
             cm = cm_key.get()
             if cm:
                 message.user_name = cm.name
+                cm.count_comment += 1
+                to_put.append(cm)
             else:
                 message.user_name = 'Guest'
 
@@ -177,6 +176,17 @@ class MessageHandler(rest_handler.RestApiListHandler, ProcessMixin):
     def process(self, resource_id, *args, **kwargs):
         message = process_messages(self.request, self.schema, self.entity)
         self.write_json_response(message.to_dict())
+
+    def delete(self, resource_id, *args, **kwargs):
+        self.update_total_message(resource_id)
+        return super(MessageHandler, self).delete(resource_id, *args, **kwargs)
+
+    def update_total_message(self, resource_id):
+        message = ndb.Key(urlsafe = resource_id).get()
+
+        event = message.event.get()
+        event.total_comment -= 1
+        event.put()
 
 
 class MessageListHandler(rest_handler.RestApiListHandler, ProcessMixin):
@@ -250,8 +260,8 @@ class StudentListHandler(SchoolRestApiListHandler, ProcessMixin):
             namespace='_x_')
 
         response.insert(0, student_key.get().to_dict())
-        self.changeTimezone(response)
 
+        self.changeTimezone(response)
         self.write_json_response(response)
 
 
@@ -380,7 +390,7 @@ class GroupListHandler(SchoolRestApiListHandler, ProcessMixin):
             return
 
         self.request.GET['feq_school'] = session.get('s')
-        self.request.GET['feq_default'] = False
+        self.request.GET['feq_default'] = 'false'
 
         resources = self.query.fetch(
             self.entity, self.request.params, self.query_schema)
@@ -388,8 +398,6 @@ class GroupListHandler(SchoolRestApiListHandler, ProcessMixin):
         response = [entity.to_dict() for entity in resources]
 
         school_key = ndb.Key(urlsafe = session.get('s'))
-
-        logging.info(len(response))
 
         group_admin_key = ndb.Key(
             Group, ADMIN_GROUPS_ID + "%s" % (school_key.id()),
@@ -401,10 +409,8 @@ class GroupListHandler(SchoolRestApiListHandler, ProcessMixin):
 
         response.insert(0, group_admin_key.get().to_dict())
         response.insert(1, group_staff_key.get().to_dict())
+
         self.changeTimezone(response)
-
-        logging.info(len(response))
-
         self.write_json_response(response)
 
 
@@ -563,6 +569,25 @@ class ContactMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
         super(ContactMarkerListHandler, self).__init__(
             ContactMarker, marker_schema, request, response,
             query_schema=marker_query_schema)
+
+    def get(self, resource_id, *args, **kwargs):
+        """"""
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+
+        event_urlsafe = self.request.GET['feq_event']
+        event = ndb.Key(urlsafe = event_urlsafe).get()
+        user = ndb.Key(urlsafe = session.get('u')).get()
+
+        marker = ndb.Key(
+            ContactMarker, "%s:%s" % (event.key.id(), user.key.id()),
+            namespace='_x_').get()
+
+        if marker:
+            marker.count_visit += 1
+            marker.put()
+
+        return super(ContactMarkerListHandler, self).get(resource_id, *args, **kwargs)
 
 
 class StudentMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):

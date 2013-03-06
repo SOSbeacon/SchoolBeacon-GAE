@@ -15,6 +15,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
             contact_count: 0
             responded_count: 0
             status: ""
+            total_comment: 0
         }
 
     validators:
@@ -70,8 +71,8 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
     }
 
     query_defaults: {
-        orderBy: 'modified'
-        orderDirection: 'desc'
+        orderBy: 'added'
+#        orderDirection: 'desc'
     }
 
     server_api: {}
@@ -127,10 +128,18 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         _.extend(@collection.server_api, {
             'feq_event': @model.id
             'orderBy': 'timestamp'
-            'orderDirection': 'desc'
+#            'orderDirection': 'desc'
         })
+        @$("#event-center-message").append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 45%" class="image">')
 
-        @collection.fetch()
+        @collection.fetch(
+            success: =>
+#                remove loading image when collection loading successful
+                @$('.image').css('display', 'none')
+            error: =>
+#                reidrect login page if user not login
+                window.location = '/school'
+        )
 
         @messageListView = new App.SOSBeacon.View.MessageList(
             @collection, false)
@@ -218,18 +227,14 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         el = $(e.target)
         href = el.attr('href')
         if href == "#responded" and not @respondedView
+            @model.fetch({async: false})
+            @model.initialize()
+
             @respondedView = new App.SOSBeacon.View.MarkerList(
                 new App.SOSBeacon.Collection.ContactMarkerList,
             @model.id, true)
 
             @$("#responded").append(@respondedView.render().el)
-
-        else if href == "#not-responded" and not @nonRespondedView
-            @nonRespondedView = new App.SOSBeacon.View.MarkerList(
-                new App.SOSBeacon.Collection.ContactMarkerList,
-            @model.id, false)
-
-            @$("#not-responded").append(@nonRespondedView.render().el)
 
         else if href == "#no-students" and not @noStudentsView
             @model.fetch({async: false})
@@ -241,7 +246,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
             @$("#no-students").append(@noStudentsView.render().el)
             if @model.get('message_type') == 'rc'
-                @$("#no-students fieldset").append("<button class='btn btn-primary' id='robocall'>Robocall non-responders parents</button>")
+                @$("#no-students fieldset").append("<button class='btn btn-primary' id='robocall'>ROBOCALL NON-RESPONDERS PARENTS</button>")
 
         else if href == "#no-directs" and not @noDirectsView
             @model.fetch({async: false})
@@ -253,7 +258,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
             @$("#no-directs").append(@noDirectsView.render().el)
             if @model.get('message_type') == 'rc'
-                @$("#no-directs fieldset").append("<button class='btn btn-primary' id='robocall'>Robocall non-responders contacts</button>")
+                @$("#no-directs fieldset").append("<button class='btn btn-primary' id='robocall'>ROBOCALL NON-RESPONDERS CONTACTS</button>")
         el.tab('show')
 
     robocallToStudent: =>
@@ -444,7 +449,12 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
 
     renderGroups: () =>
         allGroups = new App.SOSBeacon.Collection.GroupList()
-        allGroups.fetch(async: false)
+        allGroups.fetch({
+            async: false,
+            error: =>
+#                reidrect login page if user not login
+                window.location = '/school'
+        })
         allGroups.each((group, i) =>
             @$("#group-select").append(
                 $("<option></option>")
@@ -513,7 +523,7 @@ class App.SOSBeacon.View.EventCenterApp extends Backbone.View
         _.extend(@collection.server_api, {
             'limit': 200
             'orderBy': 'added'
-            'orderDirection': 'desc'
+#            'orderDirection': 'desc'
         })
         @collection.fetch()
 
@@ -568,6 +578,13 @@ class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
             group_links.push(" #{acs.get('name')}")
         )
         model_props['group_list'] = group_links
+        no_responder = @model.get('contact_count') - @model.get('responded_count') + 1
+
+        if no_responder < 0
+            model_props['no_responder'] = 0
+        else
+            model_props['no_responder'] = no_responder
+
         @$el.html(@template(model_props))
         return this
 

@@ -70,12 +70,15 @@ class App.SOSBeacon.View.ReplyMessageEdit extends Backbone.View
                 message: @message_id
             },
                 success: (model) =>
-                    console.log JSON.stringify(model)
                     App.SOSBeacon.Event.trigger('model:save', @model, this)
-                    myTextField = document.getElementById(model.get('message'))
+                    myTextField = $("#"+model.get('message'))
                     if myTextField
                         $('.fQuickReply').remove()
-                        myTextField.innerHTML = model.get('content')
+                        myTextField.html(
+                            $("<div></div>")
+                            .html(model.get('content'))
+                            .css('padding-left', '5px')
+                        )
                     else
                         alert "Error"
             )

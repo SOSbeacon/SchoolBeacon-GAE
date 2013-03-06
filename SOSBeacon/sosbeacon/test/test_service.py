@@ -438,3 +438,120 @@ class TestServiceContact(unittest.TestCase):
         self.assertIsNone(query_event.get())
         self.assertEqual(response.status_int, 200)
 
+
+class TestAccountHandler(unittest.TestCase):
+    """Test edit account user when login"""
+    def setUp(self):
+        from sosbeacon.school import School
+        from main import AccountHandler
+
+        self.testbed = testbed.Testbed()
+        self.testbed.activate()
+        self.testbed.setup_env(app_id='testapp')
+
+        url_map = [
+            ('/school/webapp/account', AccountHandler),
+            ('/authentication/login', LoginUserHandler)
+        ]
+
+        app = webapp2.WSGIApplication(
+            url_map,
+            config=webapp_config
+        )
+        self.testapp = webtest.TestApp(app)
+
+        self.user = User(
+            id='1',
+            name='longly',
+            password = 'abc123',
+            email = 'longly@cnc.vn',
+            phone = '84973796065'
+        )
+
+        self.school1 = School(
+            id='100',
+            name='School_Test',
+        )
+
+        self.school1.put()
+        self.user.schools = [self.school1.key]
+        self.user.put()
+
+        email = 'longly@cnc.vn'
+        password = 'abc123'
+
+        params1 = {'email': email, 'password': password}
+        self.testapp.post('/authentication/login', params1)
+
+    def test_empty_current_password(self):
+        """Ensure user have to fill down textbox current password"""
+        name     = 'user1'
+        email    = 'user1@gmail.com'
+        phone    = '84973796061'
+        current_password = ''
+
+        params = {
+            'name': name,
+            'email': email,
+            'current_password': current_password,
+            'phone': phone,
+            }
+        response = self.testapp.post('/school/webapp/account', params)
+        self.assertIn(response.normal_body, 'Field current password is required.')
+
+    def test_wrong_current_password(self):
+        """Ensure wrong current password can not update information user """
+        name     = 'user1'
+        email    = 'user1@gmail.com'
+        phone    = '84973796061'
+        current_password = '123abc'
+
+        params = {
+            'name': name,
+            'email': email,
+            'current_password': current_password,
+            'phone': phone,
+            }
+        response = self.testapp.post('/school/webapp/account', params)
+        self.assertIn(response.normal_body, 'Current password is wrong.')
+
+    def test_confirm_password_wrong(self):
+        """Ensure user have to complete confirm password to change new password"""
+        name     = 'user1'
+        email    = 'user1@gmail.com'
+        phone    = '84973796061'
+        current_password = 'abc123'
+        new_password = '123abc'
+        confirm_password = 'abc123'
+
+        params = {
+            'name': name,
+            'email': email,
+            'current_password': current_password,
+            'phone': phone,
+            'confirm_password': confirm_password,
+            'new_password': new_password
+        }
+        response = self.testapp.post('/school/webapp/account', params)
+        self.assertIn(response.normal_body, 'Confirm password is not correct.')
+
+    def test_update_successful(self):
+        """Ensure user update successful with correct password"""
+        name     = 'user1'
+        email    = 'user1@gmail.com'
+        phone    = '84973796061'
+        current_password = 'abc123'
+        new_password = '123abc'
+        confirm_password = '123abc'
+
+        params = {
+            'name': name,
+            'email': email,
+            'current_password': current_password,
+            'phone': phone,
+            'confirm_password': confirm_password,
+            'new_password': new_password
+        }
+        response = self.testapp.post('/school/webapp/account', params)
+        self.assertIn(response.normal_body, 'Account updated successfully.')
+

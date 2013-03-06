@@ -42,8 +42,8 @@
                                         %endfor
                                 </ul>
                             </li>
-##                            <li class="divider"></li>
-##                            <li><a id="account">Account Preferences</a></li>
+                            <li class="divider"></li>
+                            <li><a id="account">Account Preferences</a></li>
                             <li class="divider"></li>
                             <li><a id="logout">Log Out</a></li>
                         </ul>
@@ -86,7 +86,19 @@
         })
 
         $("#account").click(function() {
-            window.location = "/account"
+            var url = '/school/webapp/account'
+##            $.get(url, function(data){
+##                window.location = '/school/webapp/account'
+##            }); //End of post ajax
+##            window.location = '/school/webapp/account'
+            $.ajax({
+                type: "GET",
+                url: url,
+                success: function(xhr) {
+                    console.log(xhr)
+                    window.location = '/school/webapp/account'
+                }
+            });
         })
 
         $(".choose_school").click(function() {

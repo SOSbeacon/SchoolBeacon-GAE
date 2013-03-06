@@ -7510,11 +7510,12 @@ wysihtml5.Commands = Base.extend(
             audio.setAttribute('width','348px')
             audio.setAttribute('bgcolor','#000000')
             audio.setAttribute('tabindex','0')
+            audio.setAttribute('autoPlay','true')
 
             for (i in value) {
                 audio.setAttribute('type', 'application/x-shockwave-flash')
                 audio.setAttribute('src', 'http://www.google.com/reader/ui/3523697345-audio-player.swf')
-                audio.setAttribute('flashvars', 'audioUrl=' + value[i])
+                audio.setAttribute('flashvars', 'audioUrl=' + value[i] + "&autoPlay=true")
                 audio.setAttribute('quality', 'best')
             }
 

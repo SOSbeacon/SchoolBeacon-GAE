@@ -13,6 +13,26 @@ indexes:
 - kind: ContactMarker
   properties:
   - name: a
+  - name: dm
+  - name: event
+  - name: a_
+
+- kind: ContactMarker
+  properties:
+  - name: a
+  - name: event
+  - name: a_
+
+- kind: ContactMarker
+  properties:
+  - name: a
+  - name: event
+  - name: a_
+    direction: desc
+
+- kind: ContactMarker
+  properties:
+  - name: a
   - name: nm
 
 - kind: ContactMarker
@@ -145,6 +165,17 @@ indexes:
 - kind: Message
   properties:
   - name: e
+  - name: mt
+
+- kind: Message
+  properties:
+  - name: e
+  - name: mt
+  - name: ts
+
+- kind: Message
+  properties:
+  - name: e
   - name: ts
 
 - kind: Message
@@ -187,6 +218,21 @@ indexes:
   properties:
   - name: sc
   - name: n_
+
+- kind: StudentMarker
+  properties:
+  - name: a
+  - name: event
+  - name: id
+  - name: a_
+
+- kind: StudentMarker
+  properties:
+  - name: a
+  - name: event
+  - name: id
+  - name: a_
+    direction: desc
 
 - kind: StudentMarker
   properties:

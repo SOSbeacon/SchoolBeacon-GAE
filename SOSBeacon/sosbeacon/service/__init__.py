@@ -103,6 +103,7 @@ class SchoolRestApiListHandler(rest_handler.RestApiListHandler):
 def process_messages(request, schema, entity):
     from voluptuous import Schema
     from sosbeacon.event.message import get_sendemail_user_task
+    from sosbeacon.event.contact_marker import update_count_comment
 
     session_store = sessions.get_store()
     session = session_store.get_session()
@@ -123,10 +124,15 @@ def process_messages(request, schema, entity):
         message.is_admin = True
         user_id = session.get('u')
         if user_id:
-            key = ndb.Key(urlsafe=user_id)
-            user = key.get()
+            user_key = ndb.Key(urlsafe=user_id)
+            user = user_key.get()
             message.user = user.key
             if user:
+                if message.message_type == 'c':
+                    marker_key = ndb.Key(
+                        ContactMarker, "%s:%s" % (message.event.id(), user_key.id()),
+                        namespace='_x_')
+                    update_count_comment(marker_key)
                 message.user_name = user.name
             else:
                 message.user_name = "Guest"
@@ -140,8 +146,7 @@ def process_messages(request, schema, entity):
             cm = cm_key.get()
             if cm:
                 message.user_name = cm.name
-                cm.count_comment += 1
-                to_put.append(cm)
+                update_count_comment(cm_key)
             else:
                 message.user_name = 'Guest'
 
@@ -207,7 +212,15 @@ class MessageListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             self.abort(403)
             return
 
-        self.write_json_response(message.to_dict())
+        message = message.to_dict()
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+        if 'tz' in session:
+            message['added'] = self.convertTimeZone(session.get('tz'), message['added'])
+        else:
+            message['added'] = self.convertTimeZone("America/Los_Angeles", message['added'])
+        self.write_json_response(message)
 
 
 class StudentHandler(rest_handler.RestApiHandler, ProcessMixin):
@@ -218,6 +231,40 @@ class StudentHandler(rest_handler.RestApiHandler, ProcessMixin):
 
         super(StudentHandler, self).__init__(
             Student, student_schema, request, response)
+
+    def put(self, resource_id, *args, **kwargs):
+        """edit contact student"""
+        from voluptuous import Schema
+        from sosbeacon.student import Student
+
+        student_key = ndb.Key(urlsafe = resource_id)
+        if student_key.get().is_direct:
+            super(StudentHandler, self).put(self, *args, **kwargs)
+            return
+
+        obj = json.loads(self.request.body)
+        schema = Schema(self.schema, extra=True)
+
+        try:
+            obj = schema(obj)
+        except:
+            logging.exception('validation failed')
+
+        student = student_key.get().to_dict()
+        if obj['contacts'][1]['name'] == '':
+            obj['contacts'][1]['name'] = student['contacts'][1]['name']
+
+        if obj['contacts'][1]['methods'][0]['value'] == obj['contacts'][1]['methods'][1]['value'] \
+            == obj['contacts'][1]['methods'][2]['value'] == '':
+                obj['contacts'][1]['methods'][0]['value'] = student['contacts'][1]['methods'][0]['value']
+                obj['contacts'][1]['methods'][1]['value'] = student['contacts'][1]['methods'][1]['value']
+                obj['contacts'][1]['methods'][2]['value'] = student['contacts'][1]['methods'][2]['value']
+
+        student = Student.from_dict(obj)
+        to_put = [student]
+        ndb.put_multi(to_put)
+
+        self.write_json_response(student.to_dict())
 
 
 class StudentListHandler(SchoolRestApiListHandler, ProcessMixin):
@@ -482,8 +529,8 @@ class SchoolListHandler(rest_handler.RestApiListHandler, ProcessMixin):
             query_options={'namespace': '_x_'})
 
     def process(self, resource_id, *args, **kwargs):
-        message = process_school(self.request, self.schema, self.entity)
-        self.write_json_response(message.to_dict())
+        school = process_school(self.request, self.schema, self.entity)
+        self.write_json_response(school.to_dict())
 
 
 class EventHandler(rest_handler.RestApiHandler, ProcessMixin):
@@ -560,6 +607,32 @@ class EventStudentHandler(rest_handler.RestApiHandler):
         return
 
 
+class UpdateUserVisitsHandler(webapp2.RequestHandler):
+    """Update visits count of current user"""
+    def post(self, resource_id, *args, **kwargs):
+        """"""
+        from sosbeacon.event.event import Event
+        event_key = ndb.Key(urlsafe = resource_id)
+        if not event_key.get():
+            return
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+
+        user_key = ndb.Key(urlsafe = session.get('u'))
+        if not user_key.get():
+            self.abort(403)
+            return
+
+        marker = ndb.Key(
+            ContactMarker, "%s:%s" % (event_key.id(), user_key.id()),
+            namespace='_x_').get()
+
+        if marker:
+            marker.count_visit += 1
+            marker.put()
+
+
 class ContactMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
     def __init__(self, request=None, response=None):
@@ -569,25 +642,6 @@ class ContactMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
         super(ContactMarkerListHandler, self).__init__(
             ContactMarker, marker_schema, request, response,
             query_schema=marker_query_schema)
-
-    def get(self, resource_id, *args, **kwargs):
-        """"""
-        session_store = sessions.get_store()
-        session = session_store.get_session()
-
-        event_urlsafe = self.request.GET['feq_event']
-        event = ndb.Key(urlsafe = event_urlsafe).get()
-        user = ndb.Key(urlsafe = session.get('u')).get()
-
-        marker = ndb.Key(
-            ContactMarker, "%s:%s" % (event.key.id(), user.key.id()),
-            namespace='_x_').get()
-
-        if marker:
-            marker.count_visit += 1
-            marker.put()
-
-        return super(ContactMarkerListHandler, self).get(resource_id, *args, **kwargs)
 
 
 class StudentMarkerListHandler(rest_handler.RestApiListHandler, ProcessMixin):
@@ -995,7 +1049,6 @@ class ExportStudentHandler(blobstore_handlers.BlobstoreDownloadHandler):
 
         school_urlsafe = session.get('s')
         school_key = ndb.Key(urlsafe = school_urlsafe)
-        logging.info(school_key)
 
         file_name = files.blobstore.create(mime_type='text/csv',_blobinfo_uploaded_filename='export_student.csv')
         students = Student.query(ndb.AND(Student.school == school_key,

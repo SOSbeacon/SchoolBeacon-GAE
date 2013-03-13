@@ -114,6 +114,12 @@
                     return false;
                 }
             });
+            setTimeout((function() {
+                last_audio = $('.audio_insert').last()
+                url_audio = last_audio.attr('flashvars') + "&autoPlay=true"
+                last_audio = $('.audio_insert').last().attr('flashvars', url_audio)
+            }), 500);
+
         });
     </script>
 </%block>

@@ -16,6 +16,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
             responded_count: 0
             status: ""
             total_comment: 0
+            alert_id: 0
         }
 
     validators:
@@ -72,7 +73,7 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
 
     query_defaults: {
         orderBy: 'added'
-#        orderDirection: 'desc'
+        orderDirection: 'desc'
     }
 
     server_api: {}
@@ -226,7 +227,10 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
     triggerTab: (e) =>
         el = $(e.target)
         href = el.attr('href')
-        if href == "#responded" and not @respondedView
+        if href == "#responded"
+            if @respondedView
+                @$("#responded").empty()
+
             @model.fetch({async: false})
             @model.initialize()
 
@@ -236,7 +240,10 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
             @$("#responded").append(@respondedView.render().el)
 
-        else if href == "#no-students" and not @noStudentsView
+        else if href == "#no-students"
+            if @noStudentsView
+                @$("#no-students").empty()
+
             @model.fetch({async: false})
             @model.initialize()
 
@@ -248,7 +255,10 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
             if @model.get('message_type') == 'rc'
                 @$("#no-students fieldset").append("<button class='btn btn-primary' id='robocall'>ROBOCALL NON-RESPONDERS PARENTS</button>")
 
-        else if href == "#no-directs" and not @noDirectsView
+        else if href == "#no-directs"
+            if @noDirectsView
+                @$("#no-directs").empty()
+
             @model.fetch({async: false})
             @model.initialize()
 
@@ -265,12 +275,14 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         if !confirm("Do you really to make calls to students contact?")
             return
         $.ajax '/service/event/' + @model.id + '/robocall/student',  {'type':'POST'}
+        $("#robocall").hide()
         return false
 
     robocallToDirect: =>
         if !confirm("Do you really to make calls to directs contact?")
             return
         $.ajax '/service/event/' + @model.id + '/robocall/direct',  {'type':'POST'}
+        $("#robocall").hide()
         return false
 
     onClose: =>
@@ -523,7 +535,7 @@ class App.SOSBeacon.View.EventCenterApp extends Backbone.View
         _.extend(@collection.server_api, {
             'limit': 200
             'orderBy': 'added'
-#            'orderDirection': 'desc'
+            'orderDirection': 'desc'
         })
         @collection.fetch()
 
@@ -593,6 +605,7 @@ class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
             "/eventcenter/edit/#{@model.id}", {trigger: true})
 
     view: =>
+        $.ajax '/service/event/' + @model.id + '/visits',  {'type':'POST'}
         App.SOSBeacon.router.navigate(
             "/eventcenter/view/#{@model.id}", {trigger: true})
 

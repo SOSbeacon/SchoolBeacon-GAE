@@ -55,15 +55,17 @@ def robocall_start(event_key, is_direct, user_urlsafe):
                                 StudentMarker.is_direct == is_direct)
 
     student_markers = query.fetch()
+    logging.info(student_markers)
 
     tasks = []
     phones = []
 
     for student_marker in student_markers:
         for key, value in student_marker.contacts.iteritems():
-            for number in value['methods']:
-                if number['type'] == 'p':
-                    phones.append(number['value'])
+            if value['methods'][2]['value']:
+                phones.append(value['methods'][2]['value'])
+            else:
+                phones.append(value['methods'][1]['value'])
 
     phones = list(set(phones))
 
@@ -118,6 +120,8 @@ def get_sent_email_task(event_key, user_urlsafe):
 
 def robocall_phone(event_urlsafe, phone_markers):
     from .message import broadcast_call
+    from .message import Message
+
     if not event_urlsafe:
         logging.error('No event key given.')
         return
@@ -144,12 +148,17 @@ def robocall_phone(event_urlsafe, phone_markers):
         create_error_log(error, 'ERR')
         return
 
-    broadcast_call(str(phone_markers))
+    list_broadcast = Message.query(Message.event == event_key,
+                                   Message.message_type.IN(['b', 'eo', 'em', 'ec']))\
+                            .order(Message.timestamp).fetch()
+
+    last_broadcast = list_broadcast[-1]
+    text_message = last_broadcast.user.get().name + " checked in " + last_broadcast.user.get().phone + ". Message " + last_broadcast.message['email']
+    broadcast_call(phone_markers, text_message, last_broadcast.link_audio)
 
 
 def send_email_robocall_to_user(event_urlsafe, user_urlsafe):
     from sosbeacon.event.contact_marker import ContactMarker
-    from webapp2_extras import sessions
     import sendgrid
     import settings
 
@@ -183,7 +192,9 @@ def send_email_robocall_to_user(event_urlsafe, user_urlsafe):
 
     logging.info('Sending notice to %s via mail api.', user.email)
 
-    contact_markers = ContactMarker.query(ContactMarker.event == event_key)
+    contact_markers = ContactMarker.query(ContactMarker.event == event_key,
+                                          ContactMarker.acknowledged == False)
+
     string_date = "%s %s, %s at %s:%s %s (GMT)" % (event.added.strftime("%B"), event.added.strftime("%d"),
                                                    event.added.strftime("%Y"),event.added.strftime("%I"),
                                                    event.added.strftime("%M"), event.added.strftime("%p"))

@@ -61,6 +61,7 @@ img {
   vertical-align: middle;
   border: 0;
   -ms-interpolation-mode: bicubic;
+  margin: 5px 0;
 }
 #map_canvas img {
   max-width: none;

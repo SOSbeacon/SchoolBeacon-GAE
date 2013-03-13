@@ -24,6 +24,19 @@ class JsonHandler(webapp2.RequestHandler):
 
         self.response.write(json.dumps(self.json_response))
 
+    def convertTimeZone(self, tz, created_at):
+        from datetime import datetime
+        from pytz import timezone
+
+        fmt = "%Y-%m-%d %H:%M"
+        fmt_utc = "%Y-%m-%d %H:%M %Z%z"
+
+        create_at_obj = datetime.strptime(created_at, fmt)
+        create_at_obj_utc = create_at_obj.replace(tzinfo=timezone('UTC'))
+
+        now_pacific = create_at_obj_utc.astimezone(timezone(tz))
+
+        return now_pacific.strftime(fmt)
 
 class RestApiSaveHandler(JsonHandler):
 
@@ -90,7 +103,34 @@ class RestApiHandler(RestApiSaveHandler):
             else:
                 response = resource.to_dict()
 
+        if type(response) != type(list()):
+            self.changeTimezone(response)
+
         self.write_json_response(response)
+
+    def changeTimezone(self, response):
+        from webapp2_extras import sessions
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+
+        if 'tz' in session:
+            tz = session.get('tz')
+            response['added'] = self.convertTimeZone(tz, response['added'])
+            response['modified'] = self.convertTimeZone(tz, response['modified'])
+            if 'date' in response:
+                response['date'] = self.convertTimeZone(tz, response['date'])
+                response['last_broadcast_date'] = self.convertTimeZone(tz, response['last_broadcast_date'])
+
+        else :
+            tz = "America/Los_Angeles"
+            session['tz'] = tz
+            response['added'] = self.convertTimeZone(tz, response['added'])
+            response['modified'] = self.convertTimeZone(tz, response['modified'])
+            if 'date' in response:
+                response['date'] = self.convertTimeZone(tz, response['date'])
+                response['last_broadcast_date'] = self.convertTimeZone(tz, response['last_broadcast_date'])
+
 
 
 class RestApiListHandler(RestApiSaveHandler):
@@ -138,20 +178,6 @@ class RestApiListHandler(RestApiSaveHandler):
                 if 'date' in value:
                     value['date'] = self.convertTimeZone(tz, value['date'])
                     value['last_broadcast_date'] = self.convertTimeZone(tz, value['last_broadcast_date'])
-
-    def convertTimeZone(self, tz, created_at):
-        from datetime import datetime
-        from pytz import timezone
-
-        fmt = "%Y-%m-%d %H:%M"
-        fmt_utc = "%Y-%m-%d %H:%M %Z%z"
-
-        create_at_obj = datetime.strptime(created_at, fmt)
-        create_at_obj_utc = create_at_obj.replace(tzinfo=timezone('UTC'))
-
-        now_pacific = create_at_obj_utc.astimezone(timezone(tz))
-
-        return now_pacific.strftime(fmt)
 
 
 class RestQuery(object):

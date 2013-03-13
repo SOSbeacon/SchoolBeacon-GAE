@@ -276,7 +276,7 @@
                       'swf': '/static/img/uploadify.swf',
                       'uploader': response,
                       'buttonText': 'Upload Image',
-                      'fileTypeExts' : '*.gif; *.jpg; *.png; *.jpeg',
+                      'fileTypeExts' : '*.gif; *.jpg; *.png; *.jpeg; *.JPG; *.PNG; *.GIF; *.JPEG',
                       'onUploadStart' : function() {
                         $(".bootstrap-wysihtml5-insert-image-modal>.modal-footer>.btn").each(function(val) {
                           $(this).css('display', 'None');

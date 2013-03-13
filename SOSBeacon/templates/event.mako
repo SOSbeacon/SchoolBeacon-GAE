@@ -42,7 +42,6 @@
                 <h2>Messages</h2>
                 <div id="event-messages">
                 </div>
-                <p>test</p>
             </div>
         </div>
     </div>

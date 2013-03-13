@@ -462,8 +462,9 @@ class FileUploadHandler(MainHandler):
 class FileUploadPostHandler(blobstore_handlers.BlobstoreUploadHandler):
 
     def post(self):
+        host = os.environ['HTTP_HOST']
         blob_info = self.get_uploads()[0]
-        self.response.out.write('/uploads/view/%s' % blob_info.key())
+        self.response.out.write('//%s/uploads/view/%s' % (host, blob_info.key()))
 
 
 class FileUplaodViewHandler(blobstore_handlers.BlobstoreDownloadHandler):
@@ -471,7 +472,7 @@ class FileUplaodViewHandler(blobstore_handlers.BlobstoreDownloadHandler):
     def get(self, resource):
         resource = str(urllib.unquote(resource))
         blob_info = blobstore.BlobInfo.get(resource)
-        self.send_blob(blob_info, content_type="image/png")
+        self.send_blob(blob_info, content_type="audio/mp3")
 
 
 class HomeLoginHandler(TemplateHandler):
@@ -841,14 +842,30 @@ class AccountHandler(TemplateHandler):
         self.response.out.write(out)
 
 
-class RobocallRequestHandler(TemplateHandler):
-    def get(self):
+class CallBackHandler(TemplateHandler):
+    """Record url, create object TwiML"""
+    def post(self):
         from twilio import twiml
 
-        r = twiml.Response()
-        r.say("Hello")
-        print str(r)
+        answeredBy = self.request.get('AnsweredBy', '')
+        textMessage = self.request.get('textMessage', '')
+        playUrl = self.request.get('playUrl', '')
 
+        logging.info(playUrl)
+
+        response = twiml.Response()
+        response.say('Hello, You have a broadcast from School Beacon. ')
+        if (answeredBy == 'machine'):
+            response.pause(2)
+            response.say('We will read you the email broadcast from School Beacon now')
+            response.pause(1)
+
+        response.say(textMessage)
+        if playUrl:
+            response.play(playUrl)
+
+        self.response.headers['Content-Type'] = 'text/xml'
+        self.response.out.write(response)
 
 url_map = [
     ('/', MainHandler),
@@ -870,7 +887,7 @@ url_map = [
     webapp2.Route(r'/school/<resource_id:.+>',
         handler='main.ChooseSchoolHandler'),
     ('/sms-response', SMSResponderHandler),
-    ('/broadcast/record', RobocallRequestHandler),
+    ('/broadcast/record', CallBackHandler),
 ]
 app = webapp2.WSGIApplication(
     url_map,

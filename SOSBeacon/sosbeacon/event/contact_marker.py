@@ -67,6 +67,8 @@ class ContactMarker(EntityBase):
     count_visit = ndb.IntegerProperty('vn', default=0)
 #    count user comment
     count_comment = ndb.IntegerProperty('cc', default=0)
+#    marker of user for sort response list
+    is_user = ndb.BooleanProperty(default=False)
 
     def merge(self, other):
         """Merge this MethodMarker entity with another MethodMarker."""
@@ -367,3 +369,13 @@ def mark_as_acknowledged(event_key, marker_key):
 
     insert_count_update_task(event_key, marker.key, None, 'ack')
 
+
+def update_count_comment(marker_key):
+    """Update count comment each times student add new comment"""
+    marker = marker_key.get()
+
+    if not marker:
+        return
+
+    marker.count_comment += 1
+    marker.put()

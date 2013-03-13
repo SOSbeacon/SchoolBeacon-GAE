@@ -155,20 +155,25 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
         },
             complete: (xhr, textStatus) =>
                 if xhr.status == 400
-                    valid = 'exits'
+                    App.Util.Form.hideAlert()
+                    App.Util.Form.showAlert("Error!", "Duplicate group names not allowed.", "alert-warning")
                     return false
+
+                if xhr.status == 200
+                    App.Skel.Event.trigger("model:save", @model, this)
         )
-        setTimeout(( =>
-            if valid == false
-                return false
 
-            if valid == 'exits'
-                App.Util.Form.hideAlert()
-                App.Util.Form.showAlert("Error!", "Duplicate group names not allowed.", "alert-warning")
-                return false
-
-            return super()
-        ), 500)
+#        setTimeout(( =>
+#            if valid == false
+#                return false
+#
+#            if valid == 'exits'
+#                App.Util.Form.hideAlert()
+#                App.Util.Form.showAlert("Error!", "Duplicate group names not allowed.", "alert-warning")
+#                return false
+#
+#            return super()
+#        ), 500)
 
     render: (asModal) =>
         el = @$el

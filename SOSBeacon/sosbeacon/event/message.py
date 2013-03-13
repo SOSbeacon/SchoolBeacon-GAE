@@ -74,6 +74,9 @@ class Message(EntityBase):
     longitude = ndb.StringProperty()
     latitude = ndb.StringProperty()
 
+#    audio path for each message
+    link_audio = ndb.StringProperty(default='')
+
     @classmethod
     def from_dict(cls, data):
         """Instantiate a Message entity from a dict of values."""
@@ -123,6 +126,7 @@ class Message(EntityBase):
         message.latitude = data.get('latitude')
 
         message.message = message_data
+        message.link_audio = data.get('link_audio')
 
         return message
 
@@ -470,7 +474,8 @@ def broadcast_to_method(event_key, message_key, short_id, method):
 
     if '@' not in method:
         if message.message_type == 'ec':
-            broadcast_call(method)
+            text_message = "Message " + message.message['email']
+            broadcast_call(method, text_message, message.link_audio)
             return
 
         if message.message_type == 'eo':
@@ -555,10 +560,12 @@ def broadcast_email(address, message, url, user, school):
         create_error_log(error, 'ERR')
 
 
-def broadcast_call(number):
+def broadcast_call(number, text_message, play_audio):
     """Send a message to a given phone number."""
     from twilio.rest import TwilioRestClient
     import settings
+    import urllib
+    import re
 
     logging.debug('Call notice to %s via twilio.', number)
 
@@ -566,11 +573,16 @@ def broadcast_call(number):
         settings.TWILIO_TOKEN)
 
     try:
+        message = re.sub('<[^<]+?>', '', text_message)
+        params = {'textMessage' : str(message)}
+        broadcast_url = "http://4.sos-beacon-dev.appspot.com/broadcast/record?" + urllib.urlencode(params) + "&playUrl=" + play_audio
         client.calls.create(to = number,
             from_ = settings.TWILIO_FROM,
-            url = "http://4.sos-beacon-dev.appspot.com/broadcast/record",
-            method="GET")
+            url = broadcast_url,
+            if_machine = 'Continue',
+        )
     except:
+        logging.info("call error")
         error = 'Can not make a call to phone number: %s' % number
         create_error_log(error, 'ERR')
 
@@ -630,7 +642,8 @@ def create_marker_user(event_key, message_key, user_key):
             short_id=short_id,
             methods=[user_key.get().email,user_key.get().phone],
             count_comment = 0,
-            count_visit = 0
+            count_visit = 0,
+            is_user = True
         )
         marker.acknowledged = True
         marker.put()
@@ -710,7 +723,7 @@ def send_email_robocall_to_user(message_key, event_key):
                                                    message.added.strftime("%Y"),message.added.strftime("%I"),
                                                    message.added.strftime("%M"), message.added.strftime("%p"))
 
-    subject = "School Beacon ROBOCALL service for alert %s was requested by you" % message_key.id()
+    subject = "School Beacon ROBOCALL service for alert %s was requested by you" % event_key.id()
     body = "School Beacon ROBOCALL service for alert <span style='color: red'>%s</span> was requested by you" % event_key.id()
     body = body + " on " + "<br><span style='color:red'>" + string_date + "</span>.<br><br>" + " The following numbers were called: <br>"
 

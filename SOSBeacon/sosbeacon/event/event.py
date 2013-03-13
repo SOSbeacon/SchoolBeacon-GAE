@@ -162,6 +162,8 @@ class Event(EntityBase):
         if self.date:
             event['last_broadcast_date'] = self.date.strftime('%Y-%m-%d %H:%M')
 
+        event['id'] = self.key.id()
+
         return event
 
 

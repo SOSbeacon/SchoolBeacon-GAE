@@ -17,6 +17,11 @@
       <% } %>
     </div>
     <div class="comment-meta">- <%- added %>, wrote</div>
+    <% if (type == 'c') { %>
+    <button id="message-item-button-remove" class="btn btn-mini" style="float: right; display: block">
+      <i class="icon-trash"></i>
+    </button>
+    <% } %>
   </div>
   <% if (type == "c") { %>
   <div class="message-content">

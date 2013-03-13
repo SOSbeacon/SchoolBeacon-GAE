@@ -109,6 +109,10 @@ url_map = [
     webapp2.Route(r'/service/event/<event_id>/<number>/download',
                   handler='sosbeacon.service.DownloadHandler'),
 
+    # Update visits count of user
+    webapp2.Route(r'/service/event/<resource_id>/visits',
+                  handler='sosbeacon.service.UpdateUserVisitsHandler'),
+
     ]
 
 app = webapp2.WSGIApplication(

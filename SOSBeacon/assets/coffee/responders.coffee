@@ -34,8 +34,7 @@ class App.SOSBeacon.Collection.ContactMarkerList extends Backbone.Paginator.requ
     }
 
     query_defaults: {
-        orderBy: 'name'
-        orderDirection: 'desc'
+        orderBy: 'is_admin'
         limit: 200
     }
 
@@ -189,6 +188,7 @@ class App.SOSBeacon.View.DirectMarkerListItem extends App.Skel.View.ListItemView
         contacts = @model.get('contacts')
         emails = []
         voice_phone = []
+        text_phone = []
 
         $.each contacts, (key, value) ->
             $.each value, (key, value) ->
@@ -198,9 +198,12 @@ class App.SOSBeacon.View.DirectMarkerListItem extends App.Skel.View.ListItemView
                             emails.push(method.value)
                         if method.type == 'p'
                             voice_phone.push(method.value)
+                        if method.type == 't'
+                            text_phone.push(method.value)
 
         model_props['email'] = emails
         model_props['voice_phone'] = voice_phone
+        model_props['text_phone'] = text_phone
         @$el.html(@template(model_props))
         return this
 
@@ -277,6 +280,7 @@ class App.SOSBeacon.View.StudentMarkerListItem extends App.Skel.View.ListItemVie
         contacts = @model.get('contacts')
         emails = []
         voice_phone = []
+        text_phone = []
         names = []
 
         $.each contacts, (key, value) ->
@@ -289,13 +293,25 @@ class App.SOSBeacon.View.StudentMarkerListItem extends App.Skel.View.ListItemVie
                             emails.push(method.value)
                         if method.type == 'p'
                             voice_phone.push(method.value)
+                        if method.type == 't'
+                            text_phone.push(method.value)
 
-        model_props['email1'] = emails[0]
-        model_props['voice_phone1'] = voice_phone[0]
-        model_props['names1'] = names[0]
-        model_props['email2'] = emails[1]
-        model_props['voice_phone2'] = voice_phone[1]
-        model_props['names2'] = names[1]
+        model_props['parent1'] = 'hide'
+        if names[0] != ''
+            model_props['parent1'] = 'show'
+            model_props['email1'] = emails[0]
+            model_props['voice_phone1'] = voice_phone[0]
+            model_props['text_phone1'] = text_phone[0]
+            model_props['names1'] = names[0]
+
+        model_props['parent2'] = 'hide'
+        if names[1] != ''
+            model_props['parent2'] = 'show'
+            model_props['email2'] = emails[1]
+            model_props['voice_phone2'] = voice_phone[1]
+            model_props['text_phone2'] = text_phone[1]
+            model_props['names2'] = names[1]
+
         @$el.html(@template(model_props))
         return this
 

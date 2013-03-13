@@ -50,15 +50,15 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
             alert "Name is required for the first student contact"
             return errors
 
-        if not attrs.key
-            if attrs.contacts.length > 1
-                if attrs.contacts[1].name.length > 0
-                    if _.isEmpty(attrs.contacts[1].methods[0].value) and _.isEmpty(attrs.contacts[1].methods[1].value)
-                        attrs.contacts[1].name = ''
-                else
-                    attrs.contacts[1].methods[0].value = ''
-                    attrs.contacts[1].methods[1].value = ''
-                    attrs.contacts[1].methods[2].value = ''
+#        if not attrs.key
+        if attrs.contacts.length > 1
+            if attrs.contacts[1].name.length > 0
+                if _.isEmpty(attrs.contacts[1].methods[0].value) and _.isEmpty(attrs.contacts[1].methods[1].value)
+                    attrs.contacts[1].name = ''
+            else
+                attrs.contacts[1].methods[0].value = ''
+                attrs.contacts[1].methods[1].value = ''
+                attrs.contacts[1].methods[2].value = ''
 
         if hasError
             return errors

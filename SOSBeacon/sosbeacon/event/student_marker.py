@@ -56,7 +56,7 @@ class StudentMarker(EntityBase):
 
     def merge(self, other):
         """Merge this StudentMarker entity with another StudentMarker."""
-        self.name = self.name or other.name
+        self.name = other.name or self.name
 
         self.last_broadcast = get_latest_datetime(self.last_broadcast,
                                                   other.last_broadcast)
@@ -66,25 +66,26 @@ class StudentMarker(EntityBase):
             return self
 
         if not self.contacts:
-            self.contacts = {}
+            self.contacts = []
 
-        for new_hash, new_contact in other.contacts.iteritems():
+#        for new_hash, new_contact in other.contacts.iteritems():
+        for i in range(len(other.contacts)):
 
-            contact = self.contacts.get(new_hash)
+            contact = self.contacts[i]
             if not contact:
                 # New contact
-                self.contacts[new_hash] = new_contact
-                contact = new_contact
+                self.contacts[i] = other.contacts[i]
+                contact = other.contacts[i]
             else:
                 # Update existing contact.
                 contact['acked'] = max(contact.get('acked'),
-                                       new_contact.get('acked'))
+                                       other.contacts[i].get('acked'))
 
                 contact['acked_at'] = max(contact.get('acked_at'),
-                                          new_contact.get('acked_at'))
+                                          other.contacts[i].get('acked_at'))
 
                 contact['sent'] = max(contact.get('sent'),
-                                      new_contact.get('sent'))
+                                      other.contacts[i].get('sent'))
 
             # Update overall information.
             self.acknowledged = max(self.acknowledged,
@@ -101,7 +102,6 @@ class StudentMarker(EntityBase):
 
             #self.last_broadcast = max(self.last_broadcast,
             #                          contact.get('sent'))
-
         return self
 
     def to_dict(self):
@@ -176,10 +176,11 @@ def _build_contact_map(contacts):
     """Take a list of contacts and convert them to a map, using the hash of
     the contact as the key.
     """
-    contact_map = {}
+    contact_map = []
     for contact in contacts:
-        contact_hash = _hash_contact(contact)
-        contact_map[contact_hash] = contact
+#        contact_hash = _hash_contact(contact)
+#        contact_map[contact_hash] = contact
+        contact_map.append(contact)
 
     return contact_map
 

@@ -24,7 +24,7 @@
                             </div>
                             <div class="div1">
                                 <div class="left" style="float: left; width: 80%">
-                                    <a href="/school/web/users/forgot" style="color: #ffffff">Forgot login?</a>
+                                    <a href="/school/web/users/forgot" style="color: #000000">Forgot login?</a>
                                 </div>
                                 <div class="right" style="float: left; width: 20%">
                                     <input class="button-login" type="submit" name="btnLogin" value=""

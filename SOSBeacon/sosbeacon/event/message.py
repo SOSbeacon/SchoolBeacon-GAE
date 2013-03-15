@@ -452,6 +452,7 @@ def broadcast_to_method(event_key, message_key, short_id, method):
     from sosbeacon.responde_sms import create_responder_student_sms
     from sosbeacon.responde_sms import create_responder_user_sms
     from sosbeacon.log import create_log
+    from sosbeacon.user import User
 
     message = message_key.get()
     event = event_key.get()

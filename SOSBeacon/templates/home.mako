@@ -33,5 +33,6 @@
                 </div>
             </div>
         </div>
+        <a href="/school/web/about/school-account" class="bt-get-free-account"></a>
     </div>
 </%block>

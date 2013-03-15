@@ -287,7 +287,7 @@ class EventHandler(TemplateHandler):
                 self.redirect("/#eventcenter/view/%s" % event_key.get().key.urlsafe())
                 return
             else:
-                event_html = self.render('event.mako', event=event, contact_marker = False, timezone = self.session.get('tz'))
+                event_html = self.render('event.mako', event=event, contact_marker = False, contact_name="", timezone = self.session.get('tz'))
                 self.response.out.write(event_html)
                 return
 
@@ -638,27 +638,220 @@ class TestimonialsHandler(TemplateHandler):
             self.response.out.write(out)
 
 
-#class ContactHandler(TemplateHandler):
-#    """render template testimonials sosbeacon"""
-#    def get(self):
-#        logging.info("asdf")
-#        if not 'u' in self.session or not 's' in self.session:
-#            out = self.render('contact.mako',is_loggedin=False)
-#            self.response.out.write(out)
-#        else:
-#            out = self.render('contact.mako', school_name = self.school_name,
-#                user_name = self.user_name,
-#                schools = self.list_school,
-#                timezone = '',
-#                is_loggedin = True)
-#            self.response.out.write(out)
-#
-#    def post(self):
-#        """Sent a email to admin of school beacon"""
-#        import json
-#        self.response.headers['Content-type'] = 'application/json'
-#        self.response.out.write(json.dumps({}))
+class PrivacyHandler(TemplateHandler):
+    """render template testimonials sosbeacon"""
+    def get(self):
+        if not 'u' in self.session or not 's' in self.session:
+            out = self.render('privacy.mako',is_loggedin=False)
+            self.response.out.write(out)
+        else:
+            out = self.render('privacy.mako', school_name = self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school,
+                timezone = '',
+                is_loggedin = True)
+            self.response.out.write(out)
 
+
+class TermHandler(TemplateHandler):
+    """render template testimonials sosbeacon"""
+    def get(self):
+        if not 'u' in self.session or not 's' in self.session:
+            out = self.render('terms.mako',is_loggedin=False)
+            self.response.out.write(out)
+        else:
+            out = self.render('terms.mako', school_name = self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school,
+                timezone = '',
+                is_loggedin = True)
+            self.response.out.write(out)
+
+
+class SchoolAccountHandler(TemplateHandler):
+    """render template testimonials sosbeacon"""
+    def get(self):
+        self.render_school_account('')
+
+    def post(self):
+        """"""
+        import sendgrid
+        import settings
+
+#        row 1
+        schoolName = self.request.POST['schoolName']
+        principalName = self.request.POST['principalName']
+        adminName = self.request.POST['adminName']
+        address = self.request.POST['address']
+
+        schoolPhone = self.request.POST['schoolPhone']
+        contactPhone = self.request.POST['contactPhone']
+        contactEmail = self.request.POST['contactEmail']
+        studentNo = self.request.POST['studentNo']
+        classNo = self.request.POST['classNo']
+
+        ageRange = self.request.POST['ageRange']
+        gradeRange = self.request.POST['gradeRange']
+
+        profitType = downloadApp = haveEmergency = approval = ''
+        if 'profitType' in self.request.body:
+            profitType = self.request.POST['profitType']
+
+        foundingDate = self.request.POST['foundingDate']
+        website = self.request.POST['website']
+
+#        ROW 2
+        if 'downloadApp' in self.request.body:
+            downloadApp = self.request.POST['downloadApp']
+
+        sosPhone = self.request.POST['sosPhone']
+        sosPhoneCarrier = self.request.POST['sosPhoneCarrier']
+        howHear = self.request.POST['howHear']
+
+        if 'haveEmergency' in self.request.body:
+            haveEmergency = self.request.POST['haveEmergency']
+        whatEmergency = self.request.POST['whatEmergency']
+        whenGetSos = self.request.POST['whenGetSos']
+
+        if 'approval' in self.request.body:
+            approval = self.request.POST['approval']
+
+        whatApproval = self.request.POST['whatApproval']
+
+        subject = "Email is sent from SOSbeacon School Account Form"
+
+        body = """
+            Request form details:
+            <h2>School Account Information Form</h2>
+            <strong>Name of School:</strong> %s<br />
+
+            <strong>Name of Principal:</strong> %s<br />
+
+            <strong>Name of Contact Admin:</strong> %s<br />
+
+            <strong>Address:</strong> %s<br />
+
+            <strong>School phone:</strong> %s<br />
+
+            <strong>Contact phone :</strong> %s<br />
+
+            <strong>Contact email address:</strong> %s<br />
+
+            <strong>Number of Students:</strong> %s<br />
+
+            <strong>Number of classes:</strong> %s<br />
+
+            <strong>Student Age range:</strong> %s<br />
+
+            <strong>Grade range:</strong> %s<br />
+
+            <strong>Is your school:</strong> %s<br />
+
+            <strong>Date of School Founding (m/d/y):</strong> %s<br />
+
+            <strong>School Website:</strong> %s<br />
+
+            <strong>Have you downloaded the free School Beacon app yet:</strong> %s<br />
+
+            <strong>What mobile phone # will you use for School Beacon service:</strong> %s<br />
+
+            <strong>Type of mobile phone and carrier:</strong> %s<br />
+
+            <strong>How did you hear about School Beacon:</strong> %s<br />
+
+            <strong>Do you have an emergency communications system now:</strong> %s<br />
+
+            <strong>If so, what is it:</strong> %s<br />
+
+            <strong>When would you like to get the School Beacon emergency communications system started at your school:</strong> %s<br />
+
+            <strong>Do you have approval to start this service:</strong> %s<br />
+
+            <strong>If NO, what is required to get approval:</strong> %s<br />
+
+        """ % (schoolName, principalName, adminName, address, schoolPhone, contactPhone, contactEmail, studentNo, classNo,
+               ageRange, gradeRange, profitType, foundingDate, website, downloadApp, sosPhone, sosPhoneCarrier, howHear,
+               haveEmergency, whatEmergency, whenGetSos, approval, whatApproval)
+
+        s = sendgrid.Sendgrid(settings.SENDGRID_ACCOUNT,
+            settings.SENDGRID_PASSWORD,
+            secure=True)
+
+        email = sendgrid.Message(
+            'clifforloff@yahoo.com',
+            subject,
+            body,
+            body)
+        email.add_to('clifforloff@yahoo.com')
+        s.web.send(email)
+
+        self.render_school_account("Your email sent successfully")
+
+    def render_school_account(self, error):
+        if not 'u' in self.session or not 's' in self.session:
+            out = self.render('school-account.mako',is_loggedin=False, error=error)
+            self.response.out.write(out)
+        else:
+            out = self.render('school-account.mako', school_name = self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school,
+                timezone = '',
+                is_loggedin = True,
+                error = error)
+            self.response.out.write(out)
+
+
+class ContactHandler(TemplateHandler):
+    """render template testimonials sosbeacon"""
+    def get(self):
+        self.render_contact('')
+
+    def post(self):
+        """Sent a email to admin of school beacon"""
+        import sendgrid
+        import settings
+
+        name = self.request.POST['name']
+        email = self.request.POST['email']
+        subject = self.request.POST['subject']
+        message = self.request.POST['message']
+
+        body = """
+            Request form details:
+            <h2>Contact Information Form</h2>
+            <strong>Name:</strong> %s<br />
+
+            <strong>Email:</strong> %s<br />
+
+            <strong>message:</strong> %s<br />
+        """ % (name, email, message)
+
+        s = sendgrid.Sendgrid(settings.SENDGRID_ACCOUNT,
+            settings.SENDGRID_PASSWORD,
+            secure=True)
+
+        email = sendgrid.Message(
+            'clifforloff@yahoo.com',
+            subject,
+            body,
+            body)
+        email.add_to('clifforloff@yahoo.com')
+        s.web.send(email)
+
+        self.render_contact('Your email sent successfully')
+
+    def render_contact(self, error):
+        if not 'u' in self.session or not 's' in self.session:
+            out = self.render('contact.mako',is_loggedin=False, error=error)
+            self.response.out.write(out)
+        else:
+            out = self.render('contact.mako', school_name = self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school,
+                timezone = '',
+                is_loggedin = True,
+                error = error)
+            self.response.out.write(out)
 
 class ForgotPasswordHandler(TemplateHandler):
     """render template testimonials sosbeacon"""
@@ -681,7 +874,7 @@ class ForgotPasswordHandler(TemplateHandler):
         email    = self.request.POST['email']
 
         if not email:
-            out = self.render('contact.mako', is_loggedin=False,
+            out = self.render('forgot_password.mako', is_loggedin=False,
                 message="Please enter your email address.")
             self.response.out.write(out)
             return
@@ -691,12 +884,12 @@ class ForgotPasswordHandler(TemplateHandler):
 
         if user:
             forgot_password(user)
-            out = self.render('contact.mako', is_loggedin=False,
+            out = self.render('forgot_password.mako', is_loggedin=False,
                 message="Your new password has been sent to you by email message. "
                         "You will now be returned to where you were before.")
             self.response.out.write(out)
         else:
-            out = self.render('contact.mako', is_loggedin=False,
+            out = self.render('forgot_password.mako', is_loggedin=False,
                 message="""
                 You have not entered a email address that we recognize, or your account has not been activated or you
                 have not set a password in settings in your SOSbeacon app on your mobile phone. Please try again.
@@ -875,6 +1068,10 @@ url_map = [
     ('/school/web/about/index', AboutHandler),
     ('/school/web/about/features', FeaturesHandler),
     ('/school/web/about/testimonials', TestimonialsHandler),
+    ('/school/web/about/contact', ContactHandler),
+    ('/school/web/about/privacy', PrivacyHandler),
+    ('/school/web/about/terms', TermHandler),
+    ('/school/web/about/school-account', SchoolAccountHandler),
     ('/school/web/users/forgot', ForgotPasswordHandler),
     ('/school/webapp/account', AccountHandler),
     ('/admin/', AdminHandler),

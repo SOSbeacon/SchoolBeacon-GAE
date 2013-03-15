@@ -151,7 +151,7 @@ def forgot_password(user):
         settings.SENDGRID_PASSWORD,
         secure=True)
 
-    subject='School Beacon - Your login details here'
+    subject='Sbeacon - Your login details here'
 
     message = sendgrid.Message(
         settings.SENDGRID_SENDER,

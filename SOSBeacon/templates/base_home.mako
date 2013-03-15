@@ -8,6 +8,7 @@
     <link rel="stylesheet" type="text/css" href="/static/css/home.css">
 
     <script type="application/javascript" src="/static/script/sosbeacon.js"></script>
+    <script type="application/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.11.0/jquery.validate.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
             $("#logout").click(function () {
@@ -34,6 +35,35 @@
             $(".contact").click(function () {
                 window.location = "/school/web/about/contact"
             })
+            $(".privacy").click(function () {
+                window.location = "/school/web/about/privacy"
+            })
+            $(".bt-get-free-account").click(function () {
+                window.location = "/school/web/about/school-account"
+            })
+
+            $("#submitForm").validate({
+                rules: {
+                    schoolPhone: "This field is required.",
+                    contactEmail: {
+                        required: true,
+                        email: true
+                    },
+                    contactPhone: "This field is required"
+                }
+            });
+
+            $("#frm").validate({
+                rules: {
+                    name: "This field is required.",
+                    email: {
+                        required: true,
+                        email: true
+                    },
+                    contactPhone: "This field is required"
+                }
+            });
+
         });
     </script>
 </head>
@@ -89,9 +119,9 @@
                     <li class="testimonials">
                         <a href="/school/web/about/testimonials">&nbsp;</a>
                     </li>
-##                    <li class="contact">
-##                        <a href="/school/web/about/contact">&nbsp;</a>
-##                    </li>
+                    <li class="contact">
+                        <a href="/school/web/about/contact">&nbsp;</a>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -103,8 +133,8 @@
         <div class="copyright">
             Copyright 2012 Copyright 2012 School Beacon
             - All Rights Reserved
-            - <a href="http://sosbeacon.org/school/web/about/terms">Terms of service</a>
-            - <a href="http://sosbeacon.org/school/web/about/privacy">Privacy</a>
+            - <a href="/school/web/about/terms">Terms of service</a>
+            - <a href="/school/web/about/privacy">Privacy</a>
             - Developed by <a target="_blank" href="http://www.cncsoftgroup.com">CNC Software Group.</a>
         </div>
     </div>

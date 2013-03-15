@@ -60,12 +60,13 @@ def robocall_start(event_key, is_direct, user_urlsafe):
     tasks = []
     phones = []
 
+
     for student_marker in student_markers:
-        for key, value in student_marker.contacts.iteritems():
-            if value['methods'][2]['value']:
-                phones.append(value['methods'][2]['value'])
+        for contact in student_marker.contacts:
+            if contact['methods'][2]['value']:
+                phones.append(contact['methods'][2]['value'])
             else:
-                phones.append(value['methods'][1]['value'])
+                phones.append(contact['methods'][1]['value'])
 
     phones = list(set(phones))
 

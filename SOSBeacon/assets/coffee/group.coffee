@@ -161,6 +161,10 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
 
                 if xhr.status == 200
                     App.Skel.Event.trigger("model:save", @model, this)
+
+                    App.Util.Form.hideAlert()
+                    App.Util.Form.showAlert(
+                        "Successs!", "Save successfully", "alert-success")
         )
 
 #        setTimeout(( =>

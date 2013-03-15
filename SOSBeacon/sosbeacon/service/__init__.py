@@ -332,7 +332,10 @@ def process_group(request, schema, entity):
         return False
 
     #check group duplicate
-    check_name = Group.query(Group.name == obj['name'], namespace = '_x_')
+    group_name = obj['name'].lower()
+    school_key = ndb.Key(urlsafe = session.get('s'))
+
+    check_name = Group.query(Group.name_ == group_name, Group.school == school_key, namespace = '_x_')
 
     if check_name.get():
         return False
@@ -343,7 +346,6 @@ def process_group(request, schema, entity):
         logging.exception('validation failed')
         logging.info(obj)
 
-    school_key = ndb.Key(urlsafe = session.get('s'))
     obj['school'] = school_key
 
     group = entity.from_dict(obj)
@@ -699,7 +701,7 @@ class StudentRobocallHandler(rest_handler.RestApiListHandler, ProcessMixin):
             return
 
         is_direct = False
-        robocall_start(resource_id, is_direct, user_key)
+        robocall_start(resource_id, is_direct, user_key.urlsafe())
 
 
 class DirectRobocallHandler(rest_handler.RestApiListHandler, ProcessMixin):
@@ -907,9 +909,9 @@ class DownloadHandler(webapp2.RequestHandler):
         """ % (title)
 
         for student_marker in student_markers:
-            for key, value in student_marker.contacts.iteritems():
-                student_name = value['name']
-                for number in value['methods']:
+            for contact in student_marker.contacts:
+                student_name = contact['name']
+                for number in contact['methods']:
                     if number['type'] == 'e':
                         email_student = number['value']
                         body += str(self.format_email_student_marker(student_name, email_student))

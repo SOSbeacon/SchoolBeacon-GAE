@@ -581,6 +581,28 @@ class App.SOSBeacon.View.StudentListItem extends App.Skel.View.ListItemView
             group_links.push(" #{acs.get('name')}")
         )
         model_props['group_list'] = group_links
+
+        if @model.get('is_direct')
+            contacts = @model.get('contacts')
+            emails = []
+            voice_phone = []
+            text_phone = []
+
+            $.each contacts, (key, value) ->
+                $.each value, (key, value) ->
+                    if key == 'methods'
+                        for method in value
+                            if method.type == 'e'
+                                emails.push(method.value)
+                            if method.type == 'p'
+                                voice_phone.push(method.value)
+                            if method.type == 't'
+                                text_phone.push(method.value)
+
+            model_props['email'] = emails
+            model_props['voice_phone'] = voice_phone
+            model_props['text_phone'] = text_phone
+
         @$el.html(@template(model_props))
         return this
 
@@ -607,22 +629,12 @@ class App.SOSBeacon.View.BaseStudentList extends App.Skel.View.ListView
                 $(this).removeAttr('selected')
 
         if $('.typeOfContact').val() == 'student'
-            @run({'feq_is_direct':false})
-            $("button.add-button-contact").css('display', 'none')
-            $("button.import-direct-contact").css('display', 'none')
-            $("button.add-button-student").css('display', 'block')
-            $("button.import-student-contact").css('display', 'block')
-            $("button.export-student-contact").css('display', 'block')
-            App.Skel.Event.trigger("filter_student", false)
+            App.SOSBeacon.router.navigate(
+                "/contacts/student/view", {trigger: true})
 
         if $('.typeOfContact').val() == 'contact'
-            @run({'feq_is_direct':true})
-            $("button.add-button-contact").css('display', 'block')
-            $("button.import-direct-contact").css('display', 'block')
-            $("button.add-button-student").css('display', 'none')
-            $("button.import-student-contact").css('display', 'none')
-            $("button.export-student-contact").css('display', 'none')
-            App.Skel.Event.trigger("filter_student", true)
+            App.SOSBeacon.router.navigate(
+                "/contacts", {trigger: true})
 
     initialize: (collection) =>
         @gridFilters = new App.Ui.Datagrid.FilterList()
@@ -658,7 +670,14 @@ class App.SOSBeacon.View.StudentList extends App.SOSBeacon.View.BaseStudentList
         super(collection)
 
 
+class App.SOSBeacon.View.ContactStudentListHeader extends App.Skel.View.ListItemHeader
+    template: JST['student/listheader_student']
+
+
 class App.SOSBeacon.View.BaseContactStudentList extends App.SOSBeacon.View.BaseStudentList
+    itemView: App.SOSBeacon.View.StudentListItem
+    headerView: App.SOSBeacon.View.ContactStudentListHeader
+    gridFilters: null
 
     render: =>
         @$el.html(@template())
@@ -740,10 +759,65 @@ class App.SOSBeacon.View.SelectableStudentListItem extends App.SOSBeacon.View.St
 
         return group_links
 
-class App.SOSBeacon.View.SelectableStudentList extends App.SOSBeacon.View.BaseStudentList
+class App.SOSBeacon.View.SelectableStudentList extends App.Skel.View.ListView
     itemView: App.SOSBeacon.View.SelectableStudentListItem
     headerView: App.SOSBeacon.View.SelectableStudentListHeader
     gridFilters: null
+
+    events:
+        'change .typeOfContact' :'filter_students'
+
+    filter_students:(e) =>
+        @$el.append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 50%" class="image">')
+        value = false
+        $(".typeOfContact option").each ->
+            if $(this).val() is $(e.target).attr('value')
+                $(this).attr "selected", "selected"
+            else
+                $(this).removeAttr('selected')
+
+        if $('.typeOfContact').val() == 'student'
+            @run({'feq_is_direct':false})
+            $("button.add-button-contact").css('display', 'none')
+            $("button.import-direct-contact").css('display', 'none')
+            $("button.add-button-student").css('display', 'block')
+            $("button.import-student-contact").css('display', 'block')
+            $("button.export-student-contact").css('display', 'block')
+            App.Skel.Event.trigger("filter_students", false)
+
+        if $('.typeOfContact').val() == 'contact'
+            @run({'feq_is_direct':true})
+            $("button.add-button-contact").css('display', 'block')
+            $("button.import-direct-contact").css('display', 'block')
+            $("button.add-button-student").css('display', 'none')
+            $("button.import-student-contact").css('display', 'none')
+            $("button.export-student-contact").css('display', 'none')
+            App.Skel.Event.trigger("filter_students", true)
+
+    initialize: (collection) =>
+        @gridFilters = new App.Ui.Datagrid.FilterList()
+        super(collection)
+
+    render: =>
+        @$el.html(@template())
+        @$el.append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 50%" class="image">')
+
+        if @headerView
+            @$("table.table").prepend(new @headerView().render().el)
+
+        if @gridFilters
+            @filter = new App.SOSBeacon.View.NewGridView({
+                gridFilters: @gridFilters
+                collection: @collection
+                id: @cid
+            })
+            @$("div.gridfilters").html(@filter.render().el)
+            #            @$("div.gridFooter").html(@footer_template())
+            App.Skel.Event.bind("filter:run:#{@filter.cid}", @run, this)
+
+            @filter.runFilter()
+
+        return this
 
     run: (filters) =>
         @collection.server_api = {

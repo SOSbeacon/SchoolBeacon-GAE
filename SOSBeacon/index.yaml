@@ -242,5 +242,17 @@ indexes:
 
 - kind: User
   properties:
+  - name: email
   - name: is_admin
+  - name: a_
+
+- kind: User
+  properties:
+  - name: is_admin
+  - name: a_
+
+- kind: User
+  properties:
+  - name: is_admin
+  - name: phone
   - name: a_

@@ -41,7 +41,7 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
 
         @studentList = new App.SOSBeacon.View.SelectableStudentList(@students)
         App.Skel.Event.bind("studentlist:filter:#{@studentList.cid}", @filterStudents, this)
-        App.Skel.Event.bind("filter_student", @filter_group, this)
+        App.Skel.Event.bind("filter_students", @filter_group, this)
 
         @groupStudentList = new App.SOSBeacon.View.SelectableStudentList(@groupstudents)
         App.Skel.Event.bind("studentlist:filter:#{@groupStudentList.cid}", @groupFilterStudents, this)

@@ -250,6 +250,7 @@ class EventHandler(TemplateHandler):
     def get(self, event_id, method_id):
         from google.appengine.ext import ndb
         from sosbeacon import utils
+        from sosbeacon.event.event import EVENT_STATUS_CLOSED
 
         event_id = utils.number_decode(event_id)
         method_id = str(utils.number_decode(method_id))
@@ -276,6 +277,15 @@ class EventHandler(TemplateHandler):
             return
 
         event = event_key.get()
+
+        if event.status == EVENT_STATUS_CLOSED:
+            if 'u' in session:
+                self.redirect("/#eventcenter/view/%s" % event_key.get().key.urlsafe())
+                return
+            else:
+                event_html = self.render('event_closed.mako')
+                self.response.out.write(event_html)
+                return
 
         marker_key = ndb.Key(
             ContactMarker, "%s:%s" % (event_id, method_id),

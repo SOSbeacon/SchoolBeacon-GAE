@@ -161,6 +161,8 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
 
                 if xhr.status == 200
                     App.Skel.Event.trigger("model:save", @model, this)
+                    $('#add_area').empty()
+                    $("#add_new").text('Add Mode')
 
                     App.Util.Form.hideAlert()
                     App.Util.Form.showAlert(

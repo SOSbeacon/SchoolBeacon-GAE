@@ -671,8 +671,9 @@ class RobocallProcessHandler(webapp2.RequestHandler):
     def post(self):
         event_urlsafe = self.request.get('event')
         phone_markers = self.request.get('phone')
+        message_urlsafe = self.request.get('message')
 
-        robocall_phone(event_urlsafe, phone_markers)
+        robocall_phone(event_urlsafe, phone_markers, message_urlsafe)
 
 
 class RobocallSentEmailHandler(webapp2.RequestHandler):
@@ -681,5 +682,6 @@ class RobocallSentEmailHandler(webapp2.RequestHandler):
 
         event_urlsafe = self.request.get('event')
         user_urlsafe = self.request.get('user')
+        message_urlsafe = self.request.get('message')
 
-        send_email_robocall_to_user(event_urlsafe, user_urlsafe)
+        send_email_robocall_to_user(event_urlsafe, user_urlsafe, message_urlsafe)

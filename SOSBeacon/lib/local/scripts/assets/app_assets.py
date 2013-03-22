@@ -164,6 +164,8 @@ def _bundle_admin_coffee(app, debug=False):
         path.join(ADMIN_PATH, 'school.coffee'),
         path.join(ADMIN_PATH, 'user.coffee'),
         path.join(ADMIN_PATH, 'school_users.coffee'),
+        path.join(ADMIN_PATH, 'dashboard.coffee'),
+        path.join(ADMIN_PATH, 'message.coffee'),
     )
 
     return Bundle(

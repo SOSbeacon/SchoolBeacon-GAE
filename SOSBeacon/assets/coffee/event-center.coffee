@@ -580,6 +580,9 @@ class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
     events:
         "click .view-button": "view"
         "click .remove-button": "delete"
+        "click .aStt": "changeSelect"
+        "change .slStt": "editStatus"
+        "blur .slStt": 'actionSelect'
 
     render: =>
         model_props = @model.toJSON()
@@ -597,8 +600,47 @@ class App.SOSBeacon.View.EventCenterListItem extends App.Skel.View.ListItemView
         else
             model_props['no_responder'] = no_responder
 
+        a_status = "aStatus" + @model.get('id').toString()
+        sl_status = "slStatus" + @model.get('id').toString()
+        model_props['a_status'] = a_status
+        model_props['sl_status'] = sl_status
+
         @$el.html(@template(model_props))
         return this
+
+    changeSelect: =>
+        if @model.get('status') == 'dr'
+            return false
+
+        id = @model.get('id').toString()
+        $('#aStatus'+id).hide()
+        $('#slStatus'+id).show()
+#        set selected value for select box
+        $('#slStatus'+id).val($('#aStatus'+id).attr('data'))
+
+    editStatus: =>
+        id = @model.get('id').toString()
+        status = document.getElementById('slStatus'+id).value
+        if status == 'Open'
+            @model.set("status":"se")
+        if status == 'Closed'
+            @model.set("status":"cl")
+        $('#slStatus'+id).val(status)
+
+        $.ajax({
+            type: 'PUT'
+            dataType: 'json'
+            url: '/service/event/' + @model.get('key')
+            data: JSON.stringify(@model)
+        })
+
+
+    actionSelect: =>
+        id = @model.get('id').toString()
+        $("#aStatus" + id).show ->
+            $("#aStatus" + id).html $("#slStatus" + id).val()
+
+        $('#slStatus'+id).hide()
 
     edit: =>
         App.SOSBeacon.router.navigate(

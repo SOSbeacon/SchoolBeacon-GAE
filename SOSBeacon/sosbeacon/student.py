@@ -457,7 +457,6 @@ def _get_group(group_name, group_lookup, school_urlsafe):
     return group.key, future
 
 
-
 def create_default_student(user):
     """Create a default student when user is created"""
     contacts = [
@@ -471,6 +470,7 @@ def create_default_student(user):
         name = user.name,
         contacts = contacts,
         default_student=True,
+        is_direct = True,
         groups = [],
         school = None)
 

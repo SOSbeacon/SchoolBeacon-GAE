@@ -8,12 +8,27 @@
   <%- title %>
 </td>
 <td>
-  <% if (status == "dr") { %>
+  <!-- <% if (status == "dr") { %>
   Draft
   <% } else if (status == "se" ) { %>
   Sent
   <% } else { %>
   Closed
+  <% } %> -->
+  <% if (status == "dr") { %>
+    <a class="aStt" id=<%- a_status %> data="Draft" style="display: inline;">Draft</a>
+  <% } else if (status == "se" ) { %>
+    <a class="aStt" id=<%- a_status %> data="Open" style="display: inline;">Open</a>
+    <select class="slStt" id=<%- sl_status %> style="display: none">
+      <option id="slStatus"+<%- id %>+"Open" value="Open">Open</option>
+      <option id="slStatus"+<%- id %>+"Closed" value="Closed">Closed</option>
+    </select>
+  <% } else { %>
+    <a class="aStt" id=<%- a_status %> data="Closed" style="display: inline;">Closed</a>
+    <select class="slStt" id=<%- sl_status %> style="display: none">
+      <option id="slStatus"+<%- id %>+"Open" value="Open">Open</option>
+      <option id="slStatus"+<%- id %>+"Closed" value="Closed">Closed</option>
+    </select>
   <% } %>
 </td>
 <td width="100px">

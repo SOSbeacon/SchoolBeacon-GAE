@@ -11,6 +11,7 @@ from sosbeacon.error_log import create_error_log
 
 from .student_marker import StudentMarker
 from .event import EVENT_STATUS_CLOSED
+from .message import Message
 
 from settings import TWILIO_ACCOUNT
 from settings import TWILIO_TOKEN
@@ -55,11 +56,14 @@ def robocall_start(event_key, is_direct, user_urlsafe):
                                 StudentMarker.is_direct == is_direct)
 
     student_markers = query.fetch()
-    logging.info(student_markers)
+
+    list_broadcast = Message.query(Message.event == event_urlsafe,
+                                   Message.message_type.IN(['b', 'eo', 'em', 'ec'])).order(Message.timestamp).fetch()
+
+    last_broadcast = list_broadcast[-1]
 
     tasks = []
     phones = []
-
 
     for student_marker in student_markers:
         for contact in student_marker.contacts:
@@ -72,7 +76,7 @@ def robocall_start(event_key, is_direct, user_urlsafe):
 
     for phone in phones:
         tasks.append(
-            get_robocall_task(event_urlsafe, phone)
+            get_robocall_task(event_urlsafe, phone, last_broadcast.key)
         )
 
         if len(tasks) > 10:
@@ -80,7 +84,7 @@ def robocall_start(event_key, is_direct, user_urlsafe):
             tasks = []
 
     if tasks:
-        tasks.append(get_sent_email_task(event_urlsafe, user_urlsafe))
+        tasks.append(get_sent_email_task(event_urlsafe, user_urlsafe, last_broadcast.key))
         insert_tasks(tasks, ROBOCALL_QUEUE_NAME)
 
 
@@ -90,10 +94,11 @@ def regex_phone(phone):
     return phone
 
 
-def get_robocall_task(event_key, phone):
+def get_robocall_task(event_key, phone, message_key):
     phone = regex_phone(phone)
 
     event_urlsafe = event_key.urlsafe()
+    message_urlsafe = message_key.urlsafe()
     phone_task = hashlib.sha1(phone).hexdigest()
     name = "%s-%s" % (event_urlsafe, phone_task)
 
@@ -102,26 +107,28 @@ def get_robocall_task(event_key, phone):
         url = ROBOCALL_PROCESS,
         params={
             'event': event_urlsafe,
+            'message': message_urlsafe,
             'phone': phone
         }
     )
 
 
-def get_sent_email_task(event_key, user_urlsafe):
+def get_sent_email_task(event_key, user_urlsafe, message_key):
     event_urlsafe = event_key.urlsafe()
+    message_urlsafe = message_key.urlsafe()
 
     return taskqueue.Task(
         url = ROBOCALL_SENTEMAIL_PROCESS,
         params={
             'event': event_urlsafe,
             'user': user_urlsafe,
+            'message': message_urlsafe
         }
     )
 
 
-def robocall_phone(event_urlsafe, phone_markers):
+def robocall_phone(event_urlsafe, phone_markers, message_urlsafe):
     from .message import broadcast_call
-    from .message import Message
 
     if not event_urlsafe:
         logging.error('No event key given.')
@@ -130,6 +137,8 @@ def robocall_phone(event_urlsafe, phone_markers):
     # TODO: Use event id rather than key here for namespacing purposes?
     event_key = ndb.Key(urlsafe=event_urlsafe)
     event = event_key.get()
+    message_key = ndb.Key(urlsafe=message_urlsafe)
+    message = message_key.get()
 
     if not event:
         logging.error('Event %s not found!', event_key)
@@ -149,16 +158,11 @@ def robocall_phone(event_urlsafe, phone_markers):
         create_error_log(error, 'ERR')
         return
 
-    list_broadcast = Message.query(Message.event == event_key,
-                                   Message.message_type.IN(['b', 'eo', 'em', 'ec']))\
-                            .order(Message.timestamp).fetch()
-
-    last_broadcast = list_broadcast[-1]
-    text_message = last_broadcast.user.get().name + " checked in " + last_broadcast.user.get().phone + ". Message " + last_broadcast.message['email']
-    broadcast_call(phone_markers, text_message, last_broadcast.link_audio)
+    text_message = message.user.get().name + " checked in " + message.user.get().phone + ". Message " + message.message['email']
+    broadcast_call(phone_markers, text_message, message.link_audio)
 
 
-def send_email_robocall_to_user(event_urlsafe, user_urlsafe):
+def send_email_robocall_to_user(event_urlsafe, user_urlsafe, message_urlsafe):
     from sosbeacon.event.contact_marker import ContactMarker
     import sendgrid
     import settings
@@ -172,6 +176,8 @@ def send_email_robocall_to_user(event_urlsafe, user_urlsafe):
     event = event_key.get()
     user_key = ndb.Key(urlsafe = user_urlsafe)
     user = user_key.get()
+    message_key = ndb.Key(urlsafe = message_urlsafe)
+    message = message_key.get()
 
     if not event:
         logging.error('Event %s not found!', event_key)
@@ -188,6 +194,12 @@ def send_email_robocall_to_user(event_urlsafe, user_urlsafe):
     if not user:
         logging.error('User %s not found!', user_key)
         error = 'User %s not found!' % user_key
+        create_error_log(error, 'ERR')
+        return
+
+    if not message:
+        logging.error('Message %s not found!', message_key)
+        error = 'Message %s not found!' % message_key
         create_error_log(error, 'ERR')
         return
 
@@ -209,7 +221,7 @@ def send_email_robocall_to_user(event_urlsafe, user_urlsafe):
             if '@' not in method:
                 body += str(method) + '<br>'
 
-    body += "<br><br>The following text was delivered:<br> <span style='color:red'>%s</span>" % event.content
+    body += "<br><br>The following text was delivered:<br> <span style='color:red'>%s</span>" % message.message['email']
 
     s = sendgrid.Sendgrid(settings.SENDGRID_ACCOUNT,
         settings.SENDGRID_PASSWORD,

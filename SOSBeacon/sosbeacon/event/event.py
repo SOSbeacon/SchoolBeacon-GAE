@@ -111,15 +111,21 @@ class Event(EntityBase):
         if status == EVENT_STATUS_CLOSED:
             event.status = EVENT_STATUS_CLOSED
 
+        if status == EVENT_STATUS_SENT:
+            event.status = EVENT_STATUS_SENT
+
         event.content = data.get('content')
         if data.get('school'):
             event.school = data.get('school')
 
+        groups = []
         for key in data.get('groups'):
             if isinstance(key, basestring):
-                event.groups.append(ndb.Key(urlsafe=key))
+                groups.append(ndb.Key(urlsafe=key))
+                event.groups = list(set(groups))
             else:
-                event.groups.append(key)
+                groups.append(key)
+                event.groups = list(set(groups))
 
         if event.key and event.key.id():
             # This needs done in the handler.  We ca not do it in a hook, since

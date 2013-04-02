@@ -16,7 +16,7 @@ class App.SOSBeacon.Collection.GroupStudentList extends Backbone.Paginator.reque
 
     query_defaults: {
         orderBy: 'added'
-        feq_is_direct: true
+#        feq_is_direct: true
     }
 
     server_api: {}
@@ -47,14 +47,32 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
         App.Skel.Event.bind("studentlist:filter:#{@groupStudentList.cid}", @groupFilterStudents, this)
 
     filter_group:(filter) =>
+        if filter == undefined
+            @groupStudentList.run({})
+            @studentList.run({})
+            return
+
         @groupStudentList.run({feq_is_direct:filter})
         @studentList.run({feq_is_direct:filter})
 
+    isEmpty: (obj) =>
+        if obj == undefined
+            return true
+
+        return (Object.getOwnPropertyNames(obj).length == 0)
+
     filterStudents: (filters) =>
         @students.reset()
-        @allstudents.server_api = {feq_is_direct:true}
+#        @allstudents.server_api = {feq_is_direct:true}
+        if filters == undefined || @isEmpty(filters)
+            @$("#studentlist h2").text("All CONTACTS")
+            @allstudents.server_api = {}
 
-        if filters
+        else
+            if filters.feq_is_direct == true
+                @$("#studentlist h2").text("DIRECT CONTACTS")
+            else
+                @$("#studentlist h2").text("STUDENT CONTACTS")
             _.extend(@allstudents.server_api, filters)
 
         that = this
@@ -76,7 +94,10 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
 
     groupFilterStudents: (filters) =>
         @groupstudents.server_api['feq_groups'] = @model.id
-        @groupstudents.fetch()
+        @groupstudents.fetch(
+            success: =>
+                @$('.image').css('display', 'none')
+        )
 
     render: =>
         @$el.html(@template(@model.toJSON()))
@@ -157,10 +178,13 @@ class App.SOSBeacon.View.GroupStudentsEdit extends App.Skel.View.EditView
 
     filterStudents: (filters) =>
         @students.reset()
-        @allstudents.server_api = {feq_is_direct:true}
+#        @allstudents.server_api = {feq_is_direct:true}
 
-        if filters
+        if filters != undefined
             _.extend(@allstudents.server_api, filters)
+
+        if filters == undefined
+            @allstudents.server_api = {}
 
         that = this
         @allstudents.fetch({success: (students) =>

@@ -24,6 +24,11 @@
 <td>
   <%- added %>
 </td>
+<% if (is_direct == false) {%>
+<td>
+  <%- modified %>
+</td>
+<% } %>
 <td class="manage-button">
   <% if (default_student) { %>
   <button class="edit-button-contact btn">

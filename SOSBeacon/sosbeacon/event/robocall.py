@@ -65,6 +65,7 @@ def robocall_start(event_key, is_direct, user_urlsafe):
     tasks = []
     phones = []
 
+#    if voice phone is empty, text phone will replace voice phone to make a call
     for student_marker in student_markers:
         for contact in student_marker.contacts:
             if contact['methods'][2]['value']:
@@ -73,6 +74,9 @@ def robocall_start(event_key, is_direct, user_urlsafe):
                 phones.append(contact['methods'][1]['value'])
 
     phones = list(set(phones))
+
+    if not phones:
+        return
 
     for phone in phones:
         tasks.append(
@@ -84,7 +88,7 @@ def robocall_start(event_key, is_direct, user_urlsafe):
             tasks = []
 
     if tasks:
-        tasks.append(get_sent_email_task(event_urlsafe, user_urlsafe, last_broadcast.key))
+        tasks.append(get_sent_email_task(event_urlsafe, user_urlsafe, last_broadcast.key, phones))
         insert_tasks(tasks, ROBOCALL_QUEUE_NAME)
 
 
@@ -113,7 +117,7 @@ def get_robocall_task(event_key, phone, message_key):
     )
 
 
-def get_sent_email_task(event_key, user_urlsafe, message_key):
+def get_sent_email_task(event_key, user_urlsafe, message_key, phones):
     event_urlsafe = event_key.urlsafe()
     message_urlsafe = message_key.urlsafe()
 
@@ -122,7 +126,8 @@ def get_sent_email_task(event_key, user_urlsafe, message_key):
         params={
             'event': event_urlsafe,
             'user': user_urlsafe,
-            'message': message_urlsafe
+            'message': message_urlsafe,
+            'phones': phones
         }
     )
 
@@ -158,11 +163,13 @@ def robocall_phone(event_urlsafe, phone_markers, message_urlsafe):
         create_error_log(error, 'ERR')
         return
 
-    text_message = message.user.get().name + " checked in " + message.user.get().phone + ". Message " + message.message['email']
+    number = message.user.get().phone
+    number = " ".join(number[i:i+1] for i in range(0, len(number), 1))
+    text_message = message.user.get().name + " checked in " + number + ". Message " + message.message['email']
     broadcast_call(phone_markers, text_message, message.link_audio)
 
 
-def send_email_robocall_to_user(event_urlsafe, user_urlsafe, message_urlsafe):
+def send_email_robocall_to_user(event_urlsafe, user_urlsafe, message_urlsafe, phones):
     from sosbeacon.event.contact_marker import ContactMarker
     import sendgrid
     import settings
@@ -205,8 +212,8 @@ def send_email_robocall_to_user(event_urlsafe, user_urlsafe, message_urlsafe):
 
     logging.info('Sending notice to %s via mail api.', user.email)
 
-    contact_markers = ContactMarker.query(ContactMarker.event == event_key,
-                                          ContactMarker.acknowledged == False)
+#    contact_markers = ContactMarker.query(ContactMarker.event == event_key,
+#                                          ContactMarker.acknowledged == False)
 
     string_date = "%s %s, %s at %s:%s %s (GMT)" % (event.added.strftime("%B"), event.added.strftime("%d"),
                                                    event.added.strftime("%Y"),event.added.strftime("%I"),
@@ -216,10 +223,15 @@ def send_email_robocall_to_user(event_urlsafe, user_urlsafe, message_urlsafe):
     body = "School Beacon ROBOCALL service for alert <span style='color: red'>%s</span> was requested by you" % event_key.id()
     body = body + " on " + "<br><span style='color:red'>" + string_date + "</span>.<br><br>" + " The following numbers were called: <br>"
 
-    for contact_marker in contact_markers:
-        for method in contact_marker.methods:
-            if '@' not in method:
-                body += str(method) + '<br>'
+#    for contact_marker in contact_markers:
+#        logging.info(contact_marker)
+#        logging.info(contact_marker.methods)
+#        for method in contact_marker.methods:
+#            logging.info(method)
+#            if '@' not in method:
+#                body += str(method) + '<br>'
+    for phone in phones:
+        body += str(phone) + '<br>'
 
     body += "<br><br>The following text was delivered:<br> <span style='color:red'>%s</span>" % message.message['email']
 

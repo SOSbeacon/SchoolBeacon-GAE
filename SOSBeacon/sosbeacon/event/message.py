@@ -50,7 +50,8 @@ message_schema = {
 
 message_query_schema = {
     'feq_event': voluptuous.ndbkey(),
-    'feq_user' : voluptuous.any(None, voluptuous.ndbkey(), '')
+    'feq_user' : voluptuous.any(None, voluptuous.ndbkey(), ''),
+    'feq_message_type': basestring,
 }
 
 
@@ -148,6 +149,7 @@ class Message(EntityBase):
 
         message['longitude'] = self.longitude
         message['latitude'] = self.latitude
+        message['link_audio'] = self.link_audio
 
         if self.user:
             message['user'] = self.user.urlsafe()
@@ -532,8 +534,8 @@ def broadcast_email(address, message, url, user, school):
         subject = "School Notice message from %s (%s)" % (user.get().name, school.get().name)
 
     if message.message['email']:
-        body = "%s (%s) sent a Event Broadcast. Detail here: %s. \nMessage: %s" %\
-               (user.get().name, school.get().name, url, message.message['email'])
+        body = "%s (%s) sent a Event Broadcast. Detail here: <a href='%s'>%s</a>. \nMessage: %s" %\
+               (user.get().name, school.get().name, url, url,message.message['email'])
     else:
         body = "%s (%s) sent a Event Broadcast. Detail here: %s. \nMessage: %s" %\
                (user.get().name, school.get().name, url, message.message['sms'])

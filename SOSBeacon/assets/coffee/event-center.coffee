@@ -333,7 +333,7 @@ class App.SOSBeacon.View.EventDownloadEmail extends Backbone.View
                         selectCount = ""
                         $('.message-info').hide()
                         App.Util.Form.showAlert(
-                            "Successs!", "Sent successful to your email", "alert-success")
+                            "Successs!", "Sent successfully to your email.", "alert-success")
             else
                 false
         else

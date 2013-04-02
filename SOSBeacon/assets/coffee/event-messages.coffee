@@ -84,16 +84,42 @@ class App.SOSBeacon.View.EditMessage extends Backbone.View
 
         try
             @$("textarea#add-message-box").wysihtml5({
-                "uploadUrl": "/uploads/new",
+                "image": false,
+                "audio" : false,
+                'link': false
             })
 
         return this
 
-    renderMessages: =>
+    renderTotalComment: =>
         @event.fetch(async: false)
         total_comment = @event.get('total_comment')
 
-        $('.total_comment').text("Has " + total_comment + " added comment(s)")
+        $('.total_comment').text(total_comment + " comments")
+
+    renderMessages: =>
+        @collection = new App.SOSBeacon.Collection.MessageList()
+        _.extend(@collection.server_api, {
+            'feq_event': @event.id
+            'orderBy': 'timestamp'
+        })
+        $("#view-message-area").remove()
+        $("#event-center-message").append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 45%" class="image">')
+
+        @collection.fetch(
+            success: =>
+                #                remove loading image when collection loading successful
+                $('.image').css('display', 'none')
+            error: =>
+                #                reidrect login page if user not login
+                window.location = '/school'
+        )
+
+        @messageListView = new App.SOSBeacon.View.MessageList(
+            @collection, false)
+
+        $("#event-center-message").append(@messageListView.render().el)
+
 
     hide: () =>
         @$el.html('')
@@ -110,9 +136,11 @@ class App.SOSBeacon.View.EditMessage extends Backbone.View
                 user_name: "#{current_user}"
             },
                 success: (xhr) =>
+                    @renderTotalComment()
                     @renderMessages()
             )
-            App.SOSBeacon.Event.trigger("message:add", @message, this)
+#            @renderMessages()
+#            App.SOSBeacon.Event.trigger("message:add", @message, this)
             @hide()
 
         else
@@ -163,7 +191,7 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
         )
 
         @messageListView = new App.SOSBeacon.View.MessageList(
-            @collection, false)
+            @collection, false, @event.id)
         $("#event-center-message").append(@messageListView.render().el)
 
     #render map container
@@ -180,8 +208,8 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
 
     #get postion submited
     submitLocation:=>
-        @position.latitude = @marker.getPosition().mb
-        @position.longitude = @marker.getPosition().nb
+        @position.latitude = @marker.getPosition().lat()
+        @position.longitude = @marker.getPosition().lng()
 
     #make search address that input from search input
     searchAddress:(address)=>
@@ -226,7 +254,7 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
     #render error occur
     handerError: (error) =>
         @position = {'latitude': '', 'longitude': ''}
-        alert 'Sorry, system have just encounted an exception'
+        alert 'Geolocation is not supported in this browser!'
 
     hide: () =>
         @$el.html('')
@@ -236,12 +264,11 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
         if $("textarea#add-sms-box").attr("data")
             path_to_audio = $("textarea#add-sms-box").attr("data")
 
-        console.log path_to_audio
         if @$('textarea#add-sms-box').val()
             if !confirm("Are you sure you want to send this group broadcast?")
                 return false
 
-            @model.save(
+            @model.save({
                 message: {
                     sms: @$('textarea#add-sms-box').val(),
                     email: @$('textarea#add-email-box').val()
@@ -254,9 +281,11 @@ class App.SOSBeacon.View.AddBroadcast extends Backbone.View
                 is_admin: true
                 link_audio: path_to_audio
 
+            },
+                success: (xhr) =>
+                    @renderMessages()
             )
-
-            App.SOSBeacon.Event.trigger("message:add", @model, this)
+#            App.SOSBeacon.Event.trigger("message:add", @model, this)
             @hide()
 
         else
@@ -310,10 +339,10 @@ class App.SOSBeacon.View.AddEmergency extends App.SOSBeacon.View.AddBroadcast
                 link_audio: path_to_audio
             },
                 success: (xhr) =>
-                    console.log "ngon"
+                    @renderMessages()
             )
-
-            App.SOSBeacon.Event.trigger("message:add", @model, this)
+            @renderMessages()
+#            App.SOSBeacon.Event.trigger("message:add", @model, this)
             @hide()
 
         else
@@ -362,7 +391,7 @@ class App.SOSBeacon.View.AddCall extends App.SOSBeacon.View.AddBroadcast
             if !confirm("Are you sure you want to send this group broadcast?")
                 return false
 
-            @model.save(
+            @model.save({
                 message: {
                     sms: '',
                     email: @$('textarea#add-sms-box').val()
@@ -374,9 +403,11 @@ class App.SOSBeacon.View.AddCall extends App.SOSBeacon.View.AddBroadcast
                 longitude: ""+@position.longitude
                 is_admin: true
                 link_audio: path_to_audio
+            },
+                success: (xhr) =>
+                    @renderMessages()
             )
-
-            App.SOSBeacon.Event.trigger("message:add", @model, this)
+#            App.SOSBeacon.Event.trigger("message:add", @model, this)
             @hide()
 
         else
@@ -393,19 +424,29 @@ class App.SOSBeacon.View.AddEmail extends App.SOSBeacon.View.AddBroadcast
         "click .event-cancel-broadcast": "hide"
         "click button#google_map": "renderGoogleMap"
 
+    render: () =>
+        @$el.html(@template())
+
+        try
+            @$("textarea#add-sms-box").wysihtml5({
+            "uploadUrl": "/uploads/new",
+            })
+
+        return this
+
     saveEmail: =>
         path_to_audio = ''
         if $("textarea#add-sms-box").attr("data")
             path_to_audio = $("textarea#add-sms-box").attr("data")
 
-        if @$('textarea#add-email-box').val()
+        if @$('textarea#add-sms-box').val()
             if !confirm("Are you sure you want to send this group broadcast?")
                 return false
 
-            @model.save(
+            @model.save({
                 message: {
                     sms: '',
-                    email: @$('textarea#add-email-box').val()
+                    email: @$('textarea#add-sms-box').val()
                 },
                 user_name: "#{current_user}"
                 type: 'eo', #email only
@@ -414,9 +455,11 @@ class App.SOSBeacon.View.AddEmail extends App.SOSBeacon.View.AddBroadcast
                 longitude: ""+@position.longitude
                 is_admin: true
                 link_audio: path_to_audio
+            },
+                success: (xhr) =>
+                    @renderMessages()
             )
-
-            App.SOSBeacon.Event.trigger("message:add", @model, this)
+#            App.SOSBeacon.Event.trigger("message:add", @model, this)
             @hide()
 
         else
@@ -498,7 +541,16 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
             )
         )
 
+    stripAudioTag: (text)=>
+        partern = /<embed[^>]+>/g
+        return text.replace(partern, '')
+
     render: =>
+        if( /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent))
+            message = @model.get('message')
+            message['email'] = @stripAudioTag(message['email'])
+            @model.set('message', message)
+
         @$el.html(@template(@model.toJSON()))
 
         @reply = new App.SOSBeacon.Model.ReplyMessage()
@@ -506,8 +558,17 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
 
         if @model.get('type') == 'c'
             @$('#message-item-button-remove').css('display','block')
+
         if @model.id
             @loadReplyMessage(@model)
+
+        if( /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent))
+            if @model.get('link_audio')
+                audioPlayer = new Audio()
+                audioPlayer.controls = "controls"
+                audioPlayer.src = @model.get('link_audio')
+                audioPlayer.id = "audio-1"
+                @$('.message-broadcast').append(audioPlayer)
 
         key = @model.get('key')
         lat = @model.get('latitude')
@@ -553,6 +614,7 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
 
         $('.fQuickReply').remove();
         $(@el).append(@reply_view.render().el)
+        $(".tbQuickReply").focus()
 
     removeMessage: =>
         proceed = confirm('Are you sure you want to delete?  This can not be undone.')
@@ -566,7 +628,7 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
             @event.fetch(async: false)
             total_comment = @event.get('total_comment')
 
-            $('.total_comment').text("Has " + total_comment + " added comment(s)")
+            $('.total_comment').text(total_comment + " comments")
         ), 300)
 
 class App.SOSBeacon.Model.MessageType extends Backbone.Model
@@ -655,22 +717,20 @@ App.SOSBeacon.eventTypes = new App.SOSBeacon.Collection.MessageType([
 class App.SOSBeacon.View.NewMessageListItem extends App.SOSBeacon.View.MessageListItem
     template: JST['event-center/student-message-list-item']
 
-    render:(object) =>
-        new_model = @model.toJSON()
-#        time = @model.get('modified')
-#        if object != undefined
-#            time = object.get('modified')
-#
-#        new_model['initmodified'] = time
-#        date = Date.parse(time)
-#        if date != null
-#            date.setHours(date.getHours())
-#            time = date.toString('yyyy-MM-dd hh:mm')
-#
-#        new_model['modified'] = time
-        @$el.html(@template(new_model))
+    render: =>
+        @$el.html(@template(@model.toJSON()))
         if @model.id
             @loadReplyMessage(@model)
+
+        if( /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent))
+            if @model.get('link_audio')
+                audioPlayer = new Audio()
+                audioPlayer.controls = "controls"
+                source = document.createElement('source');
+                source.setAttribute('src', @model.get('link_audio'))
+                source.setAttribute('type', 'audio/mpeg')
+                audioPlayer.appendChild(source)
+                @$('.message-broadcast').append(audioPlayer)
 
         key = @model.get('key')
         lat = @model.get('latitude')
@@ -688,7 +748,7 @@ class App.SOSBeacon.View.NewMessageListItem extends App.SOSBeacon.View.MessageLi
 
 
 class App.SOSBeacon.View.MessageListApp extends Backbone.View
-    id: "view-message-area"
+    id: "view-message-areas"
     template: JST['event-center/event-messages']
     defvalue = 10
 
@@ -711,6 +771,21 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
         @collection.bind('all', @show, this)
         @collection.fetch()
 
+    renderMessages: =>
+        @collection = new App.SOSBeacon.Collection.MessageList()
+        _.extend(@collection.server_api, {
+            'feq_event': @eventId
+            'orderBy': 'timestamp'
+            'orderDirection': 'asc'
+#            'feq_message_type': 'c'
+            'limit': 200
+        })
+
+        @collection.bind('add', @insertOne, this)
+        @collection.bind('reset', @reset, this)
+        @collection.bind('all', @show, this)
+        @collection.fetch({async: false})
+
     render: =>
         @event = new App.SOSBeacon.Model.Event({key: @eventId})
         @event.fetch({async: false})
@@ -718,21 +793,17 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
         @total = {}
         @total['total_comment'] = @event.get('total_comment')
         @$el.html(@template(@total))
-        try
-            @$("textarea#add-message-box").wysihtml5({
-                "image": false,
-                "audio" : false,
-                'link': false
-            })
+
         return this
 
     renderTotalComment: =>
         @event = new App.SOSBeacon.Model.Event({key: @eventId})
         @event.fetch({async: false})
 
-        $(".total_comment").text("Has " + @event.get("total_comment") + " added comment(s)")
+        $(".total_comment").text(@event.get("total_comment") + " comments")
 
     saveComment: =>
+        @renderMessages()
         model = new App.SOSBeacon.Model.Message()
         if @$('.add-message-box-area').find('.guest').attr('readonly')
 #           save comment for student
@@ -752,12 +823,6 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
                     @$('.add-message-box-area').html(button)
                     @$('.add-message-box-area').append(input)
                     @$('.add-message-box-area').find('input').val(data.get('user_name'))
-                    try
-                        @$("textarea#add-message-box").wysihtml5({
-                            "image": false,
-                            "audio" : false,
-                            'link': false
-                        })
                     $('#add-message-box').focus()
             )
 
@@ -808,5 +873,5 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
         @collection.each(@addOne)
 
     reset: =>
-        @$(".listitems").html('')
+        @$("#event-message-list").html('')
         @addAll()

@@ -297,7 +297,8 @@ class EventHandler(TemplateHandler):
                 self.redirect("/#eventcenter/view/%s" % event_key.get().key.urlsafe())
                 return
             else:
-                event_html = self.render('event.mako', event=event, contact_marker = False, contact_name="", timezone = self.session.get('tz'))
+                logging.info("1")
+                event_html = self.render('event.mako', event=event, contact_marker = False, contact_name="", timezone = "America/Los_Angeles")
                 self.response.out.write(event_html)
                 return
 

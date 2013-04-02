@@ -201,7 +201,7 @@ class RestQuery(object):
             params = schema(query_params)
 
         self.query_filters = RestQueryFilters()
-        limit = int(params.get('limit', 100))
+        limit = int(params.get('limit', 200))
 
         query = entity.query(**self.query_options)
 

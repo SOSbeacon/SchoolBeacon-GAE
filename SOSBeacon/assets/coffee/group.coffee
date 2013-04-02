@@ -122,39 +122,42 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
         if e
             e.preventDefault()
 
-        if @model.get('key')
-            if @model.get('name') == @$('input.name').val()
-                return super()
-            else
-                data = {
-                    added: [@model.get('added')],
-                    name: @$('input.name').val(),
-                    modified: [@model.get('modified')],
-                    default_group: false,
-                    key: @model.get('key'),
-                    number_student: @model.get('number_student'),
-                }
-                $.ajax({
-                    type: 'PUT'
-                    dataType: 'json'
-                    url: '/service/group/' + @model.get('key')
-                    data: JSON.stringify(data)
-                    complete: (xhr) ->
-                        if xhr.status == 400
-                            App.Util.Form.hideAlert()
-                            App.Util.Form.showAlert("Error!", "Duplicate group names not allowed.", "alert-warning")
-                            $(".modal").hide()
-                            $(".modal-backdrop").hide()
-                        if xhr.status == 200
-                            location.reload()
-                })
-                return false
+#        if @model.get('key')
+#            if @model.get('name') == @$('input.name').val()
+#                return super()
+#            else
+#                data = {
+#                    added: [@model.get('added')],
+#                    name: @$('input.name').val(),
+#                    modified: [@model.get('modified')],
+#                    default_group: false,
+#                    key: @model.get('key'),
+#                    number_student: @model.get('number_student'),
+#                }
+#                $.ajax({
+#                    type: 'PUT'
+#                    dataType: 'json'
+#                    url: '/service/group/' + @model.get('key')
+#                    data: JSON.stringify(data)
+#                    complete: (xhr) ->
+#                        if xhr.status == 400
+#                            App.Util.Form.hideAlert()
+#                            App.Util.Form.showAlert("Error!", "Duplicate group names not allowed.", "alert-warning")
+#                            $(".modal").hide()
+#                            $(".modal-backdrop").hide()
+#                        if xhr.status == 200
+#                            location.reload()
+#                })
+#                return false
 
         valid = @model.save({
             name: @$('input.name').val()
         },
             complete: (xhr, textStatus) =>
                 if xhr.status == 400
+                    @model.fetch()
+                    $(".modal").hide()
+                    $(".modal-backdrop").hide()
                     App.Util.Form.hideAlert()
                     App.Util.Form.showAlert("Error!", "Duplicate group names not allowed.", "alert-warning")
                     return false
@@ -162,7 +165,6 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
                 if xhr.status == 200
                     App.Skel.Event.trigger("model:save", @model, this)
                     $('#add_area').empty()
-                    $("#add_new").text('Add Mode')
 
                     App.Util.Form.hideAlert()
                     App.Util.Form.showAlert(

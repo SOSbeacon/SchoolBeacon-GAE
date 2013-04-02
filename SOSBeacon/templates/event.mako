@@ -5,30 +5,33 @@
     <div class="row-fluid header">
         <div class="span2"><a href="http://sosbeacon.com" id="logo"></a></div>
         <div class="span10">
-            <h3>School Beacon</h3> A non-profit corporation dedicated to safety and security.
+            <h3>School Beacon</h3> A non-profit corporation dedicated to safety and security.<br />
+            <div class="span5" style="margin: auto">
+                <label style="float: left; margin-top: 13px;margin-right: 3%;">Timezone:</label>
+                <select id="selectTimeZone" name="timezone" style="width: 60%; margin-top: 10px;">
+                    <option  value="America/Los_Angeles">America/San Francisco</option>
+                    <option  value="America/Denver">America/Denver</option>
+                    <option  value="America/Chicago">America/Chicago</option>
+                    <option  value="America/New_York">America/New York</option>
+                    <option  value="America/Sao_Paulo">America/Rio De Janeiro</option>
+                    <option  value="Atlantic/Reykjavik">Atlantic/Reykjavik</option>
+                    <option  value="Europe/London">Europe/London</option>
+                    <option  value="Europe/Zurich">Europe/Zurich</option>
+                    <option  value="Europe/Athens">Europe/Athens</option>
+                    <option  value="Europe/Moscow">Europe/Moscow</option>
+                    <option  value="Asia/Calcutta">Asia/New Delhi</option>
+                    <option  value="Asia/Ho_Chi_Minh">Asia/Ho Chi Minh</option>
+                    <option  value="Asia/Hong_Kong">Asia/Hong Kong</option>
+                    <option  value="Asia/Tokyo">Asia/Tokyo</option>
+                    <option  value="Pacific/Guam">Pacific/Guam</option>
+                    <option  value="Pacific/Honolulu">Pacific/Honolulu</option>
+                    <option  value="America/Anchorage">America/Anchorage</option>
+                </select>
+            </div>
         </div>
     </div>
     <div class="row-fluid">
         <div class="span2">
-            <select id="selectTimeZone" name="timezone" style="width: 90%">
-                <option  value="America/Los_Angeles">America/San Francisco</option>
-                <option  value="America/Denver">America/Denver</option>
-                <option  value="America/Chicago">America/Chicago</option>
-                <option  value="America/New_York">America/New York</option>
-                <option  value="America/Sao_Paulo">America/Rio De Janeiro</option>
-                <option  value="Atlantic/Reykjavik">Atlantic/Reykjavik</option>
-                <option  value="Europe/London">Europe/London</option>
-                <option  value="Europe/Zurich">Europe/Zurich</option>
-                <option  value="Europe/Athens">Europe/Athens</option>
-                <option  value="Europe/Moscow">Europe/Moscow</option>
-                <option  value="Asia/Calcutta">Asia/New Delhi</option>
-                <option  value="Asia/Ho_Chi_Minh">Asia/Ho Chi Minh</option>
-                <option  value="Asia/Hong_Kong">Asia/Hong Kong</option>
-                <option  value="Asia/Tokyo">Asia/Tokyo</option>
-                <option  value="Pacific/Guam">Pacific/Guam</option>
-                <option  value="Pacific/Honolulu">Pacific/Honolulu</option>
-                <option  value="America/Anchorage">America/Anchorage</option>
-            </select>
         </div>
         <div class="span10">
             <div class="row-fluid">
@@ -39,7 +42,7 @@
                 <div>${event.content}</div>
             </div>
             <div class="row-fluid event-messages-container">
-                <h2>Messages</h2>
+                <h2>Message Center</h2>
                 <div id="event-messages">
                 </div>
             </div>
@@ -58,7 +61,7 @@
 
             <script type="text/javascript">
                 var messageList = new App.SOSBeacon.View.MessageListApp(
-                        '${event.key.urlsafe()}', '${event.total_comment}', false);
+                        '${event.key.urlsafe()}', false);
                 $("#event-messages").append(messageList.render().$el);
 
 ##                function change_timezone(value){
@@ -77,9 +80,9 @@
 ##                }
 
                 $('#selectTimeZone').change(function() {
-                    var select = $("#selectTimeZone").val()
+                    var select = $("#selectTimeZone").val();
 
-                    url = '/service/timezone/' + select
+                    url = '/service/timezone/' + select;
                     $.ajax({
                         url: url,
                         type: "GET",
@@ -90,12 +93,12 @@
                         }
                     });
 
-                    location.reload()
+                    location.reload();
                     return false
                 });
 
                 % if contact_marker:
-                        $(".add-message-box-area").append('<input type="text" class="guest" name="user_name" readonly="" value=${contact_name}>');
+                        $(".add-message-box-area").append('<input type="text" class="guest" name="user_name" readonly="" value="${contact_name}">');
                     %else:
                         $(".add-message-box-area").append('<input type="text" class="guest" name="user_name" value="Guest">');
                     % endif
@@ -109,7 +112,6 @@
                         //if (!confirm($confirmNameText)) {
                         //    chatName = '';
                         //}
-                        console.log("ngon")
                         $('#confirmDialogContent').html($confirmNameText);
                         $('#confirmDialogContent').dialog({
                             title : 'School Beacon',
@@ -141,7 +143,6 @@
                 $(document).ready(function() {
                     setChatName();
                     var default_timezone = "${timezone}"
-                    console.log(default_timezone)
                     select = $("#selectTimeZone")
                     select.val(default_timezone)
                 });

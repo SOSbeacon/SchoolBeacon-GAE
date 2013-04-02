@@ -296,15 +296,22 @@ class StudentListHandler(SchoolRestApiListHandler, ProcessMixin):
 
         response = [entity.to_dict() for entity in resources]
 
-        if self.request.GET['feq_is_direct'] == 'false':
-            self.write_json_response(response)
-            return
-
         user_key = ndb.Key(urlsafe = session.get('u'))
 
         student_key = ndb.Key(
             Student, "%s-%s" % (DEFAULT_STUDENT_ID, user_key.id()),
             namespace='_x_')
+
+        if 'feq_is_direct' not in self.request.GET:
+            response.insert(0, student_key.get().to_dict())
+            self.changeTimezone(response)
+            self.write_json_response(response)
+            return
+
+        if self.request.GET['feq_is_direct'] == 'false':
+            self.changeTimezone(response)
+            self.write_json_response(response)
+            return
 
         response.insert(0, student_key.get().to_dict())
 
@@ -377,7 +384,18 @@ class GroupHandler(rest_handler.RestApiHandler, ProcessMixin):
             self.abort(400)
             return
 
-        self.write_json_response(group.to_dict())
+        group = group.to_dict()
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+        if 'tz' in session:
+            group['added'] = self.convertTimeZone(session.get('tz'), group['added'])
+            group['modified'] = self.convertTimeZone(session.get('tz'), group['modified'])
+        else:
+            group['added'] = self.convertTimeZone("America/Los_Angeles", group['added'])
+            group['modified'] = self.convertTimeZone("America/Los_Angeles", group['modified'])
+
+        self.write_json_response(group)
 
     def delete(self, resource_id, *args, **kwargs):
         if self.resource_is_all_groups(resource_id):
@@ -424,7 +442,18 @@ class GroupListHandler(SchoolRestApiListHandler, ProcessMixin):
             self.abort(400)
             return
 
-        self.write_json_response(group.to_dict())
+        group = group.to_dict()
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+        if 'tz' in session:
+            group['added'] = self.convertTimeZone(session.get('tz'), group['added'])
+            group['modified'] = self.convertTimeZone(session.get('tz'), group['modified'])
+        else:
+            group['added'] = self.convertTimeZone("America/Los_Angeles", group['added'])
+            group['modified'] = self.convertTimeZone("America/Los_Angeles", group['modified'])
+
+        self.write_json_response(group)
 
     def get(self, resource_id, *args, **kwargs):
         from sosbeacon.group import Group

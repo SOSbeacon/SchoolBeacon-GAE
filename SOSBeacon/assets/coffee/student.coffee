@@ -629,10 +629,16 @@ class App.SOSBeacon.View.BaseStudentList extends App.Skel.View.ListView
                 $(this).removeAttr('selected')
 
         if $('.typeOfContact').val() == 'student'
+            if $('#menu-item-contacts').length > 0
+                $('#menu-item-contacts a').attr('href', '#/contacts/student/view')
+
             App.SOSBeacon.router.navigate(
                 "/contacts/student/view", {trigger: true})
 
         if $('.typeOfContact').val() == 'contact'
+            if $('#menu-item-contacts').length > 0
+                $('#menu-item-contacts a').attr('href', '#/contacts')
+
             App.SOSBeacon.router.navigate(
                 "/contacts", {trigger: true})
 
@@ -655,7 +661,7 @@ class App.SOSBeacon.View.BaseStudentList extends App.Skel.View.ListView
             })
             @$("div.gridfilters").html(@filter.render().el)
 #            @$("div.gridFooter").html(@footer_template())
-            App.Skel.Event.bind("filter:run:#{@filter.cid}", @run, this)
+            App.Skel.Event.bind("filter:run:#{@filter.cid}", @run({'feq_is_direct': true}), this)
 
             @filter.runFilter()
 
@@ -768,7 +774,7 @@ class App.SOSBeacon.View.SelectableStudentList extends App.Skel.View.ListView
         'change .typeOfContact' :'filter_students'
 
     filter_students:(e) =>
-        @$el.append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 50%" class="image">')
+        @$("div.gridfilters").append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 50%" class="image">')
         value = false
         $(".typeOfContact option").each ->
             if $(this).val() is $(e.target).attr('value')
@@ -778,21 +784,15 @@ class App.SOSBeacon.View.SelectableStudentList extends App.Skel.View.ListView
 
         if $('.typeOfContact').val() == 'student'
             @run({'feq_is_direct':false})
-            $("button.add-button-contact").css('display', 'none')
-            $("button.import-direct-contact").css('display', 'none')
-            $("button.add-button-student").css('display', 'block')
-            $("button.import-student-contact").css('display', 'block')
-            $("button.export-student-contact").css('display', 'block')
             App.Skel.Event.trigger("filter_students", false)
 
         if $('.typeOfContact').val() == 'contact'
             @run({'feq_is_direct':true})
-            $("button.add-button-contact").css('display', 'block')
-            $("button.import-direct-contact").css('display', 'block')
-            $("button.add-button-student").css('display', 'none')
-            $("button.import-student-contact").css('display', 'none')
-            $("button.export-student-contact").css('display', 'none')
             App.Skel.Event.trigger("filter_students", true)
+
+        if $('.typeOfContact').val() == 'all'
+            @run({})
+            App.Skel.Event.trigger("filter_students")
 
     initialize: (collection) =>
         @gridFilters = new App.Ui.Datagrid.FilterList()
@@ -800,13 +800,13 @@ class App.SOSBeacon.View.SelectableStudentList extends App.Skel.View.ListView
 
     render: =>
         @$el.html(@template())
-        @$el.append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 50%" class="image">')
+        @$("div.gridfilters").append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 50%" class="image">')
 
         if @headerView
             @$("table.table").prepend(new @headerView().render().el)
 
         if @gridFilters
-            @filter = new App.SOSBeacon.View.NewGridView({
+            @filter = new App.SOSBeacon.View.GroupNewGridView({
                 gridFilters: @gridFilters
                 collection: @collection
                 id: @cid
@@ -821,7 +821,7 @@ class App.SOSBeacon.View.SelectableStudentList extends App.Skel.View.ListView
 
     run: (filters) =>
         @collection.server_api = {
-            limit: @$("div.gridFooter > .size-select").val() ? 25
+            limit: @$("div.gridFooter > .size-select").val() ? 200
         }
         if @collection.query_defaults
             _.extend(@collection.server_api, @collection.query_defaults)
@@ -835,3 +835,9 @@ class App.SOSBeacon.View.NewGridView extends App.Ui.Datagrid.GridView
 
 class App.SOSBeacon.View.NewStudentGridView extends App.Ui.Datagrid.GridView
     template: JST['student/filter_student']
+
+class App.SOSBeacon.View.GroupNewGridView extends App.Ui.Datagrid.GridView
+    template: JST['student/group_filter_direct']
+
+class App.SOSBeacon.View.GroupNewStudentGridView extends App.Ui.Datagrid.GridView
+    template: JST['student/group_filter_student']

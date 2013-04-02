@@ -210,6 +210,12 @@ indexes:
 
 - kind: Student
   properties:
+  - name: g
+  - name: sc
+  - name: a_
+
+- kind: Student
+  properties:
   - name: id
   - name: sc
   - name: n_

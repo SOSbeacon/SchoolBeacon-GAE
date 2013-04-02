@@ -108,6 +108,11 @@ def _bundle_3rd_party_js(debug=False):
         path.join(JS_LIB_PATH, 'wysihtml5-0.3.0.js'),
         path.join(JS_LIB_PATH, 'bootstrap-wysihtml5.js'),
         path.join(JS_LIB_PATH, 'jquery.uploadify.js'),
+        path.join(JS_LIB_PATH, 'jquery.uploadifive.js'),
+        path.join(JS_LIB_PATH, 'jquery.fineuploader-3.3.1.js'),
+        path.join(JS_LIB_PATH, 'iframe.xss.response-3.3.1.js'),
+        path.join(JS_LIB_PATH, 'jwplayer.js'),
+        path.join(JS_LIB_PATH, 'audio.js'),
     )
 
 
@@ -184,6 +189,8 @@ def _bundle_3rd_party_css(env, debug=False):
             path.join('css', 'wysiwyg-color.css'),
             path.join('css', 'bootstrap-wysihtml5.css'),
             path.join('css', 'uploadify.css'),
+            path.join('css', 'uploadifive.css'),
+            path.join('css', 'fineuploader-3.3.1.css'),
             output=path.join(
                 '..', '..', APP_NAME, 'static', 'css', 'lib.css')
         )
@@ -195,6 +202,8 @@ def _bundle_3rd_party_css(env, debug=False):
             path.join('css', 'wysiwyg-color.css'),
             path.join('css', 'bootstrap-wysihtml.css'),
             path.join('css', 'uploadify.css'),
+            path.join('css', 'uploadifive.css'),
+            path.join('css', 'fineuploader-3.3.1.css'),
             output=path.join(
                 '..', '..', APP_NAME, 'static', 'css', 'lib.css')
         )

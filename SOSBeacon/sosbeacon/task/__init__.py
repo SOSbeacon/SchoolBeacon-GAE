@@ -683,5 +683,6 @@ class RobocallSentEmailHandler(webapp2.RequestHandler):
         event_urlsafe = self.request.get('event')
         user_urlsafe = self.request.get('user')
         message_urlsafe = self.request.get('message')
+        phones = self.request.get_all('phones')
 
-        send_email_robocall_to_user(event_urlsafe, user_urlsafe, message_urlsafe)
+        send_email_robocall_to_user(event_urlsafe, user_urlsafe, message_urlsafe, phones)

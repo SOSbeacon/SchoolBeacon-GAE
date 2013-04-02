@@ -102,11 +102,11 @@
                       </fieldset>
                   </div>
               </div>
+              <div class="modal-footer form-actions">
+                  <button type="submit" name="preview_import" value="Preview List" id="preview" form="form_direct">Preview List</button>
+                  <button type="submit" name="import" value="Start Import" disabled="disabled" id="import" form="form_direct">Start Import</button>
+              </div>
           </form>
-          <div class="modal-footer form-actions">
-              <input type="submit" name="preview_import" value="Preview List" id="preview" form="form_direct"/>
-              <input type="submit" name="import" value="Start Import" disabled="disabled" id="import" form="form_direct"/>
-          </div>
       </div>
 
       <div class="top_view row-fluid" id="results" style="display: none">

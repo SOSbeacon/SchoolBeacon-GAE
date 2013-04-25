@@ -13,7 +13,8 @@ from sosbeacon.utils import get_latest_datetime
 marker_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'acknowledged': voluptuous.boolean(),
-    'name': basestring,
+    'first_name': basestring,
+    'last_name': basestring,
     'responded': [basestring],
     'is_direct': voluptuous.boolean(),
 }
@@ -22,7 +23,8 @@ marker_query_schema = {
     'feq_acknowledged': voluptuous.boolean(),
     'feq_event': voluptuous.ndbkey(),
     'fan_key': voluptuous.ndbkey(),
-    'name': basestring,
+    'first_name': basestring,
+    'first_name': basestring,
     'feq_is_direct': voluptuous.boolean(),
 }
 
@@ -38,7 +40,8 @@ class StudentMarker(EntityBase):
 
     event = ndb.KeyProperty(Event)
 
-    name = ndb.StringProperty('n', indexed=False)
+    first_name = ndb.StringProperty('fn', indexed=False)
+    last_name = ndb.StringProperty('ln', indexed=False)
     contacts = ndb.JsonProperty('c')
 
     # When did we last try sending a broadcast to this person's contacts?
@@ -56,7 +59,8 @@ class StudentMarker(EntityBase):
 
     def merge(self, other):
         """Merge this StudentMarker entity with another StudentMarker."""
-        self.name = other.name or self.name
+        self.first_name = other.first_name or self.first_name
+        self.last_name = other.last_name or self.last_name
 
         self.last_broadcast = get_latest_datetime(self.last_broadcast,
                                                   other.last_broadcast)
@@ -115,7 +119,8 @@ class StudentMarker(EntityBase):
                 marker[field] = prop.strftime('%Y-%m-%d %H:%M')
 
         marker["version"] = self.version_
-        marker['name'] = self.name
+        marker['first_name'] = self.first_name
+        marker['last_name'] = self.last_name
         marker['contacts'] = self.contacts
         _handle_date('last_broadcast', self.last_broadcast)
         marker['acknowledged'] = self.acknowledged
@@ -141,7 +146,8 @@ def create_or_update_marker(event_key, student, message_key):
         new_marker = StudentMarker(
             key=marker_key,
             event=event_key,
-            name=student.name,
+            first_name=student.first_name,
+            last_name=student.last_name,
             contacts=_build_contact_map(student.contacts[:]),
             is_direct=True
         )
@@ -149,7 +155,8 @@ def create_or_update_marker(event_key, student, message_key):
         new_marker = StudentMarker(
             key=marker_key,
             event=event_key,
-            name=student.name,
+            first_name=student.first_name,
+            last_name=student.last_name,
             contacts=_build_contact_map(student.contacts[:]),
             is_direct=False
         )
@@ -189,7 +196,7 @@ def _hash_contact(contact):
     """Take a contact dict and return a hash for that contact."""
     import hashlib
 
-    tokens = [unicode(contact.get('name'))]
+    tokens = [unicode(contact.get('first_name'))]
     methods = contact.get('methods')
     if methods:
         tokens.extend(unicode(method.get('value')) for method in methods)

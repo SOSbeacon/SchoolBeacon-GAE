@@ -4,7 +4,8 @@ class App.SOSAdmin.Model.User extends Backbone.Model
     defaults: ->
         return {
             key: null,
-            name: "",
+            first_name: "",
+            last_name: "",
             schools: [],
             email: "",
             phone: "",
@@ -80,7 +81,8 @@ class App.SOSAdmin.Model.User extends Backbone.Model
         return password
 
     validators:
-        name: new App.Util.Validate.string(len: {min: 1, max: 50}),
+        first_name: new App.Util.Validate.string(len: {min: 1, max: 50}),
+        last_name: new App.Util.Validate.string(len: {min: 1, max: 50}),
         email: @emailValidator,
         phone: @phoneValidator,
 #        password: new App.Util.Validate.string(len: {min: 6, max: 500}),
@@ -90,9 +92,13 @@ class App.SOSAdmin.Model.User extends Backbone.Model
         hasError = false
         errors = {}
 
-        if _.isEmpty(attrs.name)
+        if _.isEmpty(attrs.first_name)
             hasError = true
-            errors.name = "Must be at least 1 characters long."
+            errors.first_name = "Must be at least 1 characters long."
+
+        if _.isEmpty(attrs.last_name)
+            hasError = true
+            errors.last_name = "Must be at least 1 characters long."
 
         if _.isEmpty(attrs.email)
             hasError = true
@@ -153,11 +159,12 @@ class App.SOSAdmin.Collection.UserList extends Backbone.Paginator.requestPager
 class App.SOSAdmin.View.UserEdit extends App.Skel.View.EditView
     template: JST['admin/user/edit']
     modelType: App.SOSAdmin.Model.User
-    focusButton: 'input#name'
+    focusButton: 'input#first_name'
 
     propertyMap:
         active: "input.active",
-        name: "input.name",
+        first_name: "input.first_name",
+        last_name: "input.last_name",
 
     events:
         "change": "change"
@@ -181,7 +188,8 @@ class App.SOSAdmin.View.UserEdit extends App.Skel.View.EditView
             e.preventDefault()
 
         valid = @model.save({
-            name: @$('input.name').val()
+            first_name: @$('input.first_name').val()
+            last_name: @$('input.last_name').val()
             email: @$('input.email').val()
             phone: @$('input.phone').val()
             password: @$('input.password').val()
@@ -234,7 +242,7 @@ class App.SOSAdmin.View.UserListItem extends App.Skel.View.ListItemView
 
     edit: =>
         setTimeout(( =>
-            if ($("#name").length > 0)
+            if ($("#first_name").length > 0)
                 $('#email').attr('readonly', true)
                 $('#phone').attr('readonly', true)
         ), 100)

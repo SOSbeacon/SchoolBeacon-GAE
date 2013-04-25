@@ -162,7 +162,7 @@ class TemplateHandler(BaseHandler):
                 from sosbeacon.user import User  # To get the model in mem.
                 user = ndb.Key(urlsafe=user_key).get()
                 if user:
-                    self._user_name = user.name
+                    self._user_name = user.first_name + " " + user.last_name
 
         return self._user_name
 
@@ -191,7 +191,7 @@ class TemplateHandler(BaseHandler):
                     from sosbeacon.user import User  # To get the model in mem.
                     admin = ndb.Key(urlsafe=admin_key).get()
                     if admin:
-                        self._admin_name = admin.name
+                        self._admin_name = admin.first_name + " " + admin.last_name
             else:
                 self._admin_name = 'Admin'
 
@@ -317,7 +317,7 @@ class EventHandler(TemplateHandler):
 
         self.setup_session_marker(marker_key, event)
 
-        event_html = self.render('event.mako', event=event, contact_marker = True, contact_name = marker.name, timezone = self.session.get('tz'))
+        event_html = self.render('event.mako', event=event, contact_marker = True, contact_name = marker.first_name + " " + marker.last_name, timezone = self.session.get('tz'))
         self.response.out.write(event_html)
 
         # Try to mark this event as acknowledged.
@@ -499,7 +499,7 @@ class HomeLoginHandler(TemplateHandler):
         user = user_key.get()
         school = self.session.get('s')
 
-        if len(user.schools) == 1 or school:
+        if len(user.schools) == 1:
             self.redirect("/")
             return
 
@@ -577,6 +577,35 @@ class HomeLoginHandler(TemplateHandler):
         for key in self.session.keys():
             if key != 'tz':
                 del self.session[key]
+
+
+class SelectSchool(TemplateHandler):
+    def get(self):
+        if not 'u' in self.session or not 's' in self.session:
+            out = self.render('select_school.mako', is_loggedin=False)
+            self.response.out.write(out)
+        else:
+            out = self.render('select_school.mako', school_name = self.school_name,
+                user_name = self.user_name,
+                schools = self.list_school,
+                timezone = '',
+                is_loggedin = True)
+            self.response.out.write(out)
+
+    def post(self, *args, **kwargs):
+        if 'school' in self.request.body:
+            school_key = self.request.POST['school']
+            self.session['s'] = school_key
+            self.redirect("/")
+            return
+
+        out = self.render('select_school.mako', school_name = self.school_name,
+            user_name = self.user_name,
+            schools = self.list_school,
+            timezone = '',
+            is_loggedin = True)
+        self.response.out.write(out)
+
 
 
 class HomeLogoutHandler(TemplateHandler):
@@ -926,7 +955,7 @@ class SMSResponderHandler(TemplateHandler):
                 'event': responder_sms.event,
                 'type': 'c',
                 'is_student': False,
-                'user_name': responder_sms.contact_name + " - " + str(from_number),
+                'user_name': responder_sms.contact_first_name + " " + responder_sms.contact_last_name + " - " + str(from_number),
                 'message': {'body': from_body},
                 'longitude': '',
                 'latitude': '',
@@ -943,7 +972,7 @@ class SMSResponderHandler(TemplateHandler):
             'event': responder_sms.event,
             'type': 'c',
             'is_student': False,
-            'user_name': responder_sms.contact_name + " - " + str(from_number),
+            'user_name': responder_sms.contact_first_name + " " + responder_sms.contact_last_name + " - " + str(from_number),
             'message': {'body': from_body},
             'longitude': '',
             'latitude': '',
@@ -969,7 +998,8 @@ class AccountHandler(TemplateHandler):
     @user_required
     def post(self):
         """Update user info"""
-        name = self.request.POST['name']
+        first_name = self.request.POST['first_name']
+        last_name = self.request.POST['last_name']
         email = self.request.POST['email']
         phone = self.request.POST['phone']
 
@@ -1002,13 +1032,13 @@ class AccountHandler(TemplateHandler):
                             school_name = self.school_name,
                             schools = self.list_school)
                     else:
-                        self.update_user(user, name, phone, email, new_password)
+                        self.update_user(user, first_name, last_name, phone, email, new_password)
                         self.render_account(error = errors['success'],
                             user = user,
                             school_name = self.school_name,
                             schools = self.list_school)
                 else:
-                    self.update_user(user, name, phone, email, user.password)
+                    self.update_user(user, first_name, last_name, phone, email, user.password)
                     self.render_account(error = errors['success'],
                         user = user,
                         school_name = self.school_name,
@@ -1019,7 +1049,7 @@ class AccountHandler(TemplateHandler):
                     school_name = self.school_name,
                     schools = self.list_school)
 
-    def update_user(self, user, name, phone, email, password):
+    def update_user(self, user, first_name, last_name, phone, email, password):
         from sosbeacon.student import DEFAULT_STUDENT_ID
         from sosbeacon.student import Student
 
@@ -1028,11 +1058,13 @@ class AccountHandler(TemplateHandler):
             namespace='_x_')
 
         student = student_key.get()
-        student.name = name
+        student.first_name = first_name
+        student.last_name = last_name
         student.contacts[0]['methods'][1]['value'] = phone
         to_put = [student]
 
-        user.name = name
+        user.first_name = first_name
+        user.last_name = last_name
         user.email = email
         user.phone = phone
         if user.password != password:
@@ -1058,7 +1090,7 @@ class CallBackHandler(TemplateHandler):
         logging.info(playUrl)
 
         response = twiml.Response()
-        response.say('Hello, You have a broadcast from School Beacon. ')
+        response.say('Hello, You have a broadcast from School Of Beacon. ')
         if (answeredBy == 'machine'):
             response.pause(2)
             response.say('We will read you the email broadcast from School Beacon now')
@@ -1075,6 +1107,7 @@ url_map = [
     ('/', MainHandler),
     ('/school/web/users/login/', HomeLoginHandler),
     ('/school/web/users/logout/', HomeLogoutHandler),
+    ('/school/web/users/selectschool/', SelectSchool),
     ('/school', HomeHandler),
     ('/school/web/about/index', AboutHandler),
     ('/school/web/about/features', FeaturesHandler),

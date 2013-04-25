@@ -40,6 +40,19 @@ admin_console:
     url: /_ah/stats/
 
 handlers:
+- url: /crossdomain.xml
+  static_files: static/crossdomain.xml
+  upload: static/crossdomain.xml
+  mime_type: text/xml
+
+- url: /audiojs.swf
+  static_files: static/script/audiojs.swf
+  upload: static/script/audiojs.swf
+
+- url: /player-graphics.gif
+  static_files: static/script/player-graphics.gif
+  upload: static/script/player-graphics.gif
+
 - url: /static
   static_dir: static
 

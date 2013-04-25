@@ -1,10 +1,16 @@
 <% if(default_student) { %>
   <td>
-    <b><%- name %></b>
+    <b><%- last_name %></b>
+  </td>
+  <td>
+    <b><%- first_name %></b>
   </td>
 <%} else {%>
   <td>
-    <%- name %>
+    <%- last_name %>
+  </td>
+  <td>
+    <%- first_name %>
   </td>
 <% } %>
 <td>

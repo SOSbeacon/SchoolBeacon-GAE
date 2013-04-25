@@ -4,7 +4,8 @@ class App.SOSBeacon.Model.Contact extends Backbone.Model
     urlRoot: '/service/contact'
     defaults: ->
         return {
-            name: "",
+            first_name: "",
+            last_name: "",
             type: "p",
             methods: [],
             notes: "",
@@ -19,9 +20,9 @@ class App.SOSBeacon.Model.Contact extends Backbone.Model
         hasError = false
         errors = {}
 
-        if attrs.type != 'd' and _.isEmpty($.trim(attrs.name))
+        if attrs.type != 'd' and _.isEmpty($.trim(attrs.first_name))
             hasError = true
-            errors.name = "Missing name."
+            errors.first_name = "Missing first name."
 
             #if _.isEmpty(attrs.methods)
             #    hasError = true
@@ -67,11 +68,12 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
         "click button#student-remove-contact": "destroy"
         "change select.contact-type": "typeChanged"
         "blur select.contact-type": "typeChanged"
-        "change input.contact-name": "validate"
-        "blur input.contact-name": "validate"
+        "change input.contact-first-name": "validate"
+        "change input.contact-last-name": "validate"
+        "blur input.contact-first-name": "validate"
+        "blur input.contact-last-name": "validate"
         "change textarea.contact-notes": "validate"
         "blur textarea.contact-notes": "validate"
-        "keypress .edit": "updateOnEnter"
 
     initialize: =>
         @contactMethodViews = []
@@ -79,21 +81,26 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
 
     validate: ->
         type = @$('select.contact-type').val()
-        name_input = @$('input.contact-name')
-        name = $.trim(name_input.val())
-        name_direct = $('input.name').val()
+        first_name_input = @$('input.contact-first-name')
+        last_name_input = @$('input.contact-last-name')
+        first_name = $.trim(first_name_input.val())
+        last_name = $.trim(last_name_input.val())
+        first_name_direct = $('input.first_name').val()
+        last_name_direct = $('input.last_name').val()
 
-        if not @validateContacts(type, name, name_input)
+        if not @validateContacts(type, first_name, first_name_input)
             return false
 
         saved = @model.set({
-            name: if type != 'd' then name else name_direct
+            first_name: if type != 'd' then first_name else first_name_direct
+            last_name: if type != 'd' then last_name else last_name_direct
             type: type,
         })
+
         if saved == false
             return false
 
-        App.Util.Form._clearMessage(name_input)
+        App.Util.Form._clearMessage(first_name_input)
         return true
 
     validateContacts: (type, name, name_input) =>
@@ -165,7 +172,8 @@ class App.SOSBeacon.View.ContactEdit extends Backbone.View
             select.append(option)
         )
         if contactType == "d"
-            name = @$('input.contact-name').hide()
+            first_name = @$('input.contact-first-name').hide()
+            last_name = @$('input.contact-last-name').hide()
 
     updateOnEnter: (e) =>
         focusItem = $("*:focus")
@@ -193,8 +201,10 @@ class App.SOSBeacon.View.StudentEdit extends App.SOSBeacon.View.ContactEdit
         "click button#student-remove-contact": "destroy"
         "change select.contact-type": "typeChanged"
         "blur select.contact-type": "typeChanged"
-        "change input.contact-name": "validate"
-        "blur input.contact-name": "validate"
+        "change input.contact-first-name": "validate"
+        "change input.contact-last-name": "validate"
+        "blur input.contact-first-name": "validate"
+        "blur input.contact-last-name": "validate"
         "change textarea.contact-notes": "validate"
         "blur textarea.contact-notes": "validate"
         "keypress .edit": "updateOnEnter"

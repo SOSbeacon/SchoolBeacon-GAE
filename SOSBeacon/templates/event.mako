@@ -60,8 +60,16 @@
             <script src="http://code.jquery.com/ui/1.10.1/jquery-ui.js"></script>
 
             <script type="text/javascript">
+                var contact_name
+                % if contact_marker:
+                    contact_name = "${contact_name}"
+##                    $(".add-message-box-area").append('<input type="text" class="guest" name="user_name" readonly="" value="${contact_name}">');
+                %else:
+                    contact_name = "Guest"
+##                    $(".add-message-box-area").append('<input type="text" class="guest" name="user_name" value="Guest">');
+                % endif
                 var messageList = new App.SOSBeacon.View.MessageListApp(
-                        '${event.key.urlsafe()}', false);
+                        '${event.key.urlsafe()}', contact_name, false);
                 $("#event-messages").append(messageList.render().$el);
 
 ##                function change_timezone(value){
@@ -96,12 +104,6 @@
                     location.reload();
                     return false
                 });
-
-                % if contact_marker:
-                        $(".add-message-box-area").append('<input type="text" class="guest" name="user_name" readonly="" value="${contact_name}">');
-                    %else:
-                        $(".add-message-box-area").append('<input type="text" class="guest" name="user_name" value="Guest">');
-                    % endif
 
                 function setChatName() {
                     var chatName = '${contact_name}';

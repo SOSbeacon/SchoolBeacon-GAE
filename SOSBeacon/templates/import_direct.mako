@@ -90,7 +90,7 @@
                           <div class="control-group">
                               <div class="controls">
                                   <p>CSV file format like this:
-                                      Group Name | Contact name | Email | Text phone | Voice phone
+                                      Group Name | Contact first name | Contact last name | Email | Text phone | Voice phone
                                       <br>(Not import first row (heading))</p>
                               </div>
                           </div>
@@ -113,7 +113,8 @@
           <h2 class="span8">${count}</h2>
           <table class="table table-striped">
             <thead>
-              <th>Contact Name</th>
+              <th>Contact First Name</th>
+              <th>Contact Last Name</th>
               <th>Group Name</th>
               <th>Email</th>
               <th>Text Phone</th>
@@ -131,7 +132,8 @@
 
 <%def name="makerow(row)">
   <tr>
-    <td>${row.name}</td>
+    <td>${row.first_name}</td>
+    <td>${row.last_name}</td>
     <td>${row.group}</td>
     <td>${row.email}</td>
     <td>${row.text_phone}</td>

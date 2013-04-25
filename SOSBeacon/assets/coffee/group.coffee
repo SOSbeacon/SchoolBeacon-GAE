@@ -61,7 +61,7 @@ class App.SOSBeacon.Collection.GroupList extends Backbone.Paginator.requestPager
     }
 
     query_defaults: {
-        orderBy: 'added'
+        orderBy: 'name_'
     }
 
     server_api: {}
@@ -163,12 +163,16 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
                     return false
 
                 if xhr.status == 200
-                    App.Skel.Event.trigger("model:save", @model, this)
-                    $('#add_area').empty()
-
-                    App.Util.Form.hideAlert()
-                    App.Util.Form.showAlert(
-                        "Successs!", "Save successfully", "alert-success")
+                    location.reload()
+#                    @groupView = new App.SOSBeacon.View.GroupApp()
+#                    @groupView.close()
+#                    $("#sosbeaconcontainer").append(@groupView.render().el)
+#                    App.Skel.Event.trigger("model:save", @model, this)
+#                    $('#add_area').empty()
+#
+#                    App.Util.Form.hideAlert()
+#                    App.Util.Form.showAlert(
+#                        "Successs!", "Save successfully", "alert-success")
         )
 
 #        setTimeout(( =>
@@ -204,6 +208,10 @@ class App.SOSBeacon.View.GroupApp extends App.Skel.View.ModelApp
     initialize: =>
         @collection = new App.SOSBeacon.Collection.GroupList()
         @listView = new App.SOSBeacon.View.GroupList(@collection)
+
+        for interval in [0...1000]
+            clearInterval(interval)
+            interval++
 
 
 class App.SOSBeacon.View.GroupListItem extends App.Skel.View.ListItemView

@@ -70,6 +70,7 @@
                     "</form>" +
                     "<p>(Accept file: mp3, amr, caf, max size: 4096 KB)</p>" +
                     "</div>" +
+                    "<p id='alert_audio' style='display: none; color: #0055cc'>Upload audio successfully. Please click insert to insert into your email</p>" +
                     "</div>" +
                     "<div class='modal-footer'>" +
                     "<a href='#' class='btn' data-dismiss='modal'>" + locale.audio.cancel + "</a>" +
@@ -412,6 +413,7 @@
                     type: "GET",
                     url: toolbar.uploadUrl,
                     success: function(response) {
+                        $("#alert_audio").css('display', 'none')
                         $("#files").css('display', 'block');
                         $("#files-queue").css('display', 'block');
                         $("#files-queue").html('');
@@ -430,6 +432,7 @@
                                 self.editor.currentView.element.focus();
                                 var url = window.location.protocol + data;
                                 urlInput.val(url);
+                                $("#alert_audio").css('display', 'block')
                                 $("#files").css('display', 'none');
                                 $("#files-queue").css('display', 'none');
                                 $(".bootstrap-wysihtml5-insert-audio-modal>.modal-footer>.btn").each(function(val) {

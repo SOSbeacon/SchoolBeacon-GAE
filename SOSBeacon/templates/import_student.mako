@@ -90,8 +90,8 @@
                             <div class="control-group">
                                 <div class="controls">
                                     <p>CSV file format like this:<br>
-                                        Group Name | Student name | Parent 1 name | Parent 1 email | Parent 1 text phone |
-                                        Parent 1 voice phone | Parent 2 name | Parent 2 email | Parent 2 text phone | Parent 2 voice phone
+                                        Group Name | Student first name | Student last name | Parent 1 first name | Parent 1 last name  | Parent 1 email | Parent 1 text phone |
+                                        Parent 1 voice phone | Parent 2 first name | Parent 2 last name | Parent 2 email | Parent 2 text phone | Parent 2 voice phone
                                         <br>(Not import first row (heading))
                                     </p>
                                 </div>
@@ -115,13 +115,16 @@
             <h2 class="span8">${count}</h2>
             <table class="table table-striped">
                 <thead>
-                    <th>Student Name</th>
+                    <th>Student First Name</th>
+                    <th>Student Last Name</th>
                     <th>Group Name</th>
-                    <th>Parent Name 1</th>
+                    <th>Parent First Name 1</th>
+                    <th>Parent Last Name 1</th>
                     <th>Email 1</th>
                     <th>Textphone 1</th>
                     <th>Voicephone 1</th>
-                    <th>Parent Name 2</th>
+                    <th>Parent First Name 2</th>
+                    <th>Parent Last Name 2</th>
                     <th>Email 2</th>
                     <th>Textphone 2</th>
                     <th>Voicephone 2</th>
@@ -138,13 +141,16 @@
 
 <%def name="makerow(row)">
     <tr>
-        <td>${row.name}</td>
+        <td>${row.first_name}</td>
+        <td>${row.last_name}</td>
         <td>${row.group}</td>
-        <td>${row.parent_name_1}</td>
+        <td>${row.parent_first_name_1}</td>
+        <td>${row.parent_last_name_1}</td>
         <td>${row.parent_email_1}</td>
         <td>${row.parent_text_phone_1}</td>
         <td>${row.parent_voice_phone_1}</td>
-        <td>${row.parent_name_2}</td>
+        <td>${row.parent_first_name_2}</td>
+        <td>${row.parent_last_name_2}</td>
         <td>${row.parent_email_2}</td>
         <td>${row.parent_text_phone_2}</td>
         <td>${row.parent_voice_phone_2}</td>

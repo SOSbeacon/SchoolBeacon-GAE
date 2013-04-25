@@ -5,6 +5,7 @@ import re
 
 from google.appengine.ext import ndb
 from google.appengine.ext.webapp import blobstore_handlers
+from google.appengine.api import channel, memcache, users
 
 import webapp2
 from webapp2_extras import sessions
@@ -100,6 +101,23 @@ class SchoolRestApiListHandler(rest_handler.RestApiListHandler):
         self.write_json_response(entity.to_dict())
 
 
+class GetTokenHandler(webapp2.RequestHandler):
+    def get(self):
+        ANONYMOUS_IDS = set(range(1, 1000)) # you can increase it for accepting more anonymous users
+
+        session_store = sessions.get_store()
+        session = session_store.get_session()
+
+        if 'u' in session:
+            channel_id = session.get('u') # you can use hash algorithm for ensuring the channel id is less then 64 bytes
+        else:
+            logging.info('vao day')
+            return
+
+        token = channel.create_channel(channel_id)
+        self.response.out.write(token)
+
+
 def process_messages(request, schema, entity):
     from voluptuous import Schema
     from sosbeacon.event.message import get_sendemail_user_task
@@ -133,7 +151,7 @@ def process_messages(request, schema, entity):
                         ContactMarker, "%s:%s" % (message.event.id(), user_key.id()),
                         namespace='_x_')
                     update_count_comment(marker_key)
-                message.user_name = user.name
+                message.user_name = user.first_name + " " + user.last_name
             else:
                 message.user_name = "Guest"
         else:
@@ -145,7 +163,7 @@ def process_messages(request, schema, entity):
             cm_key = ndb.Key( ContactMarker, cm_id, namespace='_x_')
             cm = cm_key.get()
             if cm:
-                message.user_name = cm.name
+                message.user_name = cm.first_name + " " + cm.last_name
                 update_count_comment(cm_key)
             else:
                 message.user_name = 'Guest'
@@ -216,6 +234,7 @@ class MessageListHandler(rest_handler.RestApiListHandler, ProcessMixin):
 
         session_store = sessions.get_store()
         session = session_store.get_session()
+        logging.info(message['added'])
         if 'tz' in session:
             message['added'] = self.convertTimeZone(session.get('tz'), message['added'])
         else:
@@ -251,8 +270,8 @@ class StudentHandler(rest_handler.RestApiHandler, ProcessMixin):
             logging.exception('validation failed')
 
         student = student_key.get().to_dict()
-        if obj['contacts'][1]['name'] == '':
-            obj['contacts'][1]['name'] = student['contacts'][1]['name']
+        if obj['contacts'][1]['first_name'] == '':
+            obj['contacts'][1]['first_name'] = student['contacts'][1]['first_name']
 
         if obj['contacts'][1]['methods'][0]['value'] == obj['contacts'][1]['methods'][1]['value'] \
             == obj['contacts'][1]['methods'][2]['value'] == '':
@@ -469,6 +488,7 @@ class GroupListHandler(SchoolRestApiListHandler, ProcessMixin):
 
         self.request.GET['feq_school'] = session.get('s')
         self.request.GET['feq_default'] = 'false'
+        self.request.GET['orderBy'] = 'name_'
 
         resources = self.query.fetch(
             self.entity, self.request.params, self.query_schema)
@@ -730,7 +750,11 @@ class StudentRobocallHandler(rest_handler.RestApiListHandler, ProcessMixin):
             return
 
         is_direct = False
-        robocall_start(resource_id, is_direct, user_key.urlsafe())
+        if 'tz' in session:
+            tz = session['tz']
+        else:
+            tz = "America/Los_Angeles"
+        robocall_start(resource_id, is_direct, user_key.urlsafe(), tz)
 
 
 class DirectRobocallHandler(rest_handler.RestApiListHandler, ProcessMixin):
@@ -755,7 +779,11 @@ class DirectRobocallHandler(rest_handler.RestApiListHandler, ProcessMixin):
             return
 
         is_direct = True
-        robocall_start(resource_id, is_direct, user_key.urlsafe())
+        if 'tz' in session:
+            tz = session['tz']
+        else:
+            tz = "America/Los_Angeles"
+        robocall_start(resource_id, is_direct, user_key.urlsafe(), tz)
 
 
 class DownloadHandler(webapp2.RequestHandler):
@@ -1015,7 +1043,7 @@ def process_post_user(request, schema, entity):
     schema = Schema(schema, extra=True)
 
     if obj['email'] == '' or obj['phone'] == '' or \
-            obj['name'] == '':
+            obj['first_name'] == '' or obj['last_name'] == '':
         return False
 
     if len(obj['password']) < 6:
@@ -1040,7 +1068,7 @@ def process_post_user(request, schema, entity):
 
     ndb.put_multi(to_put)
     create_default_student(user)
-    send_invitation_email(user.name, user.email, obj['password'])
+    send_invitation_email(user.first_name + " " + user.last_name, user.email, obj['password'])
 
     return user
 
@@ -1086,8 +1114,8 @@ class ExportStudentHandler(blobstore_handlers.BlobstoreDownloadHandler):
                                          Student.is_direct == False),
                                 namespace = '_x_').fetch()
 
-        headers = ['group_name', 'contacts_name','parent1', 'parent1_email', 'parent1_text_phone',
-                   'parent1_voice_phone', 'parent2', 'parent2_email', 'parent2_text_phone',
+        headers = ['group_name', 'contacts_first_name', 'contacts_last_name', 'parent1_first_name', 'parent1_last_name', 'parent1_email', 'parent1_text_phone',
+                   'parent1_voice_phone', 'parent2_first_name', 'parent2_last_name', 'parent2_email', 'parent2_text_phone',
                    'parent2_voice_phone']
 
         headers = ','.join(headers)
@@ -1115,10 +1143,12 @@ class ExportStudentHandler(blobstore_handlers.BlobstoreDownloadHandler):
     def get_info_student(self, student):
         info_student = []
         info_student.append("")
-        info_student.append(student.name)
+        info_student.append(student.first_name)
+        info_student.append(student.last_name)
 
         for contact in student.contacts:
-            info_student.append(contact['name'])
+            info_student.append(contact['first_name'])
+            info_student.append(contact['last_name'])
             if len(contact['methods'][0]['value']) > 0:
                 info_student.append(contact['methods'][0]['value'])
             if len(contact['methods'][0]['value']) == 0:

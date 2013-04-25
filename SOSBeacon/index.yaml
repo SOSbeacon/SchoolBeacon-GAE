@@ -132,6 +132,12 @@ indexes:
 - kind: Event
   properties:
   - name: sch
+  - name: lb
+    direction: desc
+
+- kind: Event
+  properties:
+  - name: sch
   - name: m_
     direction: desc
 
@@ -154,6 +160,12 @@ indexes:
 
 - kind: Group
   properties:
+  - name: df
+  - name: sc
+  - name: n_
+
+- kind: Group
+  properties:
   - name: sc
   - name: a_
 
@@ -161,6 +173,12 @@ indexes:
   properties:
   - name: sc
   - name: n_
+
+- kind: Message
+  properties:
+  - name: e
+  - name: m_
+    direction: desc
 
 - kind: Message
   properties:
@@ -200,6 +218,13 @@ indexes:
 - kind: Student
   properties:
   - name: g
+  - name: id
+  - name: sc
+  - name: n_
+
+- kind: Student
+  properties:
+  - name: g
   - name: n_
 
 - kind: Student
@@ -216,6 +241,30 @@ indexes:
 
 - kind: Student
   properties:
+  - name: g
+  - name: sc
+  - name: n_
+
+- kind: Student
+  properties:
+  - name: id
+  - name: sc
+  - name: fn
+
+- kind: Student
+  properties:
+  - name: id
+  - name: sc
+  - name: fn_
+
+- kind: Student
+  properties:
+  - name: id
+  - name: sc
+  - name: ln_
+
+- kind: Student
+  properties:
   - name: id
   - name: sc
   - name: n_
@@ -238,6 +287,14 @@ indexes:
   - name: event
   - name: id
   - name: a_
+    direction: desc
+
+- kind: StudentMarker
+  properties:
+  - name: a
+  - name: event
+  - name: id
+  - name: n
     direction: desc
 
 - kind: StudentMarker

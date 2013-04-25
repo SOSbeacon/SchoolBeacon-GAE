@@ -251,7 +251,7 @@ class App.Skel.View.ListView extends Backbone.View
         if @itemView
             view = new @itemView({model: object})
             @$(".listitems").append(view.render().el)
-    
+
     addAll: =>
         @collection.each(@addOne)
 

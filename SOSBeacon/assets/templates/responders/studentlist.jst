@@ -1,8 +1,8 @@
 <td>
-<b><%- name %></b> <br>
+<b><%- first_name %> <%- last_name %></b> <br>
 <% if (parent1 == 'show') {%>
-    Parent 1: <% if (names1 != '') { %>
-                    <span style="color:#1959AC"><%- names1 %></span>
+    Parent 1: <% if (first_names1 != '') { %>
+                    <span style="color:#1959AC; float:none;"><%- first_names1 %> <%- last_names1 %></span>
                 <% } else { %>
                     &nbsp;
                 <% } %>
@@ -23,8 +23,8 @@
         <% } %> <br />
 <% } %>
 <% if (parent2 == 'show') { %>
-Parent 2: <% if (names2 != '') { %>
-                <span style="color:#1959AC"><%- names2 %></span>
+Parent 2: <% if (first_names2 != '') { %>
+                <span style="color:#1959AC; float:none;"><%- first_names2 %> <%- last_names2 %></span>
             <% } else { %>
                 &nbsp;
             <% } %>

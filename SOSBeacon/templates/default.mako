@@ -11,7 +11,7 @@
             <div id="sosbeaconheader" class="nav-collapse">
                 <ul id="sosbeacon-menu" class="nav">
                     <li class="menu" id="menu-item-home" style="float: left">
-                        <a href="/school" id="home">
+                        <a href="/school/web/users/selectschool/" id="home">
                             <i class="icon-home"></i>
                             Home
                         </a>
@@ -63,7 +63,9 @@
 
 <%block name="body_script">
     <script type="text/javascript" src="https://maps.google.com/maps/api/js?sensor=false"></script>
-    <script type="application/javascript" src="/static/script/sosbeacon.js"></script>
+##    <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.js"></script>
+    <script type="text/javascript" src="/static/script/sosbeacon.js"></script>
+    <script type="text/javascript" src="/static/script/audio.min.js"></script>
     <script type="text/javascript">
         $(function(){
             var sosbeacon = new App.SOSBeacon.Router
@@ -106,6 +108,7 @@
         });
 
         var default_timezone = "${timezone}"
+        var interval = null;
 
         $(document).ready(function() {
             jQuery("#selectTimeZone option").each(function(){
@@ -114,12 +117,9 @@
                     return false;
                 }
             });
-            setTimeout((function() {
-                last_audio = $('.audio_insert').last()
-                url_audio = last_audio.attr('flashvars') + "&autoPlay=true"
-                last_audio = $('.audio_insert').last().attr('flashvars', url_audio)
-            }), 500);
-
+            audiojs.events.ready(function() {
+                var as = audiojs.createAll();
+            });
         });
     </script>
 </%block>

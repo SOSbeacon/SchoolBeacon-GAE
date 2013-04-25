@@ -15,7 +15,7 @@ class App.SOSBeacon.Collection.GroupStudentList extends Backbone.Paginator.reque
     }
 
     query_defaults: {
-        orderBy: 'added'
+        orderBy: 'name'
 #        feq_is_direct: true
     }
 
@@ -65,14 +65,14 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
         @students.reset()
 #        @allstudents.server_api = {feq_is_direct:true}
         if filters == undefined || @isEmpty(filters)
-            @$("#studentlist h2").text("All CONTACTS")
+            @$("#studentlist h2").text("All Contacts")
             @allstudents.server_api = {}
 
         else
             if filters.feq_is_direct == true
-                @$("#studentlist h2").text("DIRECT CONTACTS")
+                @$("#studentlist h2").text("Direct Contacts")
             else
-                @$("#studentlist h2").text("STUDENT CONTACTS")
+                @$("#studentlist h2").text("Student Contacts")
             _.extend(@allstudents.server_api, filters)
 
         that = this

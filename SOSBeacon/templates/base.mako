@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
+##    <meta http-equiv="X-UA-Compatible" content="IE=8" >
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <title><%block name="title">SBeacon</%block></title>
     <link rel="stylesheet" type="text/css" href="/static/css/lib.css">
     <link rel="stylesheet" type="text/css" href="/static/css/responsive.css">

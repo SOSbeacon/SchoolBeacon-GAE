@@ -21,7 +21,8 @@ MARKER_MERGE_QUEUE = "contact-marker-merge"
 marker_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
     'acknowledged': voluptuous.boolean(),
-    'name': basestring,
+    'first_name': basestring,
+    'last_name': basestring,
     'responded': [basestring],
 }
 
@@ -29,7 +30,8 @@ marker_query_schema = {
     'feq_acknowledged': voluptuous.boolean(),
     'feq_event': voluptuous.ndbkey(),
     'fan_key': voluptuous.ndbkey(),
-    'name': basestring
+    'first_name': basestring,
+    'last_name': basestring
 }
 
 
@@ -40,7 +42,7 @@ class ContactMarker(EntityBase):
         event.short_id + ':' + ContactMarker.short_id
     """
     _query_properties = {
-        'name': RestQueryRule('name_', lambda x: x.lower() if x else ''),
+        'first_name': RestQueryRule('first_name_', lambda x: x.lower() if x else ''),
     }
 
     # Store the schema version, to aid in migrations.
@@ -52,7 +54,8 @@ class ContactMarker(EntityBase):
     event = ndb.KeyProperty(Event)
 
     # contact name, for display
-    name = ndb.StringProperty('nm')
+    first_name = ndb.StringProperty('fnm')
+    last_name = ndb.StringProperty('lnm')
 
     acknowledged = ndb.BooleanProperty('a', default=False)
     last_viewed_date = ndb.IntegerProperty('at', indexed=False)
@@ -82,7 +85,8 @@ class ContactMarker(EntityBase):
 
         self.short_id = self.short_id or other.short_id
 
-        self.name = self.name or other.name
+        self.first_name = self.first_name or other.first_name
+        self.last_name = self.last_name or other.last_name
 
         if not self.students:
             self.students = other.students
@@ -114,7 +118,8 @@ class ContactMarker(EntityBase):
 
         marker = self._default_dict()
         marker["version"] = self.version_
-        marker['name'] = self.name
+        marker['first_name'] = self.first_name
+        marker['last_name'] = self.last_name
         marker['acknowledged'] = self.acknowledged
         marker['last_viewed_date'] = self.last_viewed_date
         marker['students'] = self.students.keys()
@@ -204,7 +209,8 @@ def create_or_update_marker(event_key, student_key, message_key, contact, search
         marker = ContactMarker(
             id=key_id,
             event=event_key,
-            name=contact.get('name'),
+            first_name=contact.get('first_name'),
+            last_name=contact.get('last_name'),
             students={str(student_key.id()): [contact]},
             short_id=short_id,
             methods=search_methods)

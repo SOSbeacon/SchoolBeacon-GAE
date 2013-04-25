@@ -72,7 +72,7 @@ class App.SOSBeacon.Collection.EventList extends Backbone.Paginator.requestPager
     }
 
     query_defaults: {
-        orderBy: 'added'
+        orderBy: 'last_broadcast_date'
         orderDirection: 'desc'
     }
 
@@ -83,6 +83,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
     template: JST['event-center/detail']
     id: "sosbeaconapp"
     className: "top_view row-fluid event-center-details"
+    interval: 0
 
     events:
         "click .event-add-comment": "addComment"
@@ -95,6 +96,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         "click #no-students #robocall": "robocallToStudent"
         "click #no-directs #robocall": "robocallToDirect"
         "click #email-download-button": "downloadEvent"
+        "click .editGroup": "editGroup"
 
     initialize: (id) =>
         @groupViews = []
@@ -114,6 +116,15 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         App.SOSBeacon.Event.bind("message:add", @messageAdd, this)
         #App.SOSBeacon.Event.bind("message:edit", @messageEdit, this)
 
+        for interval in [0...1000]
+            clearInterval(interval)
+            interval++
+
+        interval = setInterval(( =>
+            @renderTotalComment()
+            @renderMessages()
+        ), 30000)
+
     render: =>
         @$el.html(@template(@model.toJSON()))
 
@@ -124,19 +135,26 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         return this
 
+    renderTotalComment: =>
+        @model.fetch(async: false)
+        total_comment = @model.get('total_comment')
+
+        $('.total_comment').text(total_comment + " comments")
+
     renderMessages: =>
         @collection = new App.SOSBeacon.Collection.MessageList()
         _.extend(@collection.server_api, {
             'feq_event': @model.id
             'orderBy': 'timestamp'
-#            'orderDirection': 'desc'
+            'orderDirection': 'desc'
         })
+        $("#view-message-area").remove()
         @$("#event-center-message").append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 45%" class="image">')
 
         @collection.fetch(
             success: =>
 #                remove loading image when collection loading successful
-                @$('.image').css('display', 'none')
+                @$('.image').remove()
             error: =>
 #                reidrect login page if user not login
                 window.location = '/school'
@@ -147,14 +165,53 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @$("#event-center-message").append(@messageListView.render().el)
 
     renderGroups: =>
+        groupName = []
+        groupKey = []
         groupEl = @$('.event-groups')
         _.each(@model.groups.models, (group) =>
-            groupView = new App.SOSBeacon.View.EventGroup(group)
+#            groupView = new App.SOSBeacon.View.EventGroup(group)
+            groupName.push(group.get('name'))
+            groupKey.push(group.get('key'))
             #TODO: move view creaton out
             #https://github.com/EzoxSystems/SOSbeacon/pull/102/files#r1808979
-            groupEl.append(groupView.render().el)
-            @groupViews.push(groupView)
+#            groupEl.append(groupView.render().el)
+#            @groupViews.push(groupView)
         )
+        groupName = @sortGroup(groupName)
+        i = 0
+        while i < groupName.length
+            $newdiv1 = $("<a class='editGroup'>#{groupName[i]}</a>").attr('id', groupKey[i])
+            groupEl.append($newdiv1).append("<br />")
+            i++
+
+    editGroup: (e)=>
+        @groupKey = $(e.target).attr('id')
+        @groupEdit = new App.SOSBeacon.View.GroupStudentsEdit(@groupKey)
+        el = @groupEdit.render(true).$el
+        el.modal('show')
+
+    sortGroup: (group_links)=>
+        group_links.sort()
+        group_defaults = []
+
+        for i of group_links
+            if group_links[i] == "Admin"
+                group_links.splice i,1
+                group_defaults.push("Admin")
+
+            if group_links[i] == "Staff"
+                group_links.splice i,1
+                group_defaults.push("Staff")
+
+        group_defaults  = group_defaults.sort().reverse()
+
+        if group_defaults.length > 0
+            for i in group_defaults
+                group_links.unshift(i)
+
+            return group_links
+
+        return group_links
 
     downloadEvent: =>
         @downloadEmail = new App.SOSBeacon.View.EventDownloadEmail(@model)
@@ -249,11 +306,9 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
             @noStudentsView = new App.SOSBeacon.View.MarkerListStudent(
                 @studentMarkerList,
-            @model.id, false)
+            @model.id, @model.get('message_type'), false)
 
             @$("#no-students").append(@noStudentsView.render().el)
-            if @model.get('message_type') == 'rc'
-                @$("#no-students fieldset").append("<button class='btn btn-primary' id='robocall'>ROBOCALL NON-RESPONDERS PARENTS</button>")
 
         else if href == "#no-directs"
             if @noDirectsView
@@ -264,22 +319,20 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
             @noDirectsView = new App.SOSBeacon.View.MarkerListDirect(
                 @directMarkerList,
-            @model.id, false)
+            @model.id, @model.get('message_type'), false)
 
             @$("#no-directs").append(@noDirectsView.render().el)
-            if @model.get('message_type') == 'rc'
-                @$("#no-directs fieldset").append("<button class='btn btn-primary' id='robocall'>ROBOCALL NON-RESPONDERS CONTACTS</button>")
         el.tab('show')
 
     robocallToStudent: =>
-        if !confirm("Do you really to make calls to students contact?")
+        if !confirm("Do you really want to robocall non-responders now?")
             return
         $.ajax '/service/event/' + @model.id + '/robocall/student',  {'type':'POST'}
         $("#robocall").hide()
         return false
 
     robocallToDirect: =>
-        if !confirm("Do you really to make calls to directs contact?")
+        if !confirm("Do you really want to robocall non-responders now?")
             return
         $.ajax '/service/event/' + @model.id + '/robocall/direct',  {'type':'POST'}
         $("#robocall").hide()
@@ -534,10 +587,14 @@ class App.SOSBeacon.View.EventCenterApp extends Backbone.View
         @listView = new App.SOSBeacon.View.EventCenterList(@collection)
         _.extend(@collection.server_api, {
             'limit': 200
-            'orderBy': 'added'
+            'orderBy': 'last_broadcast_date'
             'orderDirection': 'desc'
         })
         @collection.fetch()
+
+        for interval in [0...1000]
+            clearInterval(interval)
+            interval++
 
     render: =>
         @$el.html(@template())

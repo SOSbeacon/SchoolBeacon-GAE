@@ -17,7 +17,8 @@ EMAIL_REGEX = re.compile("^[A-Za-z0-9\.\+_-]+@[A-Za-z0-9\._-]+\.[a-zA-Z]*$")
 
 student_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
-    'name': basestring,
+    'first_name': basestring,
+    'last_name': basestring,
 #    'identifier': basestring,
     'groups': [voluptuous.ndbkey()],
     'contacts': [{
@@ -30,7 +31,7 @@ student_schema = {
 }
 
 student_query_schema = {
-    'flike_name': basestring,
+    'flike_first_name': basestring,
     'feq_groups': voluptuous.any('', voluptuous.ndbkey()),
     'feq_school': voluptuous.ndbkey(),
     'feq_is_direct': voluptuous.boolean()
@@ -40,15 +41,18 @@ class Student(EntityBase):
     """Represents a student."""
 
     _query_properties = {
-        'name': RestQueryRule('name_', lambda x: x.lower() if x else ''),
+        'last_name': RestQueryRule('last_name_', lambda x: x.lower() if x else ''),
         'groups': RestQueryRule('groups', lambda x: None if x == '' else x)
     }
 
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
-    name = ndb.StringProperty('n')
-    name_ = ndb.ComputedProperty(lambda self: self.name.lower(), name='n_')
+    first_name = ndb.StringProperty('fn')
+
+    last_name = ndb.StringProperty('ln')
+    last_name_ = ndb.StringProperty('ln_')
+#    last_name_ = ndb.ComputedProperty(lambda self: self.last_name.lower(), last_name='ln_')
 
 #    identifier = ndb.StringProperty('i')
 #    identifier_ = ndb.ComputedProperty(
@@ -76,7 +80,9 @@ class Student(EntityBase):
         if not student:
             student = cls(namespace='_x_')
 
-        student.name = data.get('name')
+        student.first_name = data.get('first_name')
+        student.last_name_ = data.get('last_name').lower()
+        student.last_name = data.get('last_name')
 #        student.identifier = data.get('identifier')
 #       check student is direct contact or student contact
         student.is_direct = data.get('is_direct')
@@ -94,7 +100,8 @@ class Student(EntityBase):
         """
         student = self._default_dict()
         student["version"] = self.version_
-        student['name'] = self.name
+        student['first_name'] = self.first_name
+        student['last_name'] = self.last_name
 #        student['identifier'] = self.identifier
 
         student['contacts'] = self.contacts if self.contacts else []
@@ -115,9 +122,9 @@ def preview_import_students(file_, is_direct):
     from collections import namedtuple
 
     results = {'success': [], 'failures': []}
-    ResultItemDirect = namedtuple('ResultItemDirect', ['name', 'group', 'email', 'text_phone', 'voice_phone','messages'])
-    ResultItemStudent = namedtuple('ResultItemStudent', ['name', 'group', 'parent_name_1', 'parent_email_1', 'parent_text_phone_1', 'parent_voice_phone_1',
-                                                         'parent_name_2', 'parent_email_2', 'parent_text_phone_2', 'parent_voice_phone_2','messages'])
+    ResultItemDirect = namedtuple('ResultItemDirect', ['first_name', 'last_name', 'group', 'email', 'text_phone', 'voice_phone','messages'])
+    ResultItemStudent = namedtuple('ResultItemStudent', ['first_name', 'last_name','group', 'parent_first_name_1', 'parent_last_name_1','parent_email_1', 'parent_text_phone_1', 'parent_voice_phone_1',
+                                                         'parent_first_name_2', 'parent_last_name_2','parent_email_2', 'parent_text_phone_2', 'parent_voice_phone_2','messages'])
 
     students = csv.reader(StringIO.StringIO(file_), delimiter=',')
     #TODO: check size and move to tasks
@@ -131,56 +138,76 @@ def preview_import_students(file_, is_direct):
             #assume it has a header
             continue
 
-        name = unicode(student_array[1], 'utf8').strip()
+        logging.info(student_array)
+        first_name = unicode(student_array[1], 'utf8').strip()
+        last_name = unicode(student_array[2], 'utf8').strip()
         group = unicode(student_array[0], 'utf8').strip()
 
         if is_direct:
-            if not '@' in unicode(student_array[2], 'utf8').strip():
+            if not '@' in unicode(student_array[3], 'utf8').strip():
                 break
 
-            email = unicode(student_array[2], 'utf8').strip()
-            text_phone = unicode(student_array[3], 'utf8').strip()
-            voice_phone = unicode(student_array[4], 'utf8').strip()
+            email = unicode(student_array[3], 'utf8').strip()
+            text_phone = unicode(student_array[4], 'utf8').strip()
+            voice_phone = unicode(student_array[5], 'utf8').strip()
             try:
-                result = ResultItemDirect(name=name, group=group, email=email, text_phone=text_phone, voice_phone=voice_phone, messages='')
+                result = ResultItemDirect(first_name=first_name, last_name=last_name, group=group, email=email, text_phone=text_phone, voice_phone=voice_phone, messages='')
                 results['success'].append(result)
             except Exception, e:
                 logging.exception("Unable to import direct contact")
-                result = ResultItemDirect(name=name, group=group, email=email, text_phone=text_phone, voice_phone=voice_phone, messages=[e.message])
+                result = ResultItemDirect(first_name=first_name, last_name=last_name, group=group, email=email, text_phone=text_phone, voice_phone=voice_phone, messages=[e.message])
                 results['failures'].append(result)
                 error = "Unable to import direct contact"
                 create_error_log(error, 'ERR')
 
         else:
-            if '@' in unicode(student_array[2], 'utf8').strip():
+            if '@' in unicode(student_array[3], 'utf8').strip():
                 break
 
-            parent_name_1 = unicode(student_array[2], 'utf8').strip()
-            parent_email_1 = unicode(student_array[3], 'utf8').strip()
-            parent_text_phone_1 = unicode(student_array[4], 'utf8').strip()
-            parent_voice_phone_1 = unicode(student_array[5], 'utf8').strip()
+            parent_first_name_1 = unicode(student_array[3], 'utf8').strip()
+            parent_last_name_1 = unicode(student_array[4], 'utf8').strip()
+            parent_email_1 = unicode(student_array[5], 'utf8').strip()
+            parent_text_phone_1 = unicode(student_array[5], 'utf8').strip()
+            parent_voice_phone_1 = unicode(student_array[6], 'utf8').strip()
 
-            if len(student_array) > 6:
-                parent_name_2 = unicode(student_array[6], 'utf8').strip()
-                parent_email_2 = unicode(student_array[7], 'utf8').strip()
-                parent_text_phone_2 = unicode(student_array[8], 'utf8').strip()
-                parent_voice_phone_2 = unicode(student_array[9], 'utf8').strip()
+            if len(student_array) > 7:
+                parent_first_name_2 = unicode(student_array[7], 'utf8').strip()
+                parent_last_name_2 = unicode(student_array[8], 'utf8').strip()
+                parent_email_2 = unicode(student_array[9], 'utf8').strip()
+                parent_text_phone_2 = unicode(student_array[10], 'utf8').strip()
+                parent_voice_phone_2 = unicode(student_array[11], 'utf8').strip()
             else:
-                parent_name_2 = parent_email_2 = parent_text_phone_2 = parent_voice_phone_2 = ''
+                parent_first_name_2 = parent_last_name_2 = parent_text_phone_2 = parent_voice_phone_2 = ''
 
             try:
-                result = ResultItemStudent(name=name, group=group, parent_name_1=parent_name_1, parent_email_1=parent_email_1,
-                    parent_text_phone_1=parent_text_phone_1, parent_voice_phone_1=parent_voice_phone_1,
-                    parent_name_2=parent_name_2, parent_email_2=parent_email_2,
-                    parent_text_phone_2=parent_text_phone_2, parent_voice_phone_2=parent_voice_phone_2, messages='')
+                result = ResultItemStudent(first_name=first_name, last_name=last_name,
+                    group=group,
+                    parent_first_name_1 = parent_first_name_1,
+                    parent_last_name_1 = parent_last_name_1,
+                    parent_email_1 = parent_email_1,
+                    parent_text_phone_1 = parent_text_phone_1,
+                    parent_voice_phone_1 = parent_voice_phone_1,
+                    parent_first_name_2 = parent_first_name_2,
+                    parent_last_name_2 = parent_last_name_2,
+                    parent_email_2 = parent_email_2,
+                    parent_text_phone_2 = parent_text_phone_2,
+                    parent_voice_phone_2 = parent_voice_phone_2, messages='')
 
                 results['success'].append(result)
             except Exception, e:
                 logging.exception("Unable to import direct contact")
-                result = ResultItemStudent(name=name, group=group, parent_name_1=parent_name_1, parent_email_1=parent_email_1,
-                    parent_text_phone_1=parent_text_phone_1, parent_voice_phone_1=parent_voice_phone_1,
-                    parent_name_2=parent_name_2, parent_email_2=parent_email_2,
-                    parent_text_phone_2=parent_text_phone_2, parent_voice_phone_2=parent_voice_phone_2, messages=[e.message])
+                result = ResultItemStudent(first_name=first_name, last_name=last_name,
+                    group=group,
+                    parent_first_name_1 = parent_first_name_1,
+                    parent_last_name_1 = parent_last_name_1,
+                    parent_email_1 = parent_email_1,
+                    parent_text_phone_1 = parent_text_phone_1,
+                    parent_voice_phone_1 = parent_voice_phone_1,
+                    parent_first_name_2 = parent_first_name_2,
+                    parent_last_name_2 = parent_last_name_2,
+                    parent_email_2 = parent_email_2,
+                    parent_text_phone_2 = parent_text_phone_2,
+                    parent_voice_phone_2 = parent_voice_phone_2, messages=[e.message])
 
                 results['failures'].append(result)
                 error = "Unable to import direct contact"
@@ -195,9 +222,9 @@ def import_students(file_, school_urlsafe, is_direct):
     from collections import namedtuple
 
     results = {'success': [], 'failures': []}
-    ResultItemDirect = namedtuple('ResultItemDirect', ['name', 'group', 'email', 'text_phone', 'voice_phone','messages'])
-    ResultItemStudent = namedtuple('ResultItemStudent', ['name', 'group', 'parent_name_1', 'parent_email_1', 'parent_text_phone_1', 'parent_voice_phone_1',
-                                                         'parent_name_2', 'parent_email_2', 'parent_text_phone_2', 'parent_voice_phone_2','messages'])
+    ResultItemDirect = namedtuple('ResultItemDirect', ['first_name', 'last_name', 'group', 'email', 'text_phone', 'voice_phone','messages'])
+    ResultItemStudent = namedtuple('ResultItemStudent', ['first_name', 'last_name','group', 'parent_first_name_1', 'parent_last_name_1','parent_email_1', 'parent_text_phone_1', 'parent_voice_phone_1',
+                                                         'parent_first_name_2', 'parent_last_name_2','parent_email_2', 'parent_text_phone_2', 'parent_voice_phone_2','messages'])
 
     students = csv.reader(StringIO.StringIO(file_), delimiter=',')
     #TODO: check size and move to tasks
@@ -213,20 +240,21 @@ def import_students(file_, school_urlsafe, is_direct):
             #assume it has a header
             continue
 
-        name = unicode(student_array[1], 'utf8').strip()
+        first_name = unicode(student_array[1], 'utf8').strip()
+        last_name = unicode(student_array[2], 'utf8').strip()
         group = unicode(student_array[0], 'utf8').strip()
 
         if is_direct:
-            email = unicode(student_array[2], 'utf8').strip()
-            text_phone = unicode(student_array[3], 'utf8').strip()
-            voice_phone = unicode(student_array[4], 'utf8').strip()
+            email = unicode(student_array[3], 'utf8').strip()
+            text_phone = unicode(student_array[4], 'utf8').strip()
+            voice_phone = unicode(student_array[5], 'utf8').strip()
             try:
                 student, future, messages = import_student(school_urlsafe, is_direct, student_array, groups)
-                result = ResultItemDirect(name=name, group=group, email=email, text_phone=text_phone, voice_phone=voice_phone, messages=messages)
+                result = ResultItemDirect(first_name=first_name, last_name=last_name, group=group, email=email, text_phone=text_phone, voice_phone=voice_phone, messages=messages)
                 results['success'].append(result)
             except Exception, e:
                 logging.exception("Unable to import direct contact")
-                result = ResultItemDirect(name=name, group=group, email=email, text_phone=text_phone, voice_phone=voice_phone, messages=[e.message])
+                result = ResultItemDirect(first_name=first_name, last_name=last_name, group=group, email=email, text_phone=text_phone, voice_phone=voice_phone, messages=[e.message])
                 results['failures'].append(result)
                 error = "Unable to import direct contact"
                 create_error_log(error, 'ERR')
@@ -235,40 +263,49 @@ def import_students(file_, school_urlsafe, is_direct):
 #                futures.append(future)
 
         else:
-            parent_name_1 = unicode(student_array[2], 'utf8').strip()
-            parent_email_1 = unicode(student_array[3], 'utf8').strip()
-            parent_text_phone_1 = unicode(student_array[4], 'utf8').strip()
-            parent_voice_phone_1 = unicode(student_array[5], 'utf8').strip()
+            parent_first_name_1 = unicode(student_array[3], 'utf8').strip()
+            parent_last_name_1 = unicode(student_array[4], 'utf8').strip()
+            parent_email_1 = unicode(student_array[5], 'utf8').strip()
+            parent_text_phone_1 = unicode(student_array[5], 'utf8').strip()
+            parent_voice_phone_1 = unicode(student_array[6], 'utf8').strip()
 
-            if len(student_array) > 6:
-                parent_name_2 = unicode(student_array[6], 'utf8').strip()
-                parent_email_2 = unicode(student_array[7], 'utf8').strip()
-                parent_text_phone_2 = unicode(student_array[8], 'utf8').strip()
-                parent_voice_phone_2 = unicode(student_array[9], 'utf8').strip()
+
+            if len(student_array) > 7:
+                parent_first_name_2 = unicode(student_array[7], 'utf8').strip()
+                parent_last_name_2 = unicode(student_array[8], 'utf8').strip()
+                parent_email_2 = unicode(student_array[9], 'utf8').strip()
+                parent_text_phone_2 = unicode(student_array[10], 'utf8').strip()
+                parent_voice_phone_2 = unicode(student_array[11], 'utf8').strip()
             else:
-                parent_name_2 = parent_email_2 = parent_text_phone_2 = parent_voice_phone_2 = ''
+                parent_first_name_2 = parent_last_name_2 = parent_text_phone_2 = parent_voice_phone_2 = ''
 
             try:
                 student, future, messages = import_student(school_urlsafe, is_direct, student_array, groups)
-                result = ResultItemStudent(name=name, group=group,
-                    parent_name_1 = parent_name_1,
+                result = ResultItemStudent(first_name=first_name, last_name=last_name,
+                    group=group,
+                    parent_first_name_1 = parent_first_name_1,
+                    parent_last_name_1 = parent_last_name_1,
                     parent_email_1 = parent_email_1,
                     parent_text_phone_1 = parent_text_phone_1,
                     parent_voice_phone_1 = parent_voice_phone_1,
-                    parent_name_2 = parent_name_2,
+                    parent_first_name_2 = parent_first_name_2,
+                    parent_last_name_2 = parent_last_name_2,
                     parent_email_2 = parent_email_2,
                     parent_text_phone_2 = parent_text_phone_2,
-                    parent_voice_phone_2 = parent_voice_phone_2, messages=messages)
+                    parent_voice_phone_2 = parent_voice_phone_2, messages='')
 
                 results['success'].append(result)
             except Exception, e:
                 logging.exception("Unable to import direct contact")
-                result = ResultItemStudent(name=name, group=group,
-                    parent_name_1 = parent_name_1,
+                result = ResultItemStudent(first_name=first_name, last_name=last_name,
+                    group=group,
+                    parent_first_name_1 = parent_first_name_1,
+                    parent_last_name_1 = parent_last_name_1,
                     parent_email_1 = parent_email_1,
                     parent_text_phone_1 = parent_text_phone_1,
                     parent_voice_phone_1 = parent_voice_phone_1,
-                    parent_name_2 = parent_name_2,
+                    parent_first_name_2 = parent_first_name_2,
+                    parent_last_name_2 = parent_last_name_2,
                     parent_email_2 = parent_email_2,
                     parent_text_phone_2 = parent_text_phone_2,
                     parent_voice_phone_2 = parent_voice_phone_2, messages=[e.message])
@@ -305,17 +342,18 @@ def import_student(school_urlsafe, is_direct, student_array, group_lookup=None):
     group_key, group_future = _get_group(group_name, group_lookup, school_urlsafe)
 
     #TODO: look for existing student by name?
-    student_name = unicode(student_array[1], 'utf8')
-    if not student_name:
+    student_first_name = unicode(student_array[1], 'utf8')
+    student_last_name = unicode(student_array[2], 'utf8')
+    if not student_first_name:
         #TODO: add bad message
-        logging.error("Invalid student name %s", student_name)
-        error = "Invalid student name %s", student_name
+        logging.error("Invalid student name %s", student_first_name)
+        error = "Invalid student name %s", student_first_name
         create_error_log(error, 'ERR')
         return None, None, messages
 
         #Ideally they have an ID in the sheet to import in
     #    student = Student(identifier=uuid.uuid4().hex[:6], name=student_name, is_direct=is_direct)
-    student = Student(name=student_name, is_direct=is_direct)
+    student = Student(first_name=student_first_name, last_name=student_last_name, last_name_=student_last_name.lower(), is_direct=is_direct)
 
     if is_direct:
         student.contacts = _build_direct_contacts(student_array)
@@ -342,29 +380,29 @@ def _build_direct_contacts(student_array):
     contacts = []
     contact_info = student_array[1:]
     while contact_info:
-        contact, messages = _contact_from_args(*contact_info[0:4])
+        contact, messages = _contact_from_args(*contact_info[0:5])
         logging.info("Adding contact %s", contact)
         contacts.append(contact)
-        contact_info = contact_info[4:]
+        contact_info = contact_info[5:]
 
     return contacts
 
 
 def _build_student_contacts(student_array):
     contacts = []
-    contact_info = student_array[2:]
+    contact_info = student_array[3:]
     while contact_info:
-        contact, messages = _contact_from_args(*contact_info[0:4])
+        contact, messages = _contact_from_args(*contact_info[0:5])
         logging.info("Adding contact %s", contact)
         contacts.append(contact)
-        contact_info = contact_info[4:]
+        contact_info = contact_info[5:]
 
     return contacts
 
 
-def _contact_from_args(name, email, text, voice):
+def _contact_from_args(first_name, last_name, email, text, voice):
     messages = []
-    info = {'name': name, 'methods': [], "type": "p", "notes": ""}
+    info = {'first_name': first_name, 'last_name': last_name, 'methods': [], "type": "p", "notes": ""}
 
     def _add_phone_number(number, type_):
         phone, messages = validate_and_standardize_phone(number)
@@ -401,10 +439,12 @@ def validate_and_standardize_phone(number):
     import string
     messages = []
 
+    logging.info(number)
     try:
         stuff = string.maketrans('', '')
         non_digits = stuff.translate(None, string.digits)
         number = number.translate(None, non_digits)
+        logging.info(number)
     except Exception, e:
         logging.exception("Invalid phone number %s", number)
         messages.append("Invalid phone number %s, %s", number, e.message)
@@ -412,6 +452,7 @@ def validate_and_standardize_phone(number):
         create_error_log(error, 'ERR')
         return None, messages
 
+    logging.info(number)
     if not number.startswith('1'):
         number = '1' + number
 
@@ -441,7 +482,9 @@ def _get_group(group_name, group_lookup, school_urlsafe):
         return group_lookup[group_name.lower()], None
 
     from .group import Group
-    group = Group.query(Group.name_ == group_name.lower()).get()
+    school_key = ndb.Key(urlsafe = school_urlsafe)
+    group = Group.query(Group.name_ == group_name, Group.school == school_key, namespace = '_x_').get()
+
     if group:
         logging.debug("group found in datastore")
         error = "group found in datastore"
@@ -460,14 +503,15 @@ def _get_group(group_name, group_lookup, school_urlsafe):
 def create_default_student(user):
     """Create a default student when user is created"""
     contacts = [
-        {'notes': '', 'type': 'd', 'name': user.name, 'methods': [
+        {'notes': '', 'type': 'd', 'first_name': user.first_name, 'last_name': user.last_name, 'methods': [
             {'type': 'e', 'value': user.email},
             {'type': 't', 'value': user.phone},
             {'type': 'p', 'value': ''}]}]
 
     default_student = Student(key=ndb.Key(Student, DEFAULT_STUDENT_ID + "-%s" % (user.key.id()),
         namespace="_x_"),
-        name = user.name,
+        first_name = user.first_name,
+        last_name = user.last_name,
         contacts = contacts,
         default_student=True,
         is_direct = True,

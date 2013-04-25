@@ -1,25 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>School Beacon Login</title>
+    <title><%block name="title">School Beacon</%block></title>
     <link rel="stylesheet" type="text/css" href="/static/css/lib.css">
     <link rel="stylesheet" type="text/css" href="/static/css/responsive.css">
     <link rel="stylesheet" type="text/css" href="/static/css/sosbeacon.css">
     <link rel="stylesheet" type="text/css" href="/static/css/home.css">
 
-    <script type="application/javascript" src="/static/script/sosbeacon.js"></script>
-    <script type="application/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.11.0/jquery.validate.js"></script>
+    <script type="text/javascript" src="/static/script/sosbeacon.js"></script>
+    <script type="text/javascript" src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.11.0/jquery.validate.js"></script>
     <script type="text/javascript">
         $(document).ready(function () {
-            $("#logout").click(function () {
-                window.location = "/school/web/users/logout/"
-            })
-            $("#event").click(function () {
-                window.location = "/#/eventcenter"
-            })
-            $("#contact").click(function () {
-                window.location = "/#/contacts"
-            })
             $(".home").click(function () {
                 window.location = "/school"
             })
@@ -95,9 +86,10 @@
                                 <div class="account">
                             <span>Welcome
                             <strong>${school_name | h} - ${user_name | h}</strong>!</span><br>
-                                    <a id="event">Phone history</a> |
-                                    <a id="contact">WebApp</a> |
-                                    <a id="logout">Logout</a>
+                                    <a id="contact" href="/#/contacts">Contact</a> |
+                                    <a id="group" href="/#/group">Group</a> |
+                                    <a id="eventcenter" href="/#/eventcenter">Event Center</a> |
+                                    <a id="logout" href="/school/web/users/logout/">Logout</a>
                                 </div>
                             % endif
                     </div>

@@ -1,7 +1,5 @@
 <%inherit file="base_home.mako"/>
-<title><%block name="title">School Beacon Login</%block></title>
-<%block name="login">
-</%block>
+<title><%block name="title">School Beacon Select School</%block></title>
 <%block name="body_content">
     <div class="content">
         <div id="login_form" class="row-fluid">
@@ -64,13 +62,6 @@
                     </div>
                 </form>
                 </div>
-                    <!--[if !IE]>-->
-                    <button class="button-select-school" id="select-logout" style="width: 100px;margin-left: -211px;margin-top: 151px" onClick="javascript:location.href = '/school/web/users/logout/';"></button>
-                    <!--<![endif]-->
-
-                    <!--[if IE]>
-                    <button class="button-select-school" id="select-logout" style="width: 100px;margin-left: -211px;margin-top: 155px" onClick="javascript:location.href = '/school/web/users/logout/';"></button>
-                    <!--<![endif]-->
                 %else:
                     <p class="error all_error">${error}</p>
                 % endif

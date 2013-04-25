@@ -45,7 +45,7 @@
                     <li id="prefs" class="dropdown">
                         <a class="dropdown-toggle"  href="#prefs" data-toggle="dropdown"
                            data-target="prefs">
-                            ${school_name | h} - ${user.name}
+                            ${school_name | h} - ${user.first_name} + ${user.last_name}
                             <b class="caret"></b>
                         </a>
                         <ul class="dropdown-menu">
@@ -80,10 +80,18 @@
                 <p class="error">${error}</p>
                 <div class="span4">
                     <div class="control-group">
-                        <label for="name" class="control-label">Name:</label>
+                        <label for="first_name" class="control-label">First Name:</label>
                         <div class="controls">
-                            <input id="name" name="name" type="text" value="${user.name}"
-                                   autocomplete="off" class="name" placeholder="Name..." />
+                            <input id="first_name" name="first_name" type="text" value="${user.first_name}"
+                                   autocomplete="off" class="first_name" placeholder="First Name..." />
+                        </div>
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label">Last Name:</label>
+                        <div class="controls">
+                            <input id="last_name" name="last_name" type="text" value="${user.last_name}"
+                                   autocomplete="off" class="last name" placeholder="Last Name..." />
                         </div>
                     </div>
 

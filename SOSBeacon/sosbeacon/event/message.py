@@ -352,12 +352,15 @@ def get_contact_broadcast_task(event_key, message_key, student_key, contact,
     event_urlsafe = event_key.urlsafe()
     message_urlsafe = message_key.urlsafe()
 
-    BROADCAST_TYPES = ('e', 't')
+    BROADCAST_TYPES = ['e', 't']
 
     methods = []
     for method in contact.get('methods', ()):
         method_type = method.get('type')
         value = method.get('value')
+
+        if method_type == 't' and not value:
+            BROADCAST_TYPES.append('p')
 
         if not value or method_type not in BROADCAST_TYPES:
             continue
@@ -392,13 +395,16 @@ def broadcast_to_contact(event_key, message_key, student_key, contact,
     from sosbeacon.event.contact_marker import create_or_update_marker
     from sosbeacon.utils import insert_tasks
 
-    SEARCH_TYPES = ('e', 't')
+    SEARCH_TYPES = ['e', 't']
 
     # Find methods we want to query by.
     methods = set()
     for method in contact.get('methods', ()):
         method_type = method.get('type')
         value = method.get('value')
+
+        if method_type == 't' and not value:
+            SEARCH_TYPES.append('p')
 
         if not value or method_type not in SEARCH_TYPES:
             continue
@@ -477,25 +483,29 @@ def broadcast_to_method(event_key, message_key, short_id, method):
 
     if '@' not in method:
         if message.message_type == 'ec':
-            text_message = "Message " + message.message['email']
+            string_date = "%s %s, %s at %s:%s %s" % (message.added.strftime("%B"), message.added.strftime("%d"),
+                                                     message.added.strftime("%Y"),message.added.strftime("%I"),
+                                                     message.added.strftime("%M"), message.added.strftime("%p"))
+#            text_message = "Message " + message.message['email']
+            text_message = "from " + event.school.get().name + " by " + message.user.get().first_name + " " + message.user.get().last_name + " at " + string_date + ". Message " + message.message['email']
             broadcast_call(method, text_message, message.link_audio)
             return
 
         if message.message_type == 'eo':
             return
 
-        broadcast_sms(method, message, url, user.get().name, school.get().name)
-        create_log(phones, method, 's', log_sms, user.get().name, school.get().name, url)
+        broadcast_sms(method, message, url, user.get().first_name + " " + user.get().last_name, school.get().name)
+        create_log(phones, method, 's', log_sms, user.get().first_name + " " + user.get().last_name, school.get().name, url)
 
         if short_id == user.id():
-            create_responder_user_sms(user.get().phone, user.get().name, url, event_key)
+            create_responder_user_sms(user.get().phone, user.get().first_name + " " + user.get().last_name, url, event_key)
         else:
             create_responder_student_sms(method, short_id, url, event_key)
 
         return
 
     broadcast_email(method, message, url, user, school)
-    create_log(froms, method, 'e', log_email, user.get().name, school.get().name, url)
+    create_log(froms, method, 'e', log_email, user.get().first_name + " " + user.get().last_name, school.get().name, url)
 
 
 def broadcast_sms(number, message, url, user_name, school_name):
@@ -529,16 +539,16 @@ def broadcast_email(address, message, url, user, school):
     #        subject = message.message['title']
     #    else:
     if message.message_type == 'em':
-        subject = "Emergency Alert from %s (%s)" % (user.get().name, school.get().name)
+        subject = "Emergency Alert from %s (%s)" % (user.get().first_name + " " + user.get().last_name, school.get().name)
     else:
-        subject = "School Notice message from %s (%s)" % (user.get().name, school.get().name)
+        subject = "School Notice message from %s (%s)" % (user.get().first_name + " " + user.get().last_name, school.get().name)
 
     if message.message['email']:
         body = "%s (%s) sent a Event Broadcast. Detail here: <a href='%s'>%s</a>. \nMessage: %s" %\
-               (user.get().name, school.get().name, url, url,message.message['email'])
+               (user.get().first_name + " " + user.get().last_name, school.get().name, url, url,message.message['email'])
     else:
         body = "%s (%s) sent a Event Broadcast. Detail here: %s. \nMessage: %s" %\
-               (user.get().name, school.get().name, url, message.message['sms'])
+               (user.get().first_name + " " + user.get().last_name, school.get().name, url, message.message['sms'])
 
     #TODO: it might make sense to group emails as we can add more than one to
     # address per email sent
@@ -640,7 +650,8 @@ def create_marker_user(event_key, message_key, user_key):
         marker = ContactMarker(
             id=key_id,
             event=event_key,
-            name=user_key.get().name,
+            first_name=user_key.get().first_name,
+            last_name=user_key.get().last_name,
             students={str(student_key.id()): []},
             short_id=short_id,
             methods=[user_key.get().email,user_key.get().phone],

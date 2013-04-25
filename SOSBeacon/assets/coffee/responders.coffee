@@ -6,7 +6,8 @@ class App.SOSBeacon.Model.ContactMarker extends Backbone.Model
             key: null,
             short_id: '',
             event: null,
-            name: "",
+            first_name: "",
+            last_name: "",
             acknowledged: false,
             last_viewed_date: null
             students: {}
@@ -49,7 +50,8 @@ class App.SOSBeacon.Model.StudentMarker extends Backbone.Model
             key: null,
             contacts: {},
             last_broadcast: null,
-            name: "",
+            first_name: "",
+            last_name: "",
             acknowledged: false,
             acknowledged_at: 0,
             all_acknowledged: false,
@@ -74,8 +76,8 @@ class App.SOSBeacon.Collection.StudentMarkerList extends Backbone.Paginator.requ
     }
 
     query_defaults: {
-        orderBy: 'name'
-        orderDirection: 'desc'
+#        orderBy: 'name'
+#        orderDirection: 'desc'
         limit: 200
     }
 
@@ -90,7 +92,8 @@ class App.SOSBeacon.Model.DirectMarker extends Backbone.Model
             key: null,
             contacts: {},
             last_broadcast: null,
-            name: "",
+            first_name: "",
+            last_name: "",
             acknowledged: false,
             acknowledged_at: 0,
             all_acknowledged: false,
@@ -115,8 +118,8 @@ class App.SOSBeacon.Collection.DirectMarkerList extends Backbone.Paginator.reque
     }
 
     query_defaults: {
-        orderBy: 'name'
-        orderDirection: 'desc'
+#        orderBy: 'first_name'
+#        orderDirection: 'desc'
         limit: 200
     }
 
@@ -218,8 +221,9 @@ class App.SOSBeacon.View.MarkerListDirect extends App.Skel.View.ListView
     gridFilters: null
     ackFlag: false
 
-    initialize: (collection, eventKey, ackFlag) =>
+    initialize: (collection, eventKey, eventMessageType, ackFlag) =>
         @eventKey = eventKey
+        @eventMessageType = eventMessageType
         @ackFlag = ackFlag
 
         @gridFilters = new App.Ui.Datagrid.FilterList()
@@ -261,9 +265,16 @@ class App.SOSBeacon.View.MarkerListDirect extends App.Skel.View.ListView
         _.extend(@collection.server_api, filters)
 
         @collection.fetch(
-            success: =>
+            success: (data)=>
                 #remove loading image when collection loading successful
                 @$('.image').css('display', 'none')
+                if data.length > 0
+                    if @eventMessageType == "rc"
+                        $("#no-directs fieldset").append("<button class='btn btn-primary' id='robocall'>ROBOCALL NON-RESPONDERS CONTACTS</button>")
+                    return false
+                else
+                    $("#no-directs").text("All have responded")
+
             error: =>
                 #reidrect login page if user not login
                 window.location = '/school'
@@ -281,12 +292,15 @@ class App.SOSBeacon.View.StudentMarkerListItem extends App.Skel.View.ListItemVie
         emails = []
         voice_phone = []
         text_phone = []
-        names = []
+        first_names = []
+        last_names = []
 
         $.each contacts, (key, value) ->
             $.each value, (key, value) ->
-                if key == 'name'
-                    names.push(value)
+                if key == 'first_name'
+                    first_names.push(value)
+                if key == 'last_name'
+                    last_names.push(value)
                 if key == 'methods'
                     for method in value
                         if method.type == 'e'
@@ -297,20 +311,22 @@ class App.SOSBeacon.View.StudentMarkerListItem extends App.Skel.View.ListItemVie
                             text_phone.push(method.value)
 
         model_props['parent1'] = 'hide'
-        if names[0] != ''
+        if first_names[0] != ''
             model_props['parent1'] = 'show'
             model_props['email1'] = emails[0]
             model_props['voice_phone1'] = voice_phone[0]
             model_props['text_phone1'] = text_phone[0]
-            model_props['names1'] = names[0]
+            model_props['first_names1'] = first_names[0]
+            model_props['last_names1'] = last_names[0]
 
         model_props['parent2'] = 'hide'
-        if names[1] != ''
+        if first_names[1] != ''
             model_props['parent2'] = 'show'
             model_props['email2'] = emails[1]
             model_props['voice_phone2'] = voice_phone[1]
             model_props['text_phone2'] = text_phone[1]
-            model_props['names2'] = names[1]
+            model_props['first_names2'] = first_names[1]
+            model_props['last_names2'] = last_names[1]
 
         @$el.html(@template(model_props))
         return this
@@ -326,8 +342,9 @@ class App.SOSBeacon.View.MarkerListStudent extends App.Skel.View.ListView
     gridFilters: null
     ackFlag: false
 
-    initialize: (collection, eventKey, ackFlag) =>
+    initialize: (collection, eventKey, eventMessageType, ackFlag) =>
         @eventKey = eventKey
+        @eventMessageType = eventMessageType
         @ackFlag = ackFlag
 
         @gridFilters = new App.Ui.Datagrid.FilterList()
@@ -369,9 +386,15 @@ class App.SOSBeacon.View.MarkerListStudent extends App.Skel.View.ListView
         _.extend(@collection.server_api, filters)
 
         @collection.fetch(
-            success: =>
+            success: (data) =>
                 #remove loading image when collection loading successful
                 @$('.image').css('display', 'none')
+                if data.length > 0
+                    if @eventMessageType == "rc"
+                        $("#no-students fieldset").append("<button class='btn btn-primary' id='robocall'>ROBOCALL NON-RESPONDERS PARENTS</button>")
+                    return false
+                else
+                    $("#no-students").text("All have responded")
             error: =>
                 #reidrect login page if user not login
                 window.location = '/school'

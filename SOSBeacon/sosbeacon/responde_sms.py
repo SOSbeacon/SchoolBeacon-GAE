@@ -16,7 +16,8 @@ class Responder(EntityBase):
     # Store the schema version, to aid in migrations.
     version_ = ndb.IntegerProperty('v_', default=1)
 
-    contact_name = ndb.StringProperty('cn')
+    contact_first_name = ndb.StringProperty('cfn')
+    contact_last_name = ndb.StringProperty('cln')
     contact_number = ndb.StringProperty('pn')
     url = ndb.StringProperty('ur')
 
@@ -36,7 +37,8 @@ class Responder(EntityBase):
         if not responder:
             responder = cls(namespace='_x_')
 
-        responder.contact_name = data.get('contact_name')
+        responder.contact_first_name = data.get('contact_first_name')
+        responder.contact_last_name = data.get('contact_last_name')
         responder.contact_number = data.get('contact_number')
         responder.url = data.get('url')
 
@@ -48,7 +50,8 @@ class Responder(EntityBase):
         """
         responder = self._default_dict()
         responder["version"] = self.version_
-        responder['contact_name'] = self.contact_name
+        responder['contact_first_name'] = self.contact_first_name
+        responder['contact_last_name'] = self.contact_last_name
         responder['contact_number'] = self.contact_number
         responder['url'] = self.url
         responder['is_admin'] = self.is_admin
@@ -72,11 +75,13 @@ def create_responder_student_sms(contact_number, short_id, url, event_key):
     if not marker_key.get():
         raise Exception("ContactMarker key is required.")
 
-    contact_name = marker_key.get().name
+    contact_first_name = marker_key.get().first_name
+    contact_last_name = marker_key.get().last_name
     contact_number = regex_phone(contact_number)
 
     responder = {
-        'contact_name': contact_name,
+        'contact_first_name': contact_first_name,
+        'contact_last_name': contact_last_name,
         'contact_number': "+" + contact_number,
         'url': url,
         }

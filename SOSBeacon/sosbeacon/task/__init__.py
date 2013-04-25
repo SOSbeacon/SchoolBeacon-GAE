@@ -672,8 +672,9 @@ class RobocallProcessHandler(webapp2.RequestHandler):
         event_urlsafe = self.request.get('event')
         phone_markers = self.request.get('phone')
         message_urlsafe = self.request.get('message')
+        timezone = self.request.get('timezone')
 
-        robocall_phone(event_urlsafe, phone_markers, message_urlsafe)
+        robocall_phone(event_urlsafe, phone_markers, message_urlsafe, timezone)
 
 
 class RobocallSentEmailHandler(webapp2.RequestHandler):

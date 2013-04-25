@@ -12,7 +12,8 @@ from .school import School
 
 user_schema = {
     'key': voluptuous.any(None, voluptuous.ndbkey(), ''),
-    'name': basestring,
+    'first_name': basestring,
+    'last_name': basestring,
     # 'default_school': voluptuous.ndbkey(),
     'schools': [voluptuous.ndbkey()],
     # 'contacts': [{'type': basestring, 'value': basestring}],
@@ -22,7 +23,7 @@ user_schema = {
 }
 
 user_query_schema = {
-    'flike_name': basestring,
+    'flike_first_name': basestring,
     'flike_phone': basestring,
     'flike_email': basestring,
     'feq_is_admin': voluptuous.boolean(),
@@ -33,7 +34,7 @@ class User(ndb.Model):
     """Represents a user."""
 
     _query_properties = {
-        'name': RestQueryRule('n_', lambda x: x.lower() if x else ''),
+        'first_name': RestQueryRule('fn_', lambda x: x.lower() if x else ''),
         'email': RestQueryRule('email', lambda x: x if x else ''),
         'phone': RestQueryRule('phone', lambda x: x if x else ''),
     }
@@ -55,8 +56,11 @@ class User(ndb.Model):
     tos_accepted = ndb.DateTimeProperty('tos', indexed=True)
 
     # User nick name, key
-    name = ndb.StringProperty('n', indexed=False)
-    n_ = ndb.ComputedProperty(lambda self: self.name.lower())
+    first_name = ndb.StringProperty('fn', indexed=False)
+    fn_ = ndb.ComputedProperty(lambda self: self.first_name.lower())
+
+    last_name = ndb.StringProperty('ln', indexed=False)
+    ln_ = ndb.ComputedProperty(lambda self: self.last_name.lower())
 
     # Associated school info.
 #    default_school = ndb.KeyProperty('dc', kind='School')
@@ -85,7 +89,8 @@ class User(ndb.Model):
         if not user:
             user = cls(namespace='_x_')
 
-        user.name = data.get('name')
+        user.first_name = data.get('first_name')
+        user.last_name = data.get('last_name')
 
 #        user.default_school = data.get('default')
         user.schools = data.get('schools')
@@ -106,7 +111,8 @@ class User(ndb.Model):
             'added': self.added.strftime('%Y-%m-%d %H:%M'),
             'modified': self.modified.strftime('%Y-%m-%d %H:%M'),
 
-            'name': self.name,
+            'first_name': self.first_name,
+            'last_name': self.last_name,
 
             # school info
             'schools': [key.urlsafe() for key in self.schools if key.get() != None],

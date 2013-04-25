@@ -5,11 +5,13 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
     defaults: ->
         return {
             key: null,
-            name: "",
+            first_name: "",
+            last_name: "",
             identifier: "",
             groups: [],
             contacts: [],
             notes: "",
+            default_student: false
         }
 
     initialize: =>
@@ -38,23 +40,56 @@ class App.SOSBeacon.Model.Student extends Backbone.Model
         hasError = false
         errors = {}
 
-        if _.isEmpty(attrs.name)
+        if _.isEmpty(attrs.last_name)
             hasError = true
-            errors.name = "Missing name."
+            errors.name = "Missing last name."
+
+        if _.isEmpty(attrs.first_name)
+            hasError = true
+            errors.name = "Missing first name."
 
         if _.isEmpty(attrs.contacts[0].methods[0].value) and _.isEmpty(attrs.contacts[0].methods[1].value)
-            alert "Please enter method email or mobile number for the first student contact"
+            alert "Please enter method email or mobile number for the first contact"
             return errors
 
-        if _.isEmpty(attrs.contacts[0].name)
-            alert "Name is required for the first student contact"
-            return errors
+        if not attrs.default_student
+            if _.isEmpty(attrs.first_name)
+                first_name_input = $('input.first_name')
+                App.Util.Form._displayMessage(
+                    first_name_input,
+                    'error',
+                    'First Name is required.')
+                return errors
+
+            if _.isEmpty(attrs.last_name)
+                last_name_input = $('input.last_name')
+                App.Util.Form._displayMessage(
+                    last_name_input,
+                    'error',
+                    'Last Name is required.')
+                return errors
+
+            if _.isEmpty(attrs.contacts[0].first_name)
+                first_contact_name_input = $('input.contact-first-name:first')
+                App.Util.Form._displayMessage(
+                    first_contact_name_input,
+                    'error',
+                    'First name is required for the first student contact.')
+                return errors
+
+            if _.isEmpty(attrs.contacts[0].last_name)
+                last_contact_name_input = $('input.contact-last-name:first')
+                App.Util.Form._displayMessage(
+                    last_contact_name_input,
+                    'error',
+                    'Last name is required for the first student contact.')
+                return errors
 
 #        if not attrs.key
         if attrs.contacts.length > 1
-            if attrs.contacts[1].name.length > 0
+            if attrs.contacts[1].first_name.length > 0
                 if _.isEmpty(attrs.contacts[1].methods[0].value) and _.isEmpty(attrs.contacts[1].methods[1].value)
-                    attrs.contacts[1].name = ''
+                    attrs.contacts[1].first_name = ''
             else
                 attrs.contacts[1].methods[0].value = ''
                 attrs.contacts[1].methods[1].value = ''
@@ -80,7 +115,7 @@ class App.SOSBeacon.Collection.StudentList extends Backbone.Paginator.requestPag
     }
 
     query_defaults: {
-        orderBy: 'name'
+        orderBy: 'last_name_'
         feq_is_direct: true
     }
 
@@ -90,12 +125,13 @@ class App.SOSBeacon.Collection.StudentList extends Backbone.Paginator.requestPag
 class App.SOSBeacon.View.StudentEditForm extends Backbone.View
     template: JST['student/edit']
     addMode: true
-    focusButton: 'input#name'
+    focusButton: 'input#first_name'
     className: "row-fluid"
     id: "add_area"
 
     propertyMap:
-        name: "input.name",
+        first_name: "input.first_name",
+        last_name: "input.last_name",
 
     events:
         "change": "change"
@@ -123,14 +159,15 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
 
         if @model.get('default_student')
             @renderDirectContacts()
-            @$('.name').attr('readonly',true)
+            @$('.first_name').attr('readonly',true)
+            @$('.last_name').attr('readonly',true)
             @$('.method').attr('readonly',true)
             @$('.save').hide()
             return this
 
         if @model.is_direct
             @renderDirectContacts()
-            @$("#name").focus()
+            @$("#first_name").focus()
             return this
 
         @renderStudentContacts()
@@ -160,6 +197,7 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
         contactList = @$('ul.contacts')
         if @model.contacts.length == 0
             contact = new @model.contacts.model()
+            contact.set('type','d')
             @model.contacts.add(contact)
 
             editView = new App.SOSBeacon.View.ContactEdit(model: contact)
@@ -179,7 +217,8 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
             @contactEdits.push(editView)
             contactList.append(editView.render().el)
         )
-        @$('input.contact-name').hide()
+        @$('input.contact-first-name').hide()
+        @$('input.contact-last-name').hide()
 
     renderStudentContacts: () =>
         contactList = @$('ul.contacts')
@@ -258,9 +297,10 @@ class App.SOSBeacon.View.StudentEditForm extends Backbone.View
             return false
 
         @model.save({
-            name: @$('input.name').val()
+            first_name: @$('input.first_name').val()
+            last_name: @$('input.last_name').val()
         #            identifier: @$('input.identifier').val()
-        #            groups: groupIds
+            groups: groupIds
         #            notes: $.trim(@$('textarea.notes').val())
             is_direct: @model.is_direct
         },
@@ -468,6 +508,10 @@ class App.SOSBeacon.View.StudentApp extends Backbone.View
         @collection = new App.SOSBeacon.Collection.StudentList()
         @listView = new App.SOSBeacon.View.StudentList(@collection)
 
+        for interval in [0...1000]
+            clearInterval(interval)
+            interval++
+
     render: =>
         @$el.html(@template())
         @$el.append(@listView.render().el)
@@ -503,6 +547,10 @@ class App.SOSBeacon.View.StudentContactApp extends App.SOSBeacon.View.StudentApp
     initialize: =>
         @collection = new App.SOSBeacon.Collection.StudentList()
         @listViews = new App.SOSBeacon.View.ContactStudentList(@collection)
+
+        for interval in [0...1000]
+            clearInterval(interval)
+            interval++
 
     render: =>
         @$el.html(@template())

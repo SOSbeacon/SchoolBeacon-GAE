@@ -38,7 +38,7 @@ def get_robocall_start_task(event_urlsafe, is_direct, batch_id=""):
     )
     taskqueue.Queue(name=ROBOCALL_QUEUE_NAME).add(task)
 
-def robocall_start(event_key, is_direct, user_urlsafe):
+def robocall_start(event_key, is_direct, user_urlsafe, tz):
 
     event_urlsafe = ndb.Key(urlsafe=event_key)
     event = event_urlsafe.get()
@@ -60,7 +60,7 @@ def robocall_start(event_key, is_direct, user_urlsafe):
     list_broadcast = Message.query(Message.event == event_urlsafe,
                                    Message.message_type.IN(['b', 'eo', 'em', 'ec'])).order(Message.timestamp).fetch()
 
-    last_broadcast = list_broadcast[-1]
+    last_broadcast = list_broadcast[0]
 
     tasks = []
     phones = []
@@ -80,7 +80,7 @@ def robocall_start(event_key, is_direct, user_urlsafe):
 
     for phone in phones:
         tasks.append(
-            get_robocall_task(event_urlsafe, phone, last_broadcast.key)
+            get_robocall_task(event_urlsafe, phone, last_broadcast.key, tz)
         )
 
         if len(tasks) > 10:
@@ -98,7 +98,7 @@ def regex_phone(phone):
     return phone
 
 
-def get_robocall_task(event_key, phone, message_key):
+def get_robocall_task(event_key, phone, message_key, tz):
     phone = regex_phone(phone)
 
     event_urlsafe = event_key.urlsafe()
@@ -112,7 +112,8 @@ def get_robocall_task(event_key, phone, message_key):
         params={
             'event': event_urlsafe,
             'message': message_urlsafe,
-            'phone': phone
+            'phone': phone,
+            'timezone': tz
         }
     )
 
@@ -132,8 +133,9 @@ def get_sent_email_task(event_key, user_urlsafe, message_key, phones):
     )
 
 
-def robocall_phone(event_urlsafe, phone_markers, message_urlsafe):
+def robocall_phone(event_urlsafe, phone_markers, message_urlsafe, timezone):
     from .message import broadcast_call
+    from webapp2_extras import sessions
 
     if not event_urlsafe:
         logging.error('No event key given.')
@@ -163,9 +165,15 @@ def robocall_phone(event_urlsafe, phone_markers, message_urlsafe):
         create_error_log(error, 'ERR')
         return
 
-    number = message.user.get().phone
-    number = " ".join(number[i:i+1] for i in range(0, len(number), 1))
-    text_message = message.user.get().name + " checked in " + number + ". Message " + message.message['email']
+
+    time = message.added.strftime("%B %d, %Y at %I:%M %p")
+    convert_time = convertTimeZone(timezone, time)
+
+    logging.info(timezone)
+#    number = message.user.get().phone
+#    number = " ".join(number[i:i+1] for i in range(0, len(number), 1))
+#    text_message = message.user.get().name + " at " + string_date +". Message " + message.message['email']
+    text_message = "from " + event.school.get().name + " by " + message.user.get().first_name + " " + message.user.get().last_name + " on " + convert_time + ". Message " + message.message['email']
     broadcast_call(phone_markers, text_message, message.link_audio)
 
 
@@ -246,3 +254,18 @@ def send_email_robocall_to_user(event_urlsafe, user_urlsafe, message_urlsafe, ph
         body)
     email.add_to(user.email)
     s.web.send(email)
+
+
+def convertTimeZone(tz, created_at):
+    from datetime import datetime
+    from pytz import timezone
+
+    fmt = "%B %d, %Y at %I:%M %p"
+    fmt_utc = "%Y-%m-%d %H:%M %Z%z"
+
+    create_at_obj = datetime.strptime(created_at, fmt)
+    create_at_obj_utc = create_at_obj.replace(tzinfo=timezone('UTC'))
+
+    now_pacific = create_at_obj_utc.astimezone(timezone(tz))
+
+    return now_pacific.strftime(fmt)

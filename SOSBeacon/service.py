@@ -59,6 +59,10 @@ url_map = [
     webapp2.Route(r'/service/message<:/?>',
                   handler='sosbeacon.service.MessageListHandler'),
 
+    # get token message for client
+    webapp2.Route(r'/service/message<:/?>/get_token',
+                  handler='sosbeacon.service.GetTokenHandler'),
+
     # Group
     webapp2.Route(r'/service/group/<resource_id:.+>',
                   handler='sosbeacon.service.GroupHandler'),

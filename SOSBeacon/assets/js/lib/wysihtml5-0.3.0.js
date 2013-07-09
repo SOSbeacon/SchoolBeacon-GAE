@@ -7520,10 +7520,10 @@ wysihtml5.Commands = Base.extend(
                 $('textarea#add-sms-box').attr('data', value[i])
             }
 
-            composer.selection.insertNode(audio);
-            textNode = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
-            composer.selection.insertNode(textNode);
-            composer.selection.setAfter(audio);
+//            composer.selection.insertNode(audio);
+//            textNode = doc.createTextNode(wysihtml5.INVISIBLE_SPACE);
+//            composer.selection.insertNode(textNode);
+//            composer.selection.setAfter(audio);
 
         },
 

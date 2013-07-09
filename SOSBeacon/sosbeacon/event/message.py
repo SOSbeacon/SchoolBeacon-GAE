@@ -588,7 +588,7 @@ def broadcast_call(number, text_message, play_audio):
     try:
         message = re.sub('<[^<]+?>', '', text_message)
         params = {'textMessage' : message.encode('utf-8')}
-        broadcast_url = "http://4.sos-beacon-dev.appspot.com/broadcast/record?" + urllib.urlencode(params) + "&playUrl=" + play_audio
+        broadcast_url = "http://5.sos-beacon-dev.appspot.com/broadcast/record?" + urllib.urlencode(params) + "&playUrl=" + play_audio
         client.calls.create(to = number,
             from_ = settings.TWILIO_FROM,
             url = broadcast_url,

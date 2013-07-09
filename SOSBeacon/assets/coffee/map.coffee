@@ -16,6 +16,8 @@ class App.SOSBeacon.View.GoogleEdit extends Backbone.View
     submitLocation:=>
         console.log 1
         @close()
+        @$(".modal-backdrop").hide()
+        @$("#google_edit").hide()
         App.Skel.Event.trigger('submitLocation')
 
     search:=>

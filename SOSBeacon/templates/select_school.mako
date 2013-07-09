@@ -51,7 +51,15 @@
                     % for school in schools :
                     <tr>
                         <td><input type="radio" name="school" id="rSchoolId"
-                                   value="${ school.key.urlsafe() }"><label id="label">${school.name }</label></td>
+                                   value="${ school.key.urlsafe() }">
+                            <!--[if !IE]>-->
+                            <label id="label">${school.name }</label>
+                            <!--<![endif]-->
+
+                            <!--[if IE]>
+                            <label id="label" style="margin-top: 1px;">${school.name }</label>
+                            <!--<![endif]-->
+                        </td>
                     </tr>
                     % endfor
                 </tbody>

@@ -140,6 +140,10 @@ class TemplateHandler(BaseHandler):
 
     @property
     def school_name(self):
+        if not 's' in self.session:
+            self.redirect('/')
+            return
+
         if not self._school_name:
             self._school_name = 'School'
             school_key = self.session['s']

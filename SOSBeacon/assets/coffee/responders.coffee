@@ -268,6 +268,7 @@ class App.SOSBeacon.View.MarkerListDirect extends App.Skel.View.ListView
             success: (data)=>
                 #remove loading image when collection loading successful
                 @$('.image').css('display', 'none')
+                $("#no-directs fieldset").remove("#robocall")
                 if data.length > 0
                     if @eventMessageType == "rc"
                         $("#no-directs fieldset").append("<button class='btn btn-primary' id='robocall'>ROBOCALL NON-RESPONDERS CONTACTS</button>")
@@ -388,6 +389,7 @@ class App.SOSBeacon.View.MarkerListStudent extends App.Skel.View.ListView
         @collection.fetch(
             success: (data) =>
                 #remove loading image when collection loading successful
+                $("#no-students fieldset").remove("#robocall")
                 @$('.image').css('display', 'none')
                 if data.length > 0
                     if @eventMessageType == "rc"

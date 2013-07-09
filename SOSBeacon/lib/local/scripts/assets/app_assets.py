@@ -112,6 +112,7 @@ def _bundle_3rd_party_js(debug=False):
         path.join(JS_LIB_PATH, 'jquery.fineuploader-3.3.1.js'),
         path.join(JS_LIB_PATH, 'iframe.xss.response-3.3.1.js'),
         path.join(JS_LIB_PATH, 'jwplayer.js'),
+        path.join(JS_LIB_PATH, 'html5media.min.js'),
 #        path.join(JS_LIB_PATH, 'audio.min.js'),
     )
 

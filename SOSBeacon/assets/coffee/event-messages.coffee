@@ -579,13 +579,27 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
         if @model.id
             @loadReplyMessage(@model)
 
-        if( /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent)) or $.browser.msie
-            if @model.get('link_audio')
+        if @model.get('link_audio')
+            if( /Android|webOS|iPhone|iPad|iPod|BlackBerry/i.test(navigator.userAgent))
                 audioPlayer = new Audio()
                 audioPlayer.controls = "controls"
                 audioPlayer.src = @model.get('link_audio')
                 audioPlayer.id = "audio-1"
                 @$('.message-broadcast').append(audioPlayer)
+            else
+                audio = document.createElement("EMBED");
+                audio.setAttribute('height', '28')
+                audio.setAttribute('width','348px')
+                audio.setAttribute('bgcolor','#000000')
+                audio.setAttribute('tabindex','0')
+                audio.setAttribute('class','audio_insert')
+                audio.setAttribute('type', 'application/x-shockwave-flash')
+                audio.setAttribute('src', 'http://www.google.com/reader/ui/3523697345-audio-player.swf')
+                audio.setAttribute('flashvars', 'audioUrl=' + @model.get("link_audio"))
+                audio.setAttribute('quality', 'best')
+
+                @$('.message-broadcast').append(audio)
+
 
         key = @model.get('key')
         lat = @model.get('latitude')

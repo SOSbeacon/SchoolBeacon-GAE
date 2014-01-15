@@ -484,10 +484,8 @@ class App.SOSBeacon.View.AddEmail extends App.SOSBeacon.View.AddBroadcast
 class App.SOSBeacon.View.MessageList extends Backbone.View
     id: "view-message-area"
 
-    initialize: (collection, hideButtons) =>
-        @hideButtons = hideButtons
-
-        @collection = collection
+    initialize: (option) =>
+        @collection = option.collection
         @collection.bind('add', @insertOne, this)
         @collection.bind('reset', @reset, this)
         @collection.bind('all', @show, this)
@@ -512,8 +510,10 @@ class App.SOSBeacon.View.MessageList extends Backbone.View
         @collection.each(@addOne)
 
     reset: =>
-        @$(".listitems").html('')
-        @addAll()
+        if $('.tbQuickReply').val() == undefined
+          console.log "reload"
+          @$el.html('')
+          @addAll()
 
 
 class App.SOSBeacon.View.MessageListItem extends Backbone.View
@@ -557,7 +557,6 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
         )
 
     stripAudioTag: (text)=>
-        console.log text
         partern = /<embed[^>]+>/g
         return text.replace(partern, '')
 
@@ -571,7 +570,7 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
         @$el.html(@template(@model.toJSON()))
 
         @reply = new App.SOSBeacon.Model.ReplyMessage()
-        @reply_view = new App.SOSBeacon.View.ReplyMessageEdit(@reply, @model.id)
+        @reply_view = new App.SOSBeacon.View.ReplyMessageEdit(@reply, @model.id, @model.get("event"))
 
         if @model.get('type') == 'c'
             @$('#message-item-button-remove').css('display','block')
@@ -640,6 +639,13 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
             #"edit broadcast"
 
     replyMessage: =>
+#        if $('.tbQuickReply').val() == undefined || $('.tbQuickReply').val() == ''
+##            viewMesage.refeshData()
+#            console.log 1
+#        else
+#            console.log 2
+#            viewMesage.stopRefeshData()
+
         if this.$('div div.fQuickReply').length > 0
             return false
 
@@ -648,7 +654,7 @@ class App.SOSBeacon.View.MessageListItem extends Backbone.View
         $(".tbQuickReply").focus()
 
     removeMessage: =>
-        proceed = confirm('Are you sure you want to delete?  This can not be undone.')
+        proceed = confirm('Are you sure you want to delete?  This cannot be undone.')
         if proceed
           @model.destroy()
 
@@ -781,7 +787,7 @@ class App.SOSBeacon.View.NewMessageListItem extends App.SOSBeacon.View.MessageLi
         return this
 
     removeMessage: =>
-        proceed = confirm('Are you sure you want to delete?  This can not be undone.')
+        proceed = confirm('Are you sure you want to delete?  This cannot be undone.')
         if proceed
             @model.destroy()
 
@@ -800,6 +806,7 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
     initialize: (id, contact_name, hideButtons) =>
         @contact_name = contact_name
         @hideButtons = hideButtons
+        @collection = new App.SOSBeacon.Collection.MessageList()
         @eventId = id
 
         interval = 0
@@ -808,12 +815,12 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
             interval++
 
         interval = setInterval(( =>
-            @renderMS()
+            @collection.fetch({async: false})
+            @renderTotalComments()
         ), 30000)
 
 
     renderMS: =>
-        @collection = new App.SOSBeacon.Collection.MessageList()
         _.extend(@collection.server_api, {
             'feq_event': @eventId
             'orderBy': 'timestamp'
@@ -823,7 +830,6 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
         $("#event-messages").append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 45%" class="image">')
 
         @collection.fetch(
-            async: false
             success: =>
                 #                remove loading image when collection loading successful
                 $('.image').css('display', 'none')
@@ -838,7 +844,6 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
         $("#event-messages").append(messageList.render().$el);
 
     renderMessages: =>
-        @collection = new App.SOSBeacon.Collection.MessageList()
         _.extend(@collection.server_api, {
             'feq_event': @eventId
             'orderBy': 'timestamp'
@@ -900,6 +905,12 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
 
         return this
 
+    renderTotalComments: =>
+        @event.fetch(async: false)
+        total_comment = @event.get('total_comment')
+
+        $('.total_comment').text(total_comment + " comments")
+
     renderTotalComment: =>
 #        @event = new App.SOSBeacon.Model.Event({key: @eventId})
 #        @event.fetch({async: false})
@@ -908,7 +919,6 @@ class App.SOSBeacon.View.MessageListApp extends Backbone.View
         $(".total_comment").attr('data', total_comment)
 
     saveComment: =>
-        console.log $(".total_comment").val()
 #        @renderMessages()
         model = new App.SOSBeacon.Model.Message()
         if @$('.add-message-box-area').find('.guest').attr('readonly')

@@ -24,6 +24,9 @@ skip_files: |
  )$
 
 
+inbound_services:
+- channel_presence
+
 libraries:
 - name: webob
   version: latest

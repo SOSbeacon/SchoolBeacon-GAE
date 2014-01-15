@@ -119,6 +119,9 @@ class App.SOSBeacon.Collection.StudentList extends Backbone.Paginator.requestPag
         feq_is_direct: true
     }
 
+    comparator: (item)=>
+        return item.get("last_name");
+
     server_api: {}
 
 
@@ -408,7 +411,7 @@ class App.SOSBeacon.View.ContactEditApp extends Backbone.View
 
         @model.is_direct = true
         @editForm = new App.SOSBeacon.View.StudentEditForm(@model)
-        App.SOSBeacon.Event.bind("model:save", @modelSaved, this)
+#        App.SOSBeacon.Event.bind("model:save", @modelSaved, this)
 
     modelSaved: (model) =>
         App.SOSBeacon.router.navigate(
@@ -524,7 +527,7 @@ class App.SOSBeacon.View.StudentApp extends Backbone.View
         App.SOSBeacon.router.navigate("/contacts/student/new", {trigger: true})
 
     exportStudentContact: () =>
-        if !confirm("Are you sure you want to export these student datas to CSV file?")
+        if !confirm("Are you sure you want to export this emergency contact data?")
             return;
         url = '/service/export/student'
         window.open(url)

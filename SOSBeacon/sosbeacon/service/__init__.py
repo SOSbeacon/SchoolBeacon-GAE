@@ -967,7 +967,7 @@ class DownloadHandler(webapp2.RequestHandler):
 
         for student_marker in student_markers:
             for contact in student_marker.contacts:
-                student_name = contact['name']
+                student_name = contact['first_name'] + " " + contact['last_name']
                 for number in contact['methods']:
                     if number['type'] == 'e':
                         email_student = number['value']

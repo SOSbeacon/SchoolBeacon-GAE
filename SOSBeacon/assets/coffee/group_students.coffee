@@ -15,7 +15,7 @@ class App.SOSBeacon.Collection.GroupStudentList extends Backbone.Paginator.reque
     }
 
     query_defaults: {
-        orderBy: 'name'
+        orderBy: 'last_name_'
 #        feq_is_direct: true
     }
 
@@ -125,6 +125,20 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
             that.students.add(student)
             that.groupstudents.remove(student)
         )
+#
+        @students.comparator = (model) ->
+            model.get "last_name"
+
+        @students.sort()
+        @students.trigger('reset')
+
+        @groupstudents.comparator = (model) ->
+            if model.get('default_student') == true
+                model.get "default_student"
+            else
+                model.get "last_name"
+#
+        @groupstudents.sort()
         @groupstudents.trigger('reset')
 
     moveToGroup: =>
@@ -145,6 +159,20 @@ class App.SOSBeacon.View.GroupStudentsApp extends App.Skel.View.App
             that.groupstudents.add(student)
             that.students.remove(student)
         )
+
+        @groupstudents.comparator = (model) ->
+            if model.get('default_student') == true
+                model.get "default_student"
+            else
+                model.get "last_name"
+        #
+        @groupstudents.sort()
+        @groupstudents.trigger('reset')
+
+        @students.comparator = (model) ->
+            model.get "last_name"
+
+        @students.sort()
         @students.trigger('reset')
 
     onClose: =>

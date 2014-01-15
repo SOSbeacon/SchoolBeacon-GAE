@@ -17,6 +17,7 @@ class App.SOSBeacon.Model.Event extends Backbone.Model
             status: ""
             total_comment: 0
             alert_id: 0
+            token: null
         }
 
     validators:
@@ -108,13 +109,29 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         @noDirectsView = null
         @studentMarkerList = new App.SOSBeacon.Collection.StudentMarkerList()
         @directMarkerList = new App.SOSBeacon.Collection.DirectMarkerList()
+        @collection = new App.SOSBeacon.Collection.MessageList()
 
         @model = new App.SOSBeacon.Model.Event({key: id})
         @model.fetch({async: false})
         @model.initialize()
+        @token = @model.get("token")
 
         App.SOSBeacon.Event.bind("message:add", @messageAdd, this)
+#        App.Skel.Event.bind("message:view", @refeshData, this)
+#        App.Skel.Event.bind('refesh_comment', @refeshData, this)
         #App.SOSBeacon.Event.bind("message:edit", @messageEdit, this)
+#        handler =
+#            onopen: @onOpened
+#            onmessage: @onMessage
+#            onerror: ->
+#                console.log 1
+#            onclose: ->
+#                console.log 2
+#
+#        channel = new goog.appengine.Socket(@token, handler)
+#        channel.close()
+#
+#        @openChannel()
 
         for interval in [0...1000]
             clearInterval(interval)
@@ -122,7 +139,19 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         interval = setInterval(( =>
             @renderTotalComment()
-            @renderMessages()
+            @collection.fetch(async: false)
+#            @renderMessages()
+        ), 30000)
+
+#    stopRefeshData: =>
+#        for interval in [0...1000]
+#            clearInterval(interval)
+#            interval++
+
+    refeshData: =>
+        setInterval(( =>
+            @renderTotalComment()
+#            @renderMessages()
         ), 30000)
 
     render: =>
@@ -133,6 +162,7 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
 
         $('#details-tabs a[href="#details"]').tab('show')
 
+        App.Skel.Event.trigger('refesh_comment')
         return this
 
     renderTotalComment: =>
@@ -142,17 +172,16 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
         $('.total_comment').text(total_comment + " comments")
 
     renderMessages: =>
-        @collection = new App.SOSBeacon.Collection.MessageList()
         _.extend(@collection.server_api, {
             'feq_event': @model.id
             'orderBy': 'timestamp'
             'orderDirection': 'desc'
         })
-        $("#view-message-area").remove()
+        @$("#view-message-area").empty()
         @$("#event-center-message").append('<img src="/static/img/spinner_squares_circle.gif" style="display: block; margin-left: 45%" class="image">')
 
         @collection.fetch(
-            success: =>
+            success: (data) =>
 #                remove loading image when collection loading successful
                 @$('.image').remove()
             error: =>
@@ -160,9 +189,10 @@ class App.SOSBeacon.View.EventCenterAppView extends Backbone.View
                 window.location = '/school'
         )
 
-        @messageListView = new App.SOSBeacon.View.MessageList(
-            @collection, false)
-        @$("#event-center-message").append(@messageListView.render().el)
+#        console.log @collection
+
+        @messageListView = new App.SOSBeacon.View.MessageList({collection:@collection})
+        @$("#view-message-area").html(@messageListView.render().el)
 
     renderGroups: =>
         groupName = []
@@ -376,8 +406,8 @@ class App.SOSBeacon.View.EventDownloadEmail extends Backbone.View
                 selectCount = selectCount + $(this).val()
 
         if selectCount.length > 0
-            if confirm("Are you sure you want to send phone website data to your email?")
-                $(".message-info").html "<h4 style='color: blue'>Start sending email, please wait and don't reload your browser ...</h4>"
+            if confirm("Are you sure you want to upload the website data to your email?")
+                $(".message-info").html "<h4 style='color: blue'>Sending email, please wait and don't reload your browser. ...</h4>"
                 $.ajax
                     url: '/service/event/' + @model.id + '/' + selectCount + '/download',
                     type: "GET",
@@ -489,7 +519,7 @@ class App.SOSBeacon.View.EventCenterEditForm extends Backbone.View
         "keypress .edit": "updateOnEnter"
 
     initialize: (model) =>
-        App.Util.TrackChanges.track(this)
+#        App.Util.TrackChanges.track(this)
 
         @model = model
 
@@ -590,7 +620,7 @@ class App.SOSBeacon.View.EventCenterApp extends Backbone.View
             'orderBy': 'last_broadcast_date'
             'orderDirection': 'desc'
         })
-        @collection.fetch()
+#        @collection.fetch()
 
         for interval in [0...1000]
             clearInterval(interval)
@@ -726,7 +756,7 @@ class App.SOSBeacon.View.EventCenterList extends App.Skel.View.ListView
                 name: 'Title'
                 type: 'text'
                 prop: 'flike_title'
-                default: false
+                'default': false
                 control: App.Ui.Datagrid.InputFilter
             }
         ))
@@ -736,7 +766,7 @@ class App.SOSBeacon.View.EventCenterList extends App.Skel.View.ListView
                 name: 'Group'
                 type: 'text'
                 prop: 'feq_groups'
-                default: false
+                'default': false
                 control: App.SOSBeacon.View.GroupTypeahaedFilter
             }
         ))

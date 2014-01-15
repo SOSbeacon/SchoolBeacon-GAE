@@ -50,9 +50,10 @@ class App.SOSBeacon.View.ReplyMessageEdit extends Backbone.View
         "click .btnCancel": "cancelReply"
         "click .btnQuickReply": "saveReply"
 
-    initialize:(model, message_id) =>
+    initialize:(model, message_id, event_id) =>
         @model = model
         @message_id = message_id
+        @event_id = event_id
 
     render: =>
         @$el.html(@template(@model.toJSON()))

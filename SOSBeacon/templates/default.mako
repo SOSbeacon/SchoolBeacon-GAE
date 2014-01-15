@@ -62,10 +62,11 @@
 </div>
 
 <%block name="body_script">
-    <script type="text/javascript" src="https://maps.google.com/maps/api/js?sensor=false"></script>
+    <script type="text/javascript" src="/static/script/map.js"></script>
 ##    <script type="text/javascript" src="http://code.jquery.com/jquery-1.9.1.js"></script>
     <script type="text/javascript" src="/static/script/sosbeacon.js"></script>
     <script type="text/javascript" src="/static/script/audio.min.js"></script>
+    <script src='/_ah/channel/jsapi'></script>
     <script type="text/javascript">
         $(function(){
             var sosbeacon = new App.SOSBeacon.Router

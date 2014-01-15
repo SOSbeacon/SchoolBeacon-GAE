@@ -513,9 +513,9 @@ Backbone.Paginator = (function ( Backbone, _, $ ) {
 			}
 		},
 
-		sort: function () {
+//		sort: function () {
 			//assign to as needed.
-		},
+//		},
 
 		info: function () {
 

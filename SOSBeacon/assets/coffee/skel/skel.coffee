@@ -283,7 +283,7 @@ class App.Skel.View.ListItemView extends Backbone.View
         App.Skel.Event.trigger("model:edit", @model, this)
 
     delete: =>
-        proceed = confirm('Are you sure you want to delete?  This can not be undone.')
+        proceed = confirm('Are you sure you want to delete?  This cannot be undone.')
         if proceed
             @model.destroy()
 

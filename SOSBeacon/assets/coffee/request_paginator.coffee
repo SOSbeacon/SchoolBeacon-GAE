@@ -95,7 +95,7 @@ class App.Skel.REST.RequestPager extends Backbone.Collection
         @perPage = count
         @pager()
 
-    sort: =>
+#    sort: =>
         # assign to as needed.
 
     info: =>

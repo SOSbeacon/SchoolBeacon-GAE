@@ -150,6 +150,13 @@ class App.SOSBeacon.View.GroupEdit extends App.Skel.View.EditView
 #                })
 #                return false
 
+
+        if @model
+            if @model.get("name") == @$('input.name').val()
+                $(".modal").hide()
+                $(".modal-backdrop").hide()
+                return false
+
         valid = @model.save({
             name: @$('input.name').val()
         },
@@ -247,7 +254,7 @@ class App.SOSBeacon.View.GroupList extends App.Skel.View.ListView
                 name: 'Name'
                 type: 'text'
                 prop: 'flike_name'
-                default: false
+                'default': false
                 control: App.Ui.Datagrid.InputFilter
             }
         ))

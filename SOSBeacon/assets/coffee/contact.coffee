@@ -51,7 +51,7 @@ class App.SOSBeacon.Collection.ContactType extends Backbone.Collection
 
 
 App.SOSBeacon.contactTypes = new App.SOSBeacon.Collection.ContactType([
-    {type: 'd', label: 'Direct (self)'},
+    {type: 'd', label: 'Direct'},
 ])
 
 App.SOSBeacon.contactStudentTypes = new App.SOSBeacon.Collection.ContactType([

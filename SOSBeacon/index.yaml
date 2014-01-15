@@ -243,6 +243,12 @@ indexes:
   properties:
   - name: g
   - name: sc
+  - name: ln_
+
+- kind: Student
+  properties:
+  - name: g
+  - name: sc
   - name: n_
 
 - kind: Student
